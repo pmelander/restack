@@ -274,7 +274,7 @@ We will **completely redesign Phase 2** to focus on **organizational capability 
 ## References
 
 - [ADR-001: Incorporate Residuality Theory](ADR-001-incorporate-residuality-theory.md)
-- [Phase 2 Redesign Document](PHASE2_REDESIGN.md)
+- [Phase 2 Redesign Document](../PHASE2_REDESIGN.md)
 - Barry O'Reilly, *Residuality Theory* (2026)
 - [Learning Organizations](https://en.wikipedia.org/wiki/Learning_organization) - Peter Senge
 - [Evolutionary Architecture](https://evolutionaryarchitecture.com/) - Ford, Parsons, Kua

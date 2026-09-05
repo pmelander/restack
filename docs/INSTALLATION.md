@@ -22,8 +22,8 @@ cd restack
 # Copy all skills to Claude Code (Claude Code expects skills/<name>/SKILL.md)
 cp -R skills/* ~/.claude/skills/
 
-# Verify installation
-ls ~/.claude/skills/
+# Verify installation — expect 14 directories
+ls -d ~/.claude/skills/restack-*/ | wc -l
 ```
 
 **Result:** You should see skill folders like:
@@ -66,24 +66,13 @@ This method creates symbolic links, so updates to the repository automatically r
 git clone git@github.com:pmelander/restack.git restack
 cd restack
 
-# Create symlinks for skills
-ln -s "$(pwd)/skills/restack-adr" ~/.claude/skills/restack-adr
-ln -s "$(pwd)/skills/restack-solution-doc" ~/.claude/skills/restack-solution-doc
-ln -s "$(pwd)/skills/restack-tech-stack" ~/.claude/skills/restack-tech-stack
-ln -s "$(pwd)/skills/restack-design-review" ~/.claude/skills/restack-design-review
-ln -s "$(pwd)/skills/restack-stressor" ~/.claude/skills/restack-stressor
-ln -s "$(pwd)/skills/restack-excel" ~/.claude/skills/restack-excel
-ln -s "$(pwd)/skills/restack-arch-learning" ~/.claude/skills/restack-arch-learning
-ln -s "$(pwd)/skills/restack-capability-assessor" ~/.claude/skills/restack-capability-assessor
-ln -s "$(pwd)/skills/restack-patterns" ~/.claude/skills/restack-patterns
-ln -s "$(pwd)/skills/restack-evolve" ~/.claude/skills/restack-evolve
-ln -s "$(pwd)/skills/restack-cloud" ~/.claude/skills/restack-cloud
-ln -s "$(pwd)/skills/restack-capacity" ~/.claude/skills/restack-capacity
-ln -s "$(pwd)/skills/restack-discover" ~/.claude/skills/restack-discover
-ln -s "$(pwd)/skills/restack-journey" ~/.claude/skills/restack-journey
+# Symlink every skill — stays correct as skills are added or renamed
+for d in skills/restack-*/; do
+  ln -sfn "$(pwd)/${d%/}" ~/.claude/skills/"$(basename "$d")"
+done
 
-# Verify installation
-ls -la ~/.claude/skills/
+# Verify — expect 14
+ls -d ~/.claude/skills/restack-*/ | wc -l
 ```
 
 **Advantage:** Edit skills in the repository and changes are immediately available in Claude Code.

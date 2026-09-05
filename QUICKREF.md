@@ -1,308 +1,249 @@
-# ReStack - Quick Reference
+# ReStack — Quick Reference
 
-## Installation
+Every command, in journey order. Type `/restack` in Claude Code to see them all.
 
 ```bash
 git clone git@github.com:pmelander/restack.git restack
 cd restack
 cp -R skills/* ~/.claude/skills/
-pip install -r requirements.txt
+pip install -r requirements.txt        # /restack-excel only
 ```
 
 ---
 
-## All Commands
+## The shape of an engagement
 
-### Architecture Decision Records
-```bash
-/restack-adr create <title>              # Create new ADR
-/restack-adr list                        # List all ADRs
-/restack-adr update <number>             # Update existing ADR
-/restack-adr search <term>               # Search ADRs
+```
+/restack-journey start           classify terrain, map the route
+        ↓
+/restack-discover ...            brownfield & minefield only
+        ↓
+   ═══ CONFIDENCE GATE ═══       do we know this system well enough to stress it?
+        ↓
+/restack-stressor walk           ┐
+/restack-stressor generate       │
+/restack-stressor analyze        │  the loop
+/restack-stressor residues       │
+        ↓                        │
+   ═══ ITERATE GATE ═══          ┘  is impact low enough, or do we loop?
+        ↓
+/restack-adr create              document each residual as a decision
+/restack-solution-doc hld        capture the design
+/restack-design-review complete  validate it
+        ↓
+/restack-journey cadence         the rhythm once it is live
 ```
 
-### Solution Documentation
+### The three gates
+
+The workflow **stops** at each of these and waits for you. They are not
+recommendations you can read past.
+
+| Gate | Where | Settles |
+|---|---|---|
+| **Confidence** | `/restack-discover confidence` | do we understand the system well enough to stress it? |
+| **Iterate** | `/restack-journey iterate` | is impact low enough to proceed, or do we loop? |
+| **Approach** | wherever two viable designs exist | which way, and is it a one-way door? |
+
+A gate reached with **low confidence on an irreversible decision** routes
+backwards to discovery, not forwards to a choice.
+
+---
+
+## Orchestration
+
 ```bash
-/restack-solution-doc hld                # High-Level Design
-/restack-solution-doc lld [component]    # Low-Level Design
-/restack-solution-doc deployment         # Deployment Guide
-/restack-solution-doc runbook            # Operations Runbook
-/restack-solution-doc complete           # Generate all docs
-/restack-solution-doc update <type>      # Update existing doc
+/restack-journey start           # classify terrain, map the route, name the first move
+/restack-journey where           # mid-journey: where am I, what was skipped, what next
+/restack-journey iterate         # THE ITERATE GATE — loop or proceed
+/restack-journey review          # health check against the seven journey failures
+/restack-journey cadence         # ongoing rhythm for a live system
 ```
 
-### Technology Stack Advisor
+State lives in `docs/journey/` — position, iteration history, decisions,
+assumptions. Read at the start of every command, written at the end.
+
+## Discovery — brownfield and minefield
+
 ```bash
-/restack-tech-stack recommend                      # Full stack recommendation
-/restack-tech-stack evaluate <technology>          # Evaluate specific tech
-/restack-tech-stack compare <tech1> vs <tech2>     # Compare technologies
-/restack-tech-stack migrate from <old> to <new>    # Migration analysis
-/restack-tech-stack report                         # Generate tech report
+/restack-discover paths          # map what is actually there; settle the boundary
+/restack-discover actor <name>   # what an actor really does, vs what docs claim
+/restack-discover intentions     # trace one intention until it resolves or dies
+/restack-discover gaps           # prioritise unknowns: impact × likelihood × cost to close
+/restack-discover organisation   # map resistance, translate it into stressors
+/restack-discover confidence     # THE CONFIDENCE GATE — ready to walk?
 ```
 
-### Design Review
+Confidence thresholds rise with terrain. In brownfield an unknown becomes a
+registered assumption; in a **minefield an unknown on a critical path blocks**.
+
+## Stressor analysis
+
 ```bash
-/restack-design-review architecture      # Review system architecture
-/restack-design-review api               # Review API design
-/restack-design-review data              # Review data architecture
-/restack-design-review security          # Security-focused review
-/restack-design-review performance       # Performance-focused review
-/restack-design-review complete          # Comprehensive review
+/restack-stressor walk [path] ["stressor"]   # traverse a path, actor by actor
+/restack-stressor generate [count]           # 20-30 across 7 categories, incl. absurd
+/restack-stressor analyze                    # build the impact matrix
+/restack-stressor vulnerabilities            # concentration, clusters, flatness, zeros
+/restack-stressor residues                   # residuals by mechanism, ranked by leverage
+/restack-stressor iterate                    # re-walk, per-actor before/after
+/restack-stressor workshop                   # facilitate with a group
+/restack-stressor compliance <pack>          # inject a regulatory stressor pack
+/restack-stressor import <file> [sheet]      # import an existing matrix
 ```
 
-### Stressor Analysis
+Scoring is **binary** — 1 if the stressor reaches the actor, 0 if not. Not a
+simplification: severity scales let uncomfortable stressors get argued down, and
+what you want is breadth of exposure, not depth of any one failure.
+
+`/restack-stressor compliance list` shows available packs. GDPR ships as a
+worked example.
+
+## Decide and record
+
 ```bash
-/restack-stressor walk [path-name]           # Traverse a path, evaluating each actor in sequence
-/restack-stressor generate [count]           # Generate creative stressors
-/restack-stressor analyze                    # Build impact matrix (actors × stressors)
-/restack-stressor vulnerabilities            # Identify most-impacted actors
-/restack-stressor residues                   # Suggest residuals (new actors, intentions, paths)
-/restack-stressor iterate                    # Re-walk after adding residuals
-/restack-stressor workshop                   # Facilitate team stressor workshop
-/restack-stressor import <file> [sheet]      # Import stressor matrix from Excel/CSV
-/restack-stressor compliance <pack>          # Inject compliance stressor pack
+/restack-adr create <title>      # with reversibility + the residual it implements
+/restack-adr list                # flags ADRs past their review date
+/restack-adr update <number>     # supersede rather than rewrite
+/restack-adr review <number>     # outcome review: predicted vs happened
+/restack-adr search <term>       # searches alternatives too — finds what you rejected
+/restack-adr template
+
+/restack-tech-stack recommend                    # a stack, seven dimensions each
+/restack-tech-stack evaluate <tech>              # incl. "what would make this wrong?"
+/restack-tech-stack compare <a> vs <b>           # weighted before scoring
+/restack-tech-stack migrate from <old> to <new>  # starts from "probably don't"
+/restack-tech-stack report
+/restack-tech-stack retro <tech>                 # how did that choice play out?
+
+/restack-solution-doc hld                # actors, paths, and what each residual defends against
+/restack-solution-doc lld [component]    # only where an LLD is warranted
+/restack-solution-doc deployment         # incl. what CANNOT be rolled back
+/restack-solution-doc runbook            # incl. what NOT to do at 3am
+/restack-solution-doc complete
+/restack-solution-doc update <type>
+/restack-solution-doc review <type>
+
+/restack-design-review architecture      # boundaries, coupling, state, blast radius
+/restack-design-review data              # ownership, dual writes, consistency, recovery
+/restack-design-review api               # contract, evolution, error semantics
+/restack-design-review security          # threat model first, not a control list
+/restack-design-review performance       # shape, not speed
+/restack-design-review complete          # all five, in dependency order
+/restack-design-review self-check        # you review; it only pushes on assumptions
 ```
 
-### Architect's Journey
+Every design review cross-checks findings against the matrix and classifies
+each: **A** matrix caught it, residual missing · **B** residual present but not
+working · **C** matrix should have caught it · **D** genuinely new.
+A review that is mostly **C** is a discovery problem wearing a review's clothes.
+
+## Build it
+
 ```bash
-/restack-journey start           # Begin a new journey — assess terrain, map the route
-/restack-journey where           # Where am I? What comes next?
-/restack-journey iterate         # Iterate stressor loop or proceed?
-/restack-journey review          # Journey health check — completeness and quality
-/restack-journey cadence         # Establish an ongoing iteration rhythm
+/restack-cloud design <architecture>     # primitives named as the residuals they are
+/restack-cloud iac <provider>            # terraform | cloudformation | bicep | cdk
+/restack-cloud review                    # six pillars, then what they cannot reach
+/restack-cloud cost <analysis>           # checks the matrix before removing anything
+/restack-cloud migrate <to-cloud>        # six R's; Retire checked first
+/restack-cloud dr                        # tier derived from stressors, not picked
+
+/restack-capacity estimate               # arithmetic shown, assumptions inline
+/restack-capacity scale <strategy>       # horizontal|vertical|auto|database|cache|cdn
+/restack-capacity bottleneck             # ceilings, not utilisation; names the second one
+/restack-capacity load-test              # validates residuals, not just throughput
+/restack-capacity forecast               # a trigger and a lead time, not a line
+/restack-capacity right-size             # separates over-provisioning from headroom
 ```
 
-### Environment Discovery
+## Get better at it
+
 ```bash
-/restack-discover paths                  # Map paths through an existing system
-/restack-discover actor <name>           # Investigate what an actor actually does
-/restack-discover intentions             # Trace how an intention propagates
-/restack-discover gaps                   # Identify and prioritise confidence gaps
-/restack-discover organisation           # Map organisational resistance as stressors
-/restack-discover confidence             # Assess readiness to proceed to stressor analysis
+/restack-arch-learning analyze           # predicted vs happened; diagnose each miss
+/restack-arch-learning outcomes          # which decisions have no recorded outcome
+/restack-arch-learning retrospective     # facilitated, evidence circulated first
+/restack-arch-learning lessons           # routed to where they act, not to a document
+/restack-arch-learning patterns          # candidates for extraction
+/restack-arch-learning trends            # miss types, estimate bias, iteration counts
+
+/restack-patterns extract                # three independent instances or it is not one
+/restack-patterns catalog                # indexed BY PROBLEM
+/restack-patterns suggest <scenario>     # checks the context boundary against your case
+/restack-patterns effectiveness          # incl. abandonments — the strongest signal
+/restack-patterns anti-patterns          # incl. why people keep choosing it
+/restack-patterns evolve                 # promote, amend, deprecate — never delete
+
+/restack-evolve assess                   # change cost measured with real changes
+/restack-evolve fitness-functions        # automated checks that residuals still hold
+/restack-evolve brittleness              # what stops the stressor loop converging
+/restack-evolve increment                # seam first; cleanup is a step, not an intention
+/restack-evolve health                   # a muted fitness function is a failed control
+/restack-evolve coach                    # asks; does not answer
+
+/restack-capability-assessor assess      # practice under deadline, not knowledge
+/restack-capability-assessor gaps        # what it costs now, not the lowest score
+/restack-capability-assessor roadmap     # attached to live work or it will not happen
+/restack-capability-assessor track       # "what got in the way?", not "why didn't you"
+/restack-capability-assessor exercises   # deliberate practice with a feedback loop
+/restack-capability-assessor compare     # practices, never scores
 ```
 
-### Cloud Architect
-```bash
-/restack-cloud design <architecture>     # Design cloud-native architecture
-/restack-cloud iac <provider>            # Generate Terraform/CloudFormation/Bicep/CDK
-/restack-cloud review                    # Well-Architected review (6 pillars)
-/restack-cloud cost                      # Cost analysis and optimisation
-/restack-cloud migrate <to-cloud>        # Migration strategy using the 6 R's
-/restack-cloud dr                        # Disaster recovery strategy
-```
+## Utility
 
-### Capacity Planner
 ```bash
-/restack-capacity estimate               # Estimate resource requirements
-/restack-capacity scale <strategy>       # Design scaling approach
-/restack-capacity bottleneck             # Identify capacity constraints
-/restack-capacity load-test              # Design load testing strategy
-/restack-capacity forecast               # Model future capacity needs
-/restack-capacity right-size             # Identify and reduce over-provisioning
-```
-
-### Excel Reader (Utility)
-```bash
-/restack-excel read <file> [sheet]       # Read spreadsheet as markdown
-/restack-excel preview <file> [rows]     # Preview first N rows
-/restack-excel sheets <file>             # List available sheets
-/restack-excel convert <file> [sheet]    # Save to docs/imports/
-```
-
-### Architecture Learning Analyzer
-```bash
-/restack-arch-learning analyze           # Analyze ADR history
-/restack-arch-learning patterns          # Extract decision patterns
-/restack-arch-learning outcomes          # Review decision outcomes
-/restack-arch-learning retrospective     # Facilitate team retrospective
-/restack-arch-learning lessons           # Generate lessons learned report
-/restack-arch-learning trends            # Identify trends over time
-```
-
-### Team Capability Assessor
-```bash
-/restack-capability-assessor assess      # Assess team maturity
-/restack-capability-assessor gaps        # Identify capability gaps
-/restack-capability-assessor roadmap     # Create development roadmap
-/restack-capability-assessor track       # Track growth over time
-/restack-capability-assessor exercises   # Get capability-building activities
-/restack-capability-assessor compare     # Compare against benchmarks
-```
-
-### Pattern Extractor
-```bash
-/restack-patterns extract                # Extract patterns from knowledge
-/restack-patterns catalog                # View pattern library
-/restack-patterns suggest <scenario>     # Get pattern recommendations
-/restack-patterns effectiveness          # Track pattern success
-/restack-patterns anti-patterns          # Document what doesn't work
-/restack-patterns evolve                 # Update patterns based on learning
-```
-
-### Evolutionary Architecture Coach
-```bash
-/restack-evolve assess                   # Assess evolutionary readiness
-/restack-evolve fitness-functions        # Define fitness functions
-/restack-evolve brittleness              # Identify brittle areas
-/restack-evolve increment                # Plan incremental improvements
-/restack-evolve health                   # Track architectural health
-/restack-evolve coach                    # Interactive coaching session
+/restack-excel read <file> [sheet]       # to a markdown table
+/restack-excel preview <file> [rows]     # check the shape first
+/restack-excel sheets <file>
+/restack-excel convert <file> [sheet]    # write to a file instead of the chat
 ```
 
 ---
 
-## Common Workflows
+## Vocabulary
 
-### New Project (Greenfield)
-```
-1. /restack-journey start              # assess terrain, map the route
-2. /restack-tech-stack recommend
-3. /restack-adr create [for each major decision]
-4. /restack-solution-doc hld
-5. /restack-stressor walk              # walk primary paths first
-6. /restack-stressor generate          # generate stressors
-7. /restack-stressor analyze           # build impact matrix
-8. /restack-stressor residues          # identify residuals
-9. /restack-journey iterate            # proceed or loop?
-10. /restack-design-review architecture
-11. /restack-solution-doc deployment
-```
+Used precisely by every skill. Full definitions in [RESIDUALITY.md](RESIDUALITY.md).
 
-### Existing System (Brownfield / Minefield)
-```
-1. /restack-journey start              # assess terrain, map the route
-2. /restack-discover paths             # map what's actually there
-3. /restack-discover actor <critical>  # investigate opaque actors
-4. /restack-discover gaps              # prioritise unknowns
-5. /restack-discover organisation      # translate resistance into stressors
-6. /restack-discover confidence        # explicit go/no-go before walking
-7. /restack-stressor walk              # walk discovered paths
-8. /restack-stressor generate          # generate stressors
-9. /restack-stressor analyze           # build matrix on real paths
-10. /restack-stressor residues         # identify residuals
-11. /restack-journey iterate           # proceed or loop?
-12. /restack-adr create [key decisions]
-```
+| | |
+|---|---|
+| **Aspiration** | what the system should achieve — every decision is measured against it |
+| **Intention** | a signal defining what happens next; connects actors |
+| **Actor** | anything that acts on an intention — service, module, queue, person |
+| **Path** | a sequence of actors connected by intentions. Paths never fork; a fork is a new path |
+| **Stressor** | a fact or force outside your current understanding |
+| **Residual** | a discrete change — new actor, intention, or path — that persists after the stressor |
+| **Walk** | traversing a path to see what each actor does as an intention propagates |
+| **Terrain** | greenfield / brownfield / oilfield / minefield — sets thresholds and route |
 
-### Pre-Production Review
-```
-1. /restack-design-review complete
-2. [Fix critical issues]
-3. /restack-design-review [specific flagged areas]
-4. /restack-solution-doc complete
-```
+---
 
-### Cloud Migration
-```
-1. /restack-cloud migrate to <provider>
-2. /restack-cloud design <target architecture>
-3. /restack-cloud review
-4. /restack-cloud iac terraform
-5. /restack-adr create [document key cloud decisions]
-6. /restack-cloud dr
-```
+## Where things are written
 
-### Capacity Planning
 ```
-1. /restack-capacity estimate
-2. /restack-capacity bottleneck
-3. /restack-capacity scale auto
-4. /restack-capacity load-test
-5. /restack-capacity forecast
-```
-
-### Compliance (via Antifragility)
-```
-1. /restack-stressor compliance <pack>   # Inject regulatory stressors
-2. /restack-stressor walk                # Walk paths under compliance stressors
-3. /restack-stressor analyze             # Build impact matrix
-4. /restack-stressor residues            # Residuals address compliance structurally
-5. /restack-adr create [document residuals as decisions]
-```
-
-### Organisational Learning Rhythm
-```
-Monthly:
-  /restack-evolve health
-  /restack-arch-learning analyze
-  /restack-patterns effectiveness
-
-Quarterly:
-  /restack-capability-assessor assess
-  /restack-capability-assessor roadmap
-  /restack-arch-learning retrospective
-  /restack-patterns evolve
-  /restack-evolve assess
-  /restack-journey cadence               # review and refresh ongoing rhythm
+docs/journey/          journey-state, iteration history, decisions log, assumptions
+docs/discovery/        path maps, actor profiles
+docs/stressor-analysis/ stressor sets, matrices, residuals
+docs/adr/              decisions
+docs/architecture/     HLD, LLDs, evolvability assessments
+docs/deployment/       deployment guide
+docs/operations/       runbook
+docs/reviews/          design review reports
+docs/patterns/         pattern catalog, indexed by problem
+docs/learning/         outcome analyses, retrospectives
 ```
 
 ---
 
-## Output Locations
+## Everyday recipes
 
-```
-docs/
-  adr/                          # Architecture Decision Records
-  architecture/                 # HLD, LLD documents
-  deployment/                   # Deployment guides
-  operations/                   # Runbooks
-  reviews/                      # Design review reports
-  technology/                   # Tech stack reports
-  stressor-analysis/            # Stressor matrices and residue recommendations
-  imports/                      # Imported Excel/CSV data
-  arch-learning/                # Organisational learning outputs
-  capability-assessments/       # Team maturity assessments
-  patterns/                     # Pattern catalog and library
-  evolutionary-architecture/    # Fitness functions, health dashboards
-  capacity/                     # Capacity estimates and forecasts
-  cloud/                        # Cloud architecture docs and IaC
-```
-
----
-
-## Best Practices
-
-### ADRs
-- ✅ Create for significant, lasting decisions only
-- ✅ Document trade-offs honestly
-- ✅ Update status when superseded
-- ✅ Link related ADRs
-
-### Stressor Analysis
-- ✅ Walk paths before building the impact matrix — actors on paths are the columns
-- ✅ Include absurd stressors — they reveal unknown unknowns
-- ✅ Use compliance packs to let regulatory requirements emerge as residuals
-- ✅ Iterate after adding residuals to measure improvement
-- ✅ Run as a team workshop for shared mental models
-
-### Cloud Architecture
-- ✅ Design cloud-native, not lift-and-shift
-- ✅ Review against all 6 Well-Architected pillars
-- ✅ Generate IaC — never provision by hand
-- ✅ Define DR strategy before you need it
-
-### Capacity Planning
-- ✅ State all assumptions explicitly
-- ✅ Load test before production — never trust estimates alone
-- ✅ Design for 10x current load
-- ✅ Right-size continuously, not once
-
-### Organisational Capabilities
-- ✅ Assess capabilities before building roadmaps
-- ✅ Start pattern library with 10-15 high-value patterns
-- ✅ Automate fitness function checks
-- ✅ Review ADR outcomes regularly to build institutional learning
-
----
-
-## Phase Status
-
-| Phase | Skills | Status |
-|-------|--------|--------|
-| Phase 1: Individual Capabilities | ADR, Solution Doc, Tech Stack, Design Review, Stressor Analysis | ✅ Complete |
-| Utilities | Excel Reader | ✅ Complete |
-| Phase 2: Organisational Capabilities | Arch Learning, Capability Assessor, Pattern Extractor, Evolutionary Coach | ✅ Complete |
-| Phase 3: Specialised Tools | Cloud Architect, Capacity Planner, Environment Discovery, Architect's Journey | ✅ Complete |
-
-> **Note:** Risk Assessor excluded (covered by Residuality/Stressor Analysis — ADR-006). Compliance Checker replaced by `/restack-stressor compliance` packs (ADR-007).
+| I want to... | Run |
+|---|---|
+| Start anything | `/restack-journey start` |
+| Pick up someone else's engagement | `/restack-journey where` |
+| Understand a system before changing it | `/restack-discover paths` → `actor` → `confidence` |
+| Find out what will break it | `/restack-stressor walk` → `generate` → `analyze` |
+| Decide whether to keep iterating | `/restack-journey iterate` |
+| Record a decision properly | `/restack-adr create` |
+| Check a design before building | `/restack-design-review complete` |
+| Work out how big it needs to be | `/restack-capacity estimate` |
+| Know why every change is expensive | `/restack-evolve brittleness` |
+| Find out if we are getting better | `/restack-arch-learning trends` |
+| Handle a regulation | `/restack-stressor compliance <pack>` |

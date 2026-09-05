@@ -1,179 +1,123 @@
 # ReStack — Project Summary
 
-## Overview
-
-**ReStack** is a collection of Claude Code skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
-
-**Philosophy:** Skills transfer capability to architects, not create dependency on tools. The measure of success is how rarely you need the toolkit, because the thinking has been internalised.
-
-**Current status:** All three phases complete.
+A one-page orientation for anyone deciding whether to adopt, extend, or
+contribute to this toolkit. For what it does and why, read the
+[README](README.md); for how the toolkit itself is built, read
+[CLAUDE.md](CLAUDE.md).
 
 ---
 
-## Project Structure
+## What it is
 
-```
-restack/
-├── README.md
-├── CLAUDE.md                       # Development guide (this project's CLAUDE.md)
-├── QUICKREF.md                     # All commands at a glance
-├── GETTING_STARTED.md              # New user guide
-├── ROADMAP.md                      # Development history and future considerations
-├── CONTRIBUTING.md
-│
-├── skills/
-│   ├── adr/
-│   │   └── SKILL.md
-│   ├── solution-doc/
-│   │   └── SKILL.md
-│   ├── tech-stack/
-│   │   └── SKILL.md
-│   ├── design-review/
-│   │   └── SKILL.md
-│   ├── stressor/
-│   │   ├── SKILL.md
-│   │   └── compliance-packs/
-│   │       └── gdpr.md
-│   ├── excel/
-│   │   └── SKILL.md
-│   ├── arch-learning/
-│   │   └── SKILL.md
-│   ├── capability-assessor/
-│   │   └── SKILL.md
-│   ├── patterns/
-│   │   └── SKILL.md
-│   ├── evolve/
-│   │   └── SKILL.md
-│   ├── cloud/
-│   │   └── SKILL.md
-│   ├── capacity/
-│   │   └── SKILL.md
-│   ├── discover/
-│   │   └── SKILL.md
-│   └── journey/
-│       └── SKILL.md
-│
-├── templates/                      # Document templates
-├── examples/                       # Example outputs
-├── helpers/                        # Python utilities
-│   └── read_spreadsheet.py
-├── requirements.txt
-└── docs/
-    ├── adr/                        # Toolkit's own ADRs (7 decisions documented)
-    ├── INSTALLATION.md
-    └── USAGE.md
-```
+Fourteen Claude Code skills implementing
+[Residuality Theory](RESIDUALITY.md) as a working architectural practice —
+walking paths, stress-testing them against scenarios including deliberately
+absurd ones, and identifying the discrete architectural changes (residuals)
+that reduce whole classes of exposure at once.
+
+**Status:** v2.0.0, September 2026. All fourteen skills generated from
+templates with a shared behavioural preamble. CI enforces that generated files
+match their source. Not yet run end to end on a live engagement in this form.
 
 ---
 
-## Skills
+## The premise
 
-### Orchestration & Discovery
+Skills are **capability transfer tools, not dependency-creating tools**. Every
+skill states what thinking it builds and what success looks like when it is no
+longer needed. The measure is how rarely the toolkit gets invoked because the
+thinking has been internalised.
 
-| Skill | Command | Capability Built |
-|-------|---------|-----------------|
-| Architect's Journey | `/restack-journey` | Sequencing, orchestration, and iteration across the full architectural journey |
-| Environment Discovery | `/restack-discover` | Confident path mapping in brownfield and minefield environments |
-
-### Stressor Analysis
-
-| Skill | Command | Capability Built |
-|-------|---------|-----------------|
-| Stressor Analysis | `/restack-stressor` | Antifragility thinking and resilience design |
-
-**Extension:** `/restack-stressor compliance <pack>` injects regulatory frameworks as stressor sets, so compliance requirements emerge as architectural residues rather than a checklist process.
-
-### Design & Documentation
-
-| Skill | Command | Capability Built |
-|-------|---------|-----------------|
-| Architecture Decision Records | `/restack-adr` | Structured decision-making and trade-off thinking |
-| Solution Documentation | `/restack-solution-doc` | Systems thinking and communication |
-| Technology Stack Advisor | `/restack-tech-stack` | Objective evaluation without hype |
-| Design Review | `/restack-design-review` | Self-assessment and pattern recognition |
-
-### Cloud & Infrastructure
-
-| Skill | Command | Capability Built |
-|-------|---------|-----------------|
-| Cloud Architect | `/restack-cloud` | Cloud-native thinking, IaC discipline, Well-Architected mindset |
-| Capacity Planner | `/restack-capacity` | Demand modelling, scaling intuition, bottleneck identification |
-
-### Organisational Capabilities
-
-| Skill | Command | Capability Built |
-|-------|---------|-----------------|
-| Architecture Learning Analyzer | `/restack-arch-learning` | Systematic learning from past decisions |
-| Team Capability Assessor | `/restack-capability-assessor` | Team maturity self-awareness and growth |
-| Pattern Extractor | `/restack-patterns` | Institutional knowledge and pattern libraries |
-| Evolutionary Coach | `/restack-evolve` | Continuous architecture improvement mindset |
-
-### Utilities
-
-| Skill | Command | Purpose |
-|-------|---------|---------|
-| Excel Reader | `/restack-excel` | Import stressor matrices and data from Excel/CSV |
+That premise is enforced in review: a proposed skill that would train
+architects to work from checklists or registers is turned down, however useful
+it looks.
 
 ---
 
-## Key Design Decisions
+## How it is built
 
-Seven ADRs document the significant decisions made while building this toolkit:
+| | |
+|---|---|
+| **Source of truth** | `skills/<name>/SKILL.md.tmpl` — `SKILL.md` is a build artifact |
+| **Generator** | `python scripts/gen_skills.py`, standard library only |
+| **Shared behaviour** | `scripts/preamble/`, composed by declared tier (1 utility, 2 decision-shaping, 3 residuality core) |
+| **On-demand depth** | `skills/<name>/sections/` — 42 sections, read when their situation applies rather than loaded every run |
+| **Validation** | `gen_skills.py --check` (drift) and `check_skills.py` (frontmatter, banners, orphaned sections), both in CI |
+| **Document formats** | `templates/` is canonical; skills carry method, not format |
+
+This structure exists so cross-cutting behaviour — how a decision is put to the
+architect, what counts as evidence, when a workflow must stop — is defined once
+rather than fourteen times, and so a skill can carry deep method without paying
+for it on every invocation.
+
+---
+
+## Behaviour that distinguishes it
+
+- **Decision briefs.** Judgement calls become structured briefs rating
+  **confidence** (is this built on verified beliefs, and what would raise it)
+  and **reversibility** (reversible / costly / one-way door) — the axes
+  architecture decisions actually turn on.
+- **Stop gates.** Three points halt rather than drift past: the confidence gate
+  (do we understand this system well enough to stress it?), the iterate gate
+  (is impact low enough?), and approach gates.
+- **Evidence rules.** Documentation rates *low*; inference from a component's
+  name is not evidence. Unverified claims are registered as assumptions.
+- **File-based state.** `docs/journey/` carries position, iteration history,
+  decisions and assumptions, so an engagement survives weeks and handoffs.
+- **`NEEDS_DISCOVERY`** is a first-class outcome — the toolkit's own route is
+  the remedy when it does not know enough.
+
+---
+
+## Decisions on record
+
+Nine ADRs. Four matter most to anyone evaluating the approach:
 
 | ADR | Decision |
-|-----|---------|
-| ADR-001 | Incorporate Residuality Theory as the foundation |
-| ADR-002 | Redesign organisational capabilities for capability-building (not tool-centric) |
-| ADR-003 | Add Stressor Analysis skill |
-| ADR-004 | Add Excel reading utility |
-| ADR-005 | Add Architecture Learning Analyzer |
-| ADR-006 | **Exclude Risk Assessor** — covered by antifragility thinking via `/restack-stressor` |
-| ADR-007 | **Replace Compliance Checker** with `/restack-stressor compliance` packs — compliance as byproduct of antifragile design |
+|---|---|
+| [001](docs/adr/ADR-001-incorporate-residuality-theory.md) | Residuality Theory as the foundation |
+| [006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) | **No risk assessor** — registers train enumerated-threat thinking; stressor analysis covers risk and reaches further |
+| [007](docs/adr/ADR-007-compliance-via-stressor-packs.md) | **No compliance checker** — compliance enters as stressor packs so residuals address the harm structurally |
+| [008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) | Generated skills, tiered preamble, on-demand sections |
 
-ADR-006 and ADR-007 are particularly important: they show the toolkit's philosophy actively shaping what *not* to build.
+Also: [002](docs/adr/ADR-002-redesign-phase-2-for-capability-building.md)
+capability-building redesign, [003](docs/adr/ADR-003-add-stressor-analysis-skill.md)
+stressor analysis, [004](docs/adr/ADR-004-add-excel-reading-utility.md) Excel
+utility, [005](docs/adr/ADR-005-add-architecture-learning-analyzer.md) learning
+analyzer, [009](docs/adr/ADR-009-prefix-skill-names.md) prefixed skill names.
 
----
-
-## Skill Status
-
-| Category | Status | Count |
-|----------|--------|-------|
-| Orchestration & Discovery | ✅ Complete | 2 |
-| Stressor Analysis | ✅ Complete | 1 |
-| Design & Documentation | ✅ Complete | 4 |
-| Cloud & Infrastructure | ✅ Complete | 2 |
-| Organisational Capabilities | ✅ Complete | 4 |
-| Utilities | ✅ Complete | 1 |
+ADR-006 and ADR-007 are the ones worth reading first — they show the philosophy
+actively deciding what *not* to build, which is the clearest statement of what
+this toolkit is for.
 
 ---
 
-## Key Differentiators
+## Layout
 
-1. **Residuality Theory foundation** — built around antifragility, not risk registers or checklists
-2. **Capability transfer, not dependency** — skills build thinking that architects carry forward
-3. **Compliance via antifragility** — regulatory requirements emerge as residues of good design
-4. **Decisions documented** — the toolkit's own ADRs are part of the project, modelling the practice
-5. **Philosophy-consistent** — skills that would undermine the mental model were deliberately excluded
+```
+skills/restack-*/          14 skills: SKILL.md.tmpl (source) + SKILL.md + sections/
+scripts/                   generator, validator, preamble fragments
+templates/                 canonical document formats
+docs/adr/                  9 ADRs
+docs/                      installation, usage
+examples/                  example outputs
+helpers/                   read_spreadsheet.py
+```
 
 ---
 
 ## Contributing
 
-The most valuable open contribution area is **compliance packs** — curated stressor sets for GDPR, HIPAA, PCI DSS, ISO 27001, and SOC 2. These require regulatory expertise and make the toolkit immediately useful for compliance-heavy organisations without compromising its philosophical consistency.
+Highest value first:
 
-See `skills/restack-stressor/compliance-packs/README.md` for the pack structure.
+1. **Reports from real use** — especially where a gate got in the way.
+2. **Compliance packs** — HIPAA, PCI DSS, ISO 27001, SOC 2. GDPR ships as a
+   worked example. Each stressor must be a walkable scenario, not a restated
+   control.
+3. **Skills that fit the theory**, with an argument for why they build
+   capability rather than dependency.
 
-Other contributions: new Phase 4 skills, examples, template refinements. See [CONTRIBUTING.md](../CONTRIBUTING.md).
-
----
-
-## Future Considerations
-
-Phase 4 ideas (under consideration, no timeline):
-
-- **Security Architect** — threat modelling, security architecture design
-- **Team Architect** — Team Topologies, Conway's Law analysis
-- **Integration Architect** — event-driven architecture, message queue design
-- **Data Architect** — data modelling, governance, data lake design
-
-Any new skill must align with Residuality Theory — if it trains architects to think in checklists or registers rather than antifragility, a different approach is needed.
+`SKILL.md` files are generated — edit the `.tmpl` and run the generator; CI
+rejects drift. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Roadmap](ROADMAP.md).

@@ -276,7 +276,7 @@ Build a scalable, reliable e-commerce platform that enables customers to browse 
 
 ## 10. References
 
-- [ADR-001: Microservices Architecture](../adr/ADR-001-use-microservices.md)
-- [ADR-002: PostgreSQL for Primary Database](../adr/ADR-002-postgresql-primary-db.md)
+- `ADR-001: Microservices Architecture` — illustrative; this example HLD does not ship its ADRs
+- `ADR-002: PostgreSQL for Primary Database` — illustrative
 - [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
 - [PCI DSS Compliance Guide](https://www.pcisecuritystandards.org/)

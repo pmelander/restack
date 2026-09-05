@@ -217,7 +217,7 @@ Solution: Database per service, communicate via API
 
 ### References
 
-**Correct Pattern:** [Link to pattern documentation](../patterns/correct-pattern.md)
+**Correct pattern:** [link to the replacement in `docs/patterns/`]
 
 **ADRs Using Correct Approach:**
 - [ADR-XXX: Title](link)

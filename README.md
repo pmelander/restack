@@ -1,38 +1,143 @@
 # ReStack
 
-**Residual architecture skills for Claude Code.** A collection of skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
+**Architecture skills for Claude Code, built on Residuality Theory.**
+
+Fourteen skills that walk you through designing systems which survive things
+nobody predicted — and build the thinking so that eventually you do it without
+them.
 
 > Formerly *Residual Architecture Skill Set*. Renamed to ReStack in September 2026; the history is unchanged.
 
-> **Philosophy:** Skills are designed to transfer capability to architects, not create dependency on tools. The measure of success is how little you need them.
+---
 
-## 🚀 Quick Links
+## The problem this addresses
 
-- **[Introduction to Residuality Theory](RESIDUALITY.md)** - The philosophy behind this toolkit — start here if you're new to the framework
-- **[Getting Started Guide](GETTING_STARTED.md)** - Get up and running in 5 minutes
-- **[Quick Reference](QUICKREF.md)** - All commands at a glance
-- **[Roadmap](ROADMAP.md)** - What's built and what's next
-- **[Contributing](CONTRIBUTING.md)** - How to add skills and compliance packs
+Risk registers enumerate the threats you already imagined. Compliance
+checklists codify harms that happened to somebody else. Both produce confidence
+proportional to how much you wrote down, rather than to how exposed you
+actually are.
+
+The failures that hurt are the ones nobody listed.
+
+ReStack takes the opposite approach, from
+[Barry O'Reilly's Residuality Theory](RESIDUALITY.md): stress a design against
+scenarios so varied that some of them are absurd, find which components keep
+getting hit, and change the architecture so whole *classes* of surprise stop
+mattering. You are not defending against a list. You are making the system
+structurally harder to hurt.
 
 ---
 
-## Start Your Journey
+## What that looks like
 
-The first thing to do with any new engagement isn't to open a specific skill — it's to understand where you are and what the terrain demands.
+You walk a path through the system, actor by actor, and watch what an intention
+does as it propagates:
+
+```
+/restack-stressor walk checkout
+
+  Browser → API Gateway → Auth → Order Service → Inventory DB
+          → Payment Gateway → Notification Queue → Email Service
+
+  Under "payment provider goes offline":
+    Order Service blocks at the Payment Gateway hop — no timeout configured
+    Intention dies at hop 5; the customer sees a spinner, then a 502
+```
+
+Then you generate stressors — deliberately including ones that sound
+unserious — and score which actors each one reaches:
+
+```
+                           | API GW | Auth | Order | Inventory | Payment | Notify |
+---------------------------|--------|------|-------|-----------|---------|--------|
+Payment provider down      |   0    |  0   |   1   |     0     |    1    |   1    | = 3
+Region-wide AZ failure     |   1    |  1   |   1   |     1     |    1    |   1    | = 6
+Auth token clock skew      |   1    |  1   |   1   |     0     |    0    |   0    | = 3
+Black Friday 40x spike     |   1    |  0   |   1   |     1     |    1    |   1    | = 5
+Regulator audit mid-outage |   0    |  0   |   1   |     0     |    1    |   0    | = 2
+Fire-breathing lizards     |   0    |  0   |   0   |     1     |    0    |   0    | = 1
+---------------------------|--------|------|-------|-----------|---------|--------|
+Vulnerability              |   3    |  2   |   5   |     3     |    4    |   3    | Total: 20
+```
+
+Order Service is carrying the most exposure. Four of the stressors hitting it
+share one mechanism — nothing on that path degrades when a downstream
+dependency slows. So you add **one** residual, a payment-intent queue with an
+async settlement path, and re-walk:
+
+```
+Actor          | Iter 1 | Iter 2 | Delta | Residual applied
+---------------|--------|--------|-------|------------------------------
+Order Service  |   5    |   2    |  -3   | async payment queue + timeout
+Payment GW     |   4    |   2    |  -2   | async payment queue
+Total          |  20    |  13    |  -7   | 1 residual, 2 actors changed
+```
+
+One change, seven points, against stressors that had nothing to do with each
+other. That compounding is the whole argument — and it is why the lizards stay
+in. An absurd stressor is a mechanism in a costume, and teams will reason
+seriously about "sudden total loss of a facility with no warning" when it
+arrives as a lizard, then wave the identical scenario away as unrealistic when
+it arrives as a datacentre fire.
+
+---
+
+## What makes these skills behave differently
+
+**They stop and make you decide.** Every point where judgement is genuinely
+yours becomes a structured brief — not a recommendation buried in prose. It
+carries the aspiration the decision serves, plain-English stakes, a
+recommendation, and two ratings that matter more than a confidence score:
+
+```
+D3 — Iterate the stressor loop, or proceed to design?
+Aspiration: originate a mortgage in under a day with no rekeying
+Confidence: Medium — impact numbers assume the queue residual is implemented,
+            and it is currently proposed only
+Reversibility: Reversible — proceeding does not close off another iteration
+```
+
+`Confidence: Low` on a **one-way door** routes you back to discovery instead of
+forward to a choice.
+
+**They refuse to proceed on beliefs.** A claim about how an existing system
+behaves needs a source. Code, logs, a live probe, or a person who operates it —
+documentation rates *low* and inference from a component's name is not evidence
+at all. Anything unverified gets registered as an assumption with what would
+settle it.
+
+**They gate.** Three points where the workflow halts rather than drifting past:
+*have we discovered enough to stress this?* (the threshold rises in dangerous
+terrain), *is impact low enough to stop iterating?*, and *which approach, and is
+it reversible?*
+
+**They remember.** Journey state lives on disk in `docs/journey/`, so an
+engagement survives weeks, breaks, and handoffs — with an audit trail of what
+was decided and why.
+
+**They compound.** Residuals that recur across engagements become patterns.
+Decisions carry predictions, which makes them falsifiable, which is what lets
+the next analysis be better than the last.
+
+---
+
+## Start here
 
 ```
 /restack-journey start
 ```
 
-Tell Claude about the system you're working on — what you're trying to achieve, what exists today, and any constraints. It will assess the terrain and map your recommended skill sequence from there.
+Describe the system, what you are trying to achieve, and what already exists.
+It classifies the terrain and maps the route from there — because the route
+genuinely differs:
 
-The journey looks different depending on the terrain:
+| Terrain | You are | First move |
+|---|---|---|
+| **Greenfield** | designing paths that do not exist yet | design, then stress before building |
+| **Brownfield** | changing a system you partly understand | discover before you touch anything |
+| **Minefield** | changing a fragile system with real blast radius | discover extensively; gaps block, they do not become assumptions |
 
-- **Greenfield** — design paths, walk and stress them, then build what survives
-- **Brownfield** — discover what exists before changing anything
-- **Minefield** — discover extensively before touching anything
-
-At the heart of every journey is an iteration loop, not a straight line:
+At the centre of every route is a loop, not a line:
 
 ```
 walk paths → generate stressors → build matrix → find residuals
@@ -40,136 +145,150 @@ walk paths → generate stressors → build matrix → find residuals
   re-walk ←← implement residuals ←← impact low enough? ←←
 ```
 
-You keep iterating until the system's vulnerability is sufficiently low — not zero, but low enough given the aspiration and the cost of further improvement.
+You iterate until vulnerability is low enough — not zero, but low enough given
+the aspiration and what further reduction would cost. That judgement stays
+yours; the toolkit's job is to make you make it deliberately, with the matrix
+in front of you, rather than by drifting onward.
 
-→ [Full Getting Started Guide](GETTING_STARTED.md) · [All commands](QUICKREF.md)
-
----
-
-## Skills
-
-14 skills spanning the full architectural journey:
-
-| Category | Skills |
-|----------|--------|
-| Orchestration | `/restack-journey` |
-| Discovery | `/restack-discover` |
-| Stressor Analysis | `/restack-stressor` |
-| Design & Documentation | `/restack-adr` `/restack-solution-doc` `/restack-tech-stack` `/restack-design-review` |
-| Cloud & Infrastructure | `/restack-cloud` `/restack-capacity` |
-| Organisational Capabilities | `/restack-arch-learning` `/restack-capability-assessor` `/restack-patterns` `/restack-evolve` |
-| Utilities | `/restack-excel` |
-
-> **Note on Risk and Compliance:** A standalone Risk Assessor and Compliance Checker were deliberately excluded. Residuality Theory covers risk through antifragility thinking (`/restack-stressor`) — risk registers create false confidence in enumerated threats. Compliance is handled through **stressor compliance packs** (`/restack-stressor compliance <pack>`), so regulatory requirements emerge as residues of antifragile design rather than a separate checklist process. See [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) and [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md).
+→ **[Getting Started](GETTING_STARTED.md)** · **[All commands](QUICKREF.md)** · **[The theory](RESIDUALITY.md)**
 
 ---
 
-## ⚡ Install
+## The skills
+
+Fourteen, organised by where you are rather than by what they are called.
+
+**Orchestration**
+
+| | |
+|---|---|
+| [`/restack-journey`](skills/restack-journey/SKILL.md) | classify terrain, map the route, run the iterate gate, keep state |
+
+**Understand what is there** — brownfield and minefield
+
+| | |
+|---|---|
+| [`/restack-discover`](skills/restack-discover/SKILL.md) | map paths and actors, trace intentions, rate confidence honestly, own the confidence gate |
+
+**Find what will break**
+
+| | |
+|---|---|
+| [`/restack-stressor`](skills/restack-stressor/SKILL.md) | walk paths, generate stressors, build the matrix, identify residuals by mechanism |
+
+**Decide and record**
+
+| | |
+|---|---|
+| [`/restack-adr`](skills/restack-adr/SKILL.md) | decisions with reversibility and the residual they implement |
+| [`/restack-tech-stack`](skills/restack-tech-stack/SKILL.md) | technology against seven dimensions, including which residuals it must express |
+| [`/restack-solution-doc`](skills/restack-solution-doc/SKILL.md) | HLD, LLD, deployment, runbook — in actors, intentions and paths |
+| [`/restack-design-review`](skills/restack-design-review/SKILL.md) | review that also asks why the matrix did not catch each finding |
+
+**Build it**
+
+| | |
+|---|---|
+| [`/restack-cloud`](skills/restack-cloud/SKILL.md) | cloud design, IaC, Well-Architected, migration, DR — primitives treated as residuals |
+| [`/restack-capacity`](skills/restack-capacity/SKILL.md) | sizing with the arithmetic shown, bottlenecks as stressors, load tests that validate residuals |
+
+**Get better at it** — the compounding layer
+
+| | |
+|---|---|
+| [`/restack-arch-learning`](skills/restack-arch-learning/SKILL.md) | compare what you predicted against what happened; correct the method |
+| [`/restack-patterns`](skills/restack-patterns/SKILL.md) | recurring residuals become patterns; recurring failures become anti-patterns |
+| [`/restack-evolve`](skills/restack-evolve/SKILL.md) | brittleness, incremental change, fitness functions that stop residuals eroding |
+| [`/restack-capability-assessor`](skills/restack-capability-assessor/SKILL.md) | team capability rated on practice under deadline, not on knowledge |
+
+**Utility**
+
+| | |
+|---|---|
+| [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
+
+### Two things deliberately absent
+
+There is no risk assessor and no compliance checker, and that is a position
+rather than a gap.
+
+Risk registers train architects to think in enumerated threats, which is the
+habit this toolkit exists to break — stressor analysis covers risk and reaches
+further ([ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md)).
+Compliance enters as **stressor packs**
+(`/restack-stressor compliance gdpr`), so a regulation's requirements arrive as
+scenarios to walk, and the residuals that emerge address the underlying harm
+structurally rather than satisfying a control on paper
+([ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md)).
+
+---
+
+## Install
 
 ```bash
 git clone git@github.com:pmelander/restack.git restack
 cd restack
 
-# Install all skills (Claude Code expects skills/<name>/SKILL.md)
-cp -R skills/* ~/.claude/skills/
-
-# Python dependency for Excel reading
-pip install -r requirements.txt
+cp -R skills/* ~/.claude/skills/     # Claude Code reads skills/<name>/SKILL.md
+pip install -r requirements.txt      # openpyxl, for /restack-excel only
 ```
 
-Open Claude Code and type `/restack` to see them all.
+Open Claude Code and type `/restack` to see all fourteen.
 
 Every skill is prefixed so ReStack coexists with other skill suites — an
 unprefixed `design-review` or `patterns` silently overwrites whatever was
-installed there first. See [Installation](docs/INSTALLATION.md#why-every-skill-is-prefixed).
-
-📖 See [Installation Guide](docs/INSTALLATION.md) for detailed setup and troubleshooting.
-
----
-
-## Project Structure
-
-```
-.
-├── skills/                             # Claude Code layout: skills/<name>/SKILL.md
-│   ├── adr/
-│   │   └── SKILL.md
-│   ├── solution-doc/
-│   │   └── SKILL.md
-│   ├── tech-stack/
-│   │   └── SKILL.md
-│   ├── design-review/
-│   │   └── SKILL.md
-│   ├── stressor/
-│   │   ├── SKILL.md
-│   │   └── compliance-packs/       # Regulatory stressor packs
-│   │       ├── README.md
-│   │       └── gdpr.md
-│   ├── excel/
-│   │   └── SKILL.md
-│   ├── arch-learning/
-│   │   └── SKILL.md
-│   ├── capability-assessor/
-│   │   └── SKILL.md
-│   ├── patterns/
-│   │   └── SKILL.md
-│   ├── evolve/
-│   │   └── SKILL.md
-│   ├── cloud/
-│   │   └── SKILL.md
-│   ├── capacity/
-│   │   └── SKILL.md
-│   ├── discover/
-│   │   └── SKILL.md
-│   └── journey/
-│       └── SKILL.md
-├── templates/                          # Document templates
-├── examples/                           # Example outputs
-├── helpers/                            # Python utilities (Excel reading)
-└── docs/
-    ├── adr/                            # Architecture Decision Records for this toolkit
-    └── ...
-```
+installed there first. See
+[Installation](docs/INSTALLATION.md#why-every-skill-is-prefixed) for the
+symlink method, upgrading from an unprefixed install, and troubleshooting.
 
 ---
 
-## 📊 Skills
+## Status
 
-| Category | Count |
-|----------|-------|
-| Orchestration & Discovery | 2 |
-| Stressor Analysis | 1 |
-| Design & Documentation | 4 |
-| Cloud & Infrastructure | 2 |
-| Organisational Capabilities | 4 |
-| Utilities | 1 |
-| **Total** | **14** |
+All fourteen skills are at **v2.0.0**, generated from templates with a shared
+behavioural preamble. CI checks on every push that no generated file has
+drifted from its source and that the skills tree is valid.
 
-See [Roadmap](ROADMAP.md) for future considerations.
+**These skills are the deliverable; they have not yet been run end to end on a
+live engagement in this form.** If you use them in anger, the most useful thing
+you could report back is which gate you wanted to skip, and why.
 
----
-
-## 🤝 Contributing
-
-Contributions welcome — especially:
-- 📋 **Compliance packs** for regulatory frameworks (GDPR, HIPAA, PCI DSS, ISO 27001, SOC 2) — see `skills/restack-stressor/compliance-packs/README.md`
-- 💡 **New skill ideas** that align with Residuality Theory
-- 📝 **Documentation improvements**
-- 🐛 **Bug fixes and refinements**
-
-See [Contributing Guide](CONTRIBUTING.md) for details.
+See the [Roadmap](ROADMAP.md) for what is next, and the
+[ADRs](docs/adr/) for the decisions behind the design — including the ones
+about what deliberately does *not* exist.
 
 ---
 
-## 📚 Documentation
+## Contributing
 
-- **[Residuality Theory](RESIDUALITY.md)** — The philosophy behind the toolkit
-- **[Getting Started](GETTING_STARTED.md)** — New user guide
-- **[Quick Reference](QUICKREF.md)** — Command cheatsheet
-- **[Roadmap](ROADMAP.md)** — Development history and future plans
-- **[ADRs](docs/adr/)** — Decisions made while building this toolkit
-- **[Contributing](CONTRIBUTING.md)** — How to contribute
+`SKILL.md` files are **generated**. Edit `skills/<name>/SKILL.md.tmpl` and run
+`python scripts/gen_skills.py`; CI rejects drift.
+
+Most wanted:
+
+- **Compliance packs** — HIPAA, PCI DSS, ISO 27001, SOC 2. GDPR exists as a
+  worked example. Each stressor must be a concrete scenario you could walk, not
+  a restated control.
+- **Real-world reports** — where a gate helped, and where it got in the way.
+- **Skills that fit the theory.** A skill that trains architects to work from
+  checklists or registers will be turned down, however useful it looks.
+
+See [Contributing](CONTRIBUTING.md).
 
 ---
 
-**Built with ❤️ for Solution Architects using Claude Code**
+## Documentation
+
+| | |
+|---|---|
+| [RESIDUALITY.md](RESIDUALITY.md) | the theory, and the vocabulary every skill uses |
+| [GETTING_STARTED.md](GETTING_STARTED.md) | first engagement, start to finish |
+| [QUICKREF.md](QUICKREF.md) | every command, and the gates |
+| [docs/USAGE.md](docs/USAGE.md) | worked examples per skill |
+| [docs/INSTALLATION.md](docs/INSTALLATION.md) | install, upgrade, troubleshoot |
+| [CLAUDE.md](CLAUDE.md) | architecture of the toolkit itself |
+| [docs/adr/](docs/adr/) | decisions made while building it |
+
+---
+
+MIT licensed. Built for Solution Architects using Claude Code.
