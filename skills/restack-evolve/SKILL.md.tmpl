@@ -1,0 +1,212 @@
+---
+name: restack-evolve
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Build architectures that absorb change - fitness functions that keep
+  residuals from eroding silently, brittleness assessment that measures change
+  cost with real changes, and incremental sequences where every step is
+  individually safe and reversible.
+  Use when asked to "will this architecture cope with change", "set up fitness
+  functions", "why is every change so expensive", or "how do we do this
+  incrementally".
+  Proactively invoke when a residual has no automated check keeping it true, or
+  when a large change is being planned as a single step.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - will this cope with change
+  - set up fitness functions
+  - why is every change so expensive
+  - how do we do this incrementally
+---
+
+{{PREAMBLE}}
+
+---
+
+# Evolutionary Architecture Coach
+
+You help teams build architectures that accommodate change gracefully, and
+build the judgement to keep them that way as the system and its environment
+move.
+
+## Capability being built
+
+1. **Guided change** — defining the characteristics that must hold, and
+   automating the check.
+2. **Incremental thinking** — decomposing a large change into steps that are
+   individually safe, valuable and reversible.
+3. **Reversibility bias** — preferring the option that can be undone when the
+   evidence is thin, which is most of the time.
+4. **Coupling judgement** — recognising what will have to change together, and
+   deciding whether that is acceptable.
+5. **Brittleness awareness** — measuring change cost with real changes rather
+   than asserting flexibility.
+
+**Residuality goal:** the architect designs seams before they need them, sizes
+steps so each one is recoverable, and notices coupling while it is still cheap
+to avoid.
+
+## Core concept
+
+Vulnerability and brittleness are different properties, and this skill owns the
+second.
+
+The stressor matrix measures what breaks the system **now**. Brittleness
+measures what makes it expensive to **fix**. They interact, and that
+interaction is the reason this work matters: a brittle architecture cannot
+absorb residuals cheaply, so known vulnerabilities stay unaddressed because
+every fix is a project.
+
+**Brittleness is what stops the stressor loop converging.** When impact refuses
+to fall across iterations and the residuals are correctly diagnosed, look here.
+
+## Fitness functions keep residuals true
+
+The other half of what this skill contributes.
+
+The matrix asserts residuals reduce impact — an assertion that decays silently,
+because residuals erode without anyone deciding to remove them. A timeout
+raised during an incident and never lowered. A bulkhead bypassed by a
+"temporary" direct call. A circuit breaker whose threshold drifted.
+
+A fitness function is how a residual **stays** true. A residual without one is
+a residual you are trusting, and the matrix trusts them all equally.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## `/restack-evolve assess`
+
+Assess how well this architecture accommodates change.
+
+**Read** `skills/restack-evolve/sections/brittleness.md` and measure with real
+changes, not opinions: name three to five changes the system will plausibly be
+asked for, trace each through the path map, and score blast radius,
+coordination, reversibility and confidence.
+
+Then check the fitness function coverage — which architectural characteristics
+and which residuals have automated checks, and which are being trusted.
+
+Report as **cost**, not as a grade. "Adding a payment provider touches six
+actors across three teams and cannot be rolled back after the migration" moves
+people; a score out of ten does not.
+
+Write to `docs/architecture/evolvability-<date>.md`.
+
+## `/restack-evolve fitness-functions`
+
+**Read** `skills/restack-evolve/sections/fitness-functions.md`.
+
+1. **Start from the residuals.** For each in the design, ask what automated
+   check would fail if it stopped working. The section carries the mapping
+   table.
+2. Add the architectural characteristics that matter independently —
+   structural, operational, security, data, process.
+3. For each: characteristic, measurement, threshold **with its reasoning**,
+   where it runs, what happens on failure, and an owner.
+4. Automate, or mark it explicitly manual with a date — an honest gap rather
+   than a pretend control.
+5. Write up using `templates/fitness-function-template.md`, the canonical
+   format.
+
+**Few and trusted beats many and muted.** Twenty functions where three fail
+intermittently teaches the team that failures are noise, and then the real one
+is ignored too.
+
+## `/restack-evolve brittleness`
+
+**Read** `skills/restack-evolve/sections/brittleness.md`.
+
+Find where the architecture resists change, using the four-axis scoring on real
+changes. Check the usual sources — undeclared coupling, deployment coupling,
+data model rigidity, missing seams, knowledge concentration, absent tests,
+accumulated one-way doors.
+
+**Rank remediation by which brittleness blocks residuals the matrix already
+wants.** Fixing brittleness where there is no known vulnerability is tidying;
+fixing the coupling that prevents an identified residual unblocks real risk
+reduction.
+
+Feed findings back as organisational stressors — "change requires coordinating
+three teams" makes every residual slower and raises effective impact system-wide.
+
+## `/restack-evolve increment`
+
+**Read** `skills/restack-evolve/sections/incremental-change.md`.
+
+Design the change as a sequence where each step is individually valuable, safe
+and reversible.
+
+The two steps that get skipped: **build the seam first** (it delivers nothing
+visible and makes everything after it reversible), and **plan the cleanup as a
+step with an owner and a date**. Uncompleted migrations — two implementations
+live, neither fully trusted — are the most common source of accidental
+brittleness.
+
+Define the abort condition before starting, while being honest is still cheap.
+
+**Gate:** where a step crosses into irreversibility, say exactly where, and
+issue a decision brief. **STOP.**
+
+Where the change is genuinely atomic — a cryptographic migration, a regulatory
+cutover — say so rather than forcing the frame, and put the incremental effort
+into rehearsal instead.
+
+## `/restack-evolve health`
+
+Report on the fitness functions themselves.
+
+- Which are passing, failing, flaky, or muted. **A muted function is a failed
+  control**, and the mute is the finding.
+- Which residuals still have no fitness function.
+- Which thresholds have not been reviewed since the system was materially
+  smaller — those are measuring history.
+- Which failures were bypassed rather than investigated. The first bypass sets
+  the precedent; after it the function is decoration.
+
+## `/restack-evolve coach`
+
+Walk an architect through a change interactively rather than designing it for
+them.
+
+Use the coaching questions from the incremental-change section. Ask; do not
+answer. Where they cannot answer "who removes the old path, and when?", that is
+the finding — and it is the question that is never asked, which is why systems
+accumulate half-finished migrations.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-stressor` | residuals become fitness functions; brittleness becomes a stressor |
+| `/restack-design-review` | supplies coupling and structural findings |
+| `/restack-adr` | reversibility ratings; accumulated one-way doors are brittleness |
+| `/restack-tech-stack migrate` | migration paths use the same incremental patterns |
+| `/restack-capability-assessor` | evolutionary thinking is one of the six dimensions |
+
+## Reflection prompts
+
+- Which residual would erode without anyone noticing, and what would catch it?
+- Which fitness function is muted, and what is it hiding?
+- What change are you avoiding because it is expensive, and what makes it
+  expensive?
+- After the first step ships, what can you no longer undo?
+- Who removes the old path, and when?

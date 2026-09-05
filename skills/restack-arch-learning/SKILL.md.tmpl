@@ -1,0 +1,183 @@
+---
+name: restack-arch-learning
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Learn systematically from architectural history - compare what each decision
+  predicted against what actually happened, diagnose why the analysis missed
+  what it missed, and turn that into corrections to how the next analysis runs.
+  Use when asked to "what have we learned", "run an architecture
+  retrospective", "how did that decision play out", or "are we getting better".
+  Proactively invoke after an incident, and when several ADRs reach their
+  review dates together - a batch tells you how this team decides, which one
+  review never can.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - what have we learned
+  - architecture retrospective
+  - how did that decision play out
+  - are we getting better
+---
+
+{{PREAMBLE}}
+
+---
+
+# Architecture Learning Analyzer
+
+You help teams learn from their own architectural history, and build the habit
+of closing the loop between what was predicted and what happened.
+
+## Capability being built
+
+1. **Outcome awareness** — treating a decision as unfinished until its result
+   is known.
+2. **Honest hindsight** — separating what was actually predicted from what the
+   team now remembers predicting.
+3. **Miss diagnosis** — working out *why* an analysis missed something, rather
+   than noting that it did.
+4. **Reasoning-versus-outcome discrimination** — judging the quality of a
+   decision separately from its result.
+5. **Institutional memory** — making a lesson survive the person who learned it.
+
+**Residuality goal:** the team closes its own loops. Decisions get revisited
+without being scheduled, incidents get fed back as stressors as a matter of
+course, and "what did we expect to happen?" is asked before "what went wrong?"
+
+## Core concept
+
+This skill exists because the toolkit produces **written predictions**. ADRs
+state expected consequences; the matrix states which actors are vulnerable and
+by how much; residuals state how much impact they should remove.
+
+That makes the architecture falsifiable — and falsifiable is what makes it
+possible to improve. Without those records you can describe what happened, but
+you cannot say whether your reasoning was any good, and so it never gets
+better.
+
+**The output that compounds is not a lesson. It is a correction to the
+method.** "We missed the batch reconciliation job" is a fact. "We consistently
+miss actors that nobody owns, so actor enumeration now explicitly asks who owns
+each hop" is a change to how every future analysis runs.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## `/restack-arch-learning analyze`
+
+The core command. **Read**
+`skills/restack-arch-learning/sections/outcome-analysis.md` and run it.
+
+1. Gather what was predicted, from the ADRs, the matrix, the iteration history
+   and the assumptions register — **before** talking to anyone.
+2. Gather what happened, including the non-events.
+3. Compare, using the four cases: predicted-and-held, predicted-and-failed,
+   unpredicted, and predicted-but-never-occurred.
+4. Diagnose each miss to a specific mechanism — missing actor, missing path,
+   missing stressor class, mis-scored cell, or consciously accepted.
+5. Name the residuals that quietly worked. Nobody notices those, and they are
+   the first things removed under cost pressure.
+6. Write to `docs/learning/analysis-<date>.md` and route each correction to the
+   command it changes.
+
+## `/restack-arch-learning outcomes`
+
+Narrower: track what happened to specific decisions.
+
+Read the ADRs, identify those past their review date or touched by a recent
+incident, and run `/restack-adr review` on each. Then look at them **as a set**
+— the pattern across several is the finding that no single review contains.
+
+Report which decisions have no recorded outcome at all. That number is usually
+large, and it is the first thing to fix: a decision whose outcome nobody
+checked cannot teach anything.
+
+## `/restack-arch-learning retrospective`
+
+**Read** `skills/restack-arch-learning/sections/retrospective-protocol.md` and
+facilitate from it.
+
+The two moves that make the difference: do the outcome analysis **before** the
+session and circulate it, so the room is not reconstructing from memory; and
+ask what people suspected but did not raise, because the answer is usually a
+fixable structural problem that appears in no artefact.
+
+## `/restack-arch-learning lessons`
+
+Extract durable lessons from the analysis and record them where they will be
+found again.
+
+A lesson qualifies only if it is **specific, sourced and actionable**: it names
+what happened, points at the evidence, and says what to do differently. "Be
+more careful with third-party integrations" fails all three.
+
+Route each lesson to where it acts, rather than to a document nobody reads:
+
+| Lesson about | Goes to |
+|---|---|
+| A recurring solution that works | `/restack-patterns extract` |
+| A recurring failure | `/restack-patterns anti-patterns` |
+| A stressor class we keep missing | `/restack-stressor generate` |
+| A kind of actor we keep missing | `/restack-discover paths` |
+| A skill the team lacks | `/restack-capability-assessor` |
+| A decision that should be revisited | `/restack-adr update` |
+
+A lessons document with no route out is a graveyard.
+
+## `/restack-arch-learning patterns`
+
+Identify recurring shapes across the decision history — the same problem solved
+the same way three times, or the same mistake made three times.
+
+This is detection, not codification. Hand candidates to `/restack-patterns
+extract`, which owns the bar for what qualifies and the write-up.
+
+## `/restack-arch-learning trends`
+
+**Read** the trends part of
+`skills/restack-arch-learning/sections/outcome-analysis.md`.
+
+Track across successive analyses: recurring miss types, estimate bias and its
+rough multiplier, stressor iteration counts, the proportion of design-review
+findings the matrix should have caught, and which areas keep being superseded.
+
+Show the instances behind every trend. A trend asserted without its data is an
+opinion with a chart.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-adr review` | supplies per-decision outcomes; this reads them as a set |
+| `/restack-stressor` | receives missed stressor classes; incidents return as stressors |
+| `/restack-discover` | receives the actor and path types the analysis keeps missing |
+| `/restack-patterns` | receives recurring solutions and recurring failures |
+| `/restack-capability-assessor` | receives the capability gaps the misses reveal |
+| `/restack-journey cadence` | schedules this work so it actually happens |
+
+## Reflection prompts
+
+- What did we predict correctly, and are we sure we predicted it — or does it
+  only feel that way now?
+- Which miss would have been cheapest to catch, and what would have caught it?
+- Which residual worked without anyone noticing?
+- Where did we reason badly and get away with it?
+- What did someone suspect and not say, and what stopped them?
+- Has the miss type we identified last time actually changed?

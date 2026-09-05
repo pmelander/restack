@@ -8,7 +8,7 @@
 
 **Technical Story:** Adopting proven skill-authoring patterns from gstack
 
-**Implementation Status:** partially implemented — 9 of 14 converted, CI enforcing; five remain (the organisational group and `/restack-excel`)
+**Implementation Status:** implemented — all 14 skills generated, CI enforcing
 
 **Implemented Date:** 2026-09-05
 
@@ -122,8 +122,8 @@ failure mode of this port.
   banner, the `--check` mode, and documentation in `CONTRIBUTING.md`.
 - Python is now required to develop the toolkit, not just to use `/restack-excel`. The
   generator is standard-library-only to keep that cost at zero installs.
-- Mixed state until the remaining twelve skills are converted: some skills have
-  the shared preamble and some do not.
+- ~~Mixed state during conversion~~ — resolved; all fourteen now share the
+  preamble.
 
 **Neutral**
 
@@ -132,13 +132,8 @@ failure mode of this port.
 
 ## Follow-ups
 
-1. ~~Convert `/restack-discover` at tier 3~~ (done — completes the residuality
-   core). ~~Convert the design-and-documentation group at tier 2~~ (done —
-   `/restack-adr`, `/restack-solution-doc`, `/restack-design-review`,
-   `/restack-tech-stack`). ~~Convert the specialised pair~~ (done — `/restack-cloud`,
-   `/restack-capacity`). Remaining: `/restack-arch-learning`,
-   `/restack-capability-assessor`, `/restack-patterns`, `/restack-evolve` at
-   tier 2; `/restack-excel` at tier 1.
+1. ~~Convert all fourteen skills~~ (done — the residuality core at tier 3,
+   `/restack-excel` at tier 1, the other ten at tier 2).
 2. ~~Add `python scripts/gen_skills.py --check` to CI~~ (done —
    `.github/workflows/skills.yml`, alongside `scripts/check_skills.py`).
 3. ~~Resolve the `/design-review` name collision with gstack~~ (done — every

@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-evolve",
+  "version": 1,
+  "sections": [
+    {
+      "id": "fitness-functions",
+      "file": "fitness-functions.md",
+      "title": "Designing fitness functions",
+      "trigger": "running /restack-evolve fitness-functions or health - defining or reviewing the automated checks that guard architectural characteristics"
+    },
+    {
+      "id": "brittleness",
+      "file": "brittleness.md",
+      "title": "Assessing brittleness",
+      "trigger": "running /restack-evolve assess or brittleness - finding where the architecture resists change"
+    },
+    {
+      "id": "incremental-change",
+      "file": "incremental-change.md",
+      "title": "Incremental change patterns",
+      "trigger": "running /restack-evolve increment or coach - planning a change as a sequence of safe reversible steps"
+    }
+  ]
+}

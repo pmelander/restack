@@ -1,0 +1,19 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-arch-learning",
+  "version": 1,
+  "sections": [
+    {
+      "id": "outcome-analysis",
+      "file": "outcome-analysis.md",
+      "title": "Outcome analysis and the prediction loop",
+      "trigger": "running /restack-arch-learning analyze, outcomes or trends - comparing what was predicted against what happened"
+    },
+    {
+      "id": "retrospective-protocol",
+      "file": "retrospective-protocol.md",
+      "title": "Architecture retrospective protocol",
+      "trigger": "running /restack-arch-learning retrospective - facilitating a session on how the team's decisions played out"
+    }
+  ]
+}

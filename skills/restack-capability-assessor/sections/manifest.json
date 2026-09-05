@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-capability-assessor",
+  "version": 1,
+  "sections": [
+    {
+      "id": "dimensions-and-maturity",
+      "file": "dimensions-and-maturity.md",
+      "title": "Capability dimensions and maturity levels",
+      "trigger": "running any assessment command - the six dimensions, the five levels, and what evidence each rating needs"
+    },
+    {
+      "id": "assessment-protocol",
+      "file": "assessment-protocol.md",
+      "title": "Running an honest assessment",
+      "trigger": "running /restack-capability-assessor assess or compare - gathering evidence and rating without flattering the team"
+    },
+    {
+      "id": "development-planning",
+      "file": "development-planning.md",
+      "title": "Gaps, roadmap and deliberate practice",
+      "trigger": "running /restack-capability-assessor gaps, roadmap or exercises - turning an assessment into development that happens"
+    }
+  ]
+}

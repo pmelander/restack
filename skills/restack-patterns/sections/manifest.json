@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-patterns",
+  "version": 1,
+  "sections": [
+    {
+      "id": "pattern-extraction",
+      "file": "pattern-extraction.md",
+      "title": "What qualifies as a pattern, and how to extract one",
+      "trigger": "running /restack-patterns extract or suggest - deciding whether something is a pattern and writing it up"
+    },
+    {
+      "id": "anti-patterns",
+      "file": "anti-patterns.md",
+      "title": "Extracting anti-patterns",
+      "trigger": "running /restack-patterns anti-patterns - capturing what keeps failing and why it keeps being chosen"
+    },
+    {
+      "id": "catalog-and-evolution",
+      "file": "catalog-and-evolution.md",
+      "title": "Catalog structure, effectiveness tracking and deprecation",
+      "trigger": "running /restack-patterns catalog, effectiveness or evolve - maintaining the library over time"
+    }
+  ]
+}

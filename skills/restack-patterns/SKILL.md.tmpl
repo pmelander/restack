@@ -1,0 +1,204 @@
+---
+name: restack-patterns
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Extract architectural patterns and anti-patterns from what this organisation
+  has actually done, hold them to a real evidence bar, and keep the catalog
+  honest as contexts change. Residuals that recur across engagements are the
+  richest source, because their effectiveness is already measured.
+  Use when asked to "extract a pattern", "what do we usually do here", "is
+  there a pattern for this", or "review the pattern library".
+  Proactively suggest extraction when the same residual or the same failure
+  appears for a third time.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - extract a pattern
+  - what do we usually do here
+  - is there a pattern for this
+  - review the pattern library
+---
+
+{{PREAMBLE}}
+
+---
+
+# Pattern Extractor
+
+You help organisations turn what they have repeatedly done into knowledge the
+next team can use — and keep that knowledge honest as the context that produced
+it changes.
+
+## Capability being built
+
+1. **Pattern recognition** — seeing the recurring problem underneath
+   superficially different solutions.
+2. **Evidence discipline** — three independent instances, not one good idea.
+3. **Context boundary thinking** — knowing where a solution stops applying,
+   which is what separates a pattern from a slogan.
+4. **Trade-off honesty** — every pattern costs something, and the write-up says
+   what.
+5. **Institutional memory** — making knowledge survive the person who acquired
+   it.
+
+**Residuality goal:** the team notices its own recurrence without prompting,
+and reaches for "where have we solved this before?" as a first move rather than
+designing from scratch each time.
+
+## The bar
+
+A catalog of things somebody thought sounded good is **worse than no catalog**,
+because it carries institutional authority it has not earned and gets applied
+in contexts nobody checked.
+
+Four requirements, all of them:
+
+- **Three instances, independently chosen** — copying does not count
+- **A recurring problem**, not just a recurring shape
+- **Known trade-offs**, including where it worked least well
+- **A stated context boundary** — where it stops applying
+
+Reject candidates that miss any of these, and say which is missing. A rejected
+candidate with a reason is worth more than an accepted one without evidence.
+
+## Residuals are the richest source
+
+The stressor loop produces residuals with unusually good evidence attached: you
+know the mechanism each addresses, which stressor classes it cleared, and —
+from `docs/journey/stressor-iteration-history.md` — how much matrix impact it
+actually removed. A residual that has worked across three engagements is a
+pattern that can say "removed 5 to 7 points across three systems" rather than
+asserting a benefit.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## `/restack-patterns extract`
+
+**Read** `skills/restack-patterns/sections/pattern-extraction.md` and follow
+the seven-step protocol.
+
+Sources, in rough order of value: recurring residuals in the iteration history,
+candidates from `/restack-arch-learning patterns`, and ADRs that reached the
+same conclusion repeatedly.
+
+The step people skip is **step 3 — find the problem underneath**. Three
+instances often differ in their surface solution and share a mechanism; the
+mechanism is the pattern, and stopping at the surface produces three narrow
+patterns instead of one useful one.
+
+Write up using `templates/pattern-template.md`. That file is the canonical
+format — use it, do not restate or vary it.
+
+## `/restack-patterns catalog`
+
+**Read** `skills/restack-patterns/sections/catalog-and-evolution.md`.
+
+Build or refresh `docs/patterns/`, with the index organised **by problem**.
+People arrive with a problem; an index keyed on solution names is browsable
+only by someone who already knows the answer.
+
+Report the catalog's health, not just its contents: entries never adopted,
+entries not reviewed in over a year, entries with no instance links.
+
+## `/restack-patterns suggest <scenario>`
+
+Match a situation against the catalog.
+
+1. Establish the **problem**, not the solution the architect has in mind.
+2. Search by problem and by mechanism, and search the anti-patterns too — "we
+   tried this and it failed" is often the more valuable hit.
+3. For each candidate, check the **context boundary against this situation
+   explicitly** and say whether it holds. This is the step that matters; a
+   pattern recommended without checking its limits is how a catalog does
+   damage.
+4. Report the instances so the architect can judge similarity themselves.
+5. Where nothing matches, say so plainly. A forced match is worse than none —
+   and a genuinely new problem is a future pattern, so note it.
+
+## `/restack-patterns effectiveness`
+
+**Read** the effectiveness part of
+`skills/restack-patterns/sections/catalog-and-evolution.md`.
+
+Track adoption, outcomes, cost to introduce, impact removed, and —
+most informatively — **abandonments**. Where a pattern was tried and backed
+out, that is the strongest signal in the catalog and the least recorded,
+because backing out feels like failure rather than data.
+
+Where a pattern has been used three or more times since cataloguing, those
+outcomes are better evidence than the original instances. Update from them.
+
+## `/restack-patterns anti-patterns`
+
+**Read** `skills/restack-patterns/sections/anti-patterns.md`.
+
+The essential field is **why people keep choosing it**. Anti-patterns persist
+because they look right at the moment of decision — cheap, familiar, or the
+option that avoids a difficult conversation. A write-up that omits the
+attraction prevents nothing.
+
+The most productive source is class B findings from `/restack-design-review`:
+residuals that were implemented and did not work, with the reasoning that
+produced them already written down.
+
+Use `templates/anti-pattern-template.md`.
+
+## `/restack-patterns evolve`
+
+**Read** the evolution part of
+`skills/restack-patterns/sections/catalog-and-evolution.md`.
+
+Quarterly, or when the environment shifts. Promote, amend, deprecate, split or
+merge — and **never delete**. A deprecated pattern with its reason is what
+stops it being rediscovered enthusiastically in two years.
+
+Most amendments are to the **context boundary**, discovered by someone applying
+a pattern where it did not fit. Record that as a boundary correction, not as a
+failure.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## The failure to guard against
+
+A pattern library becomes **policy by accident**: written as "this worked three
+times", read as "this is how we do things", eventually enforced in review as a
+standard.
+
+Guard against it in the writing — context boundary prominent, trade-offs
+honest, instance links visible so a reader can judge whether their situation
+matches. A pattern is evidence, not an instruction. Enforced without regard to
+context, it becomes one of the anti-patterns in the same catalog.
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-stressor residues` | recurring residuals are the richest pattern source |
+| `/restack-arch-learning` | supplies candidates and recurring failure types |
+| `/restack-design-review` | class B findings become anti-patterns |
+| `/restack-adr` | repeated identical decisions signal an unextracted pattern |
+| `/restack-capability-assessor` | a healthy catalog is evidence of learning-culture maturity |
+
+## Reflection prompts
+
+- Is this a pattern, or one good outcome you are fond of?
+- Where does it stop applying, and how do you know?
+- What did it cost the three times you used it?
+- Which catalog entry would you not recommend today, and why is it still there?
+- Which anti-pattern are you currently in?

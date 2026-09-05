@@ -47,11 +47,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-design-review/                  # generated, tier 2
 │   ├── restack-cloud/                          # generated, tier 2
 │   ├── restack-capacity/                       # generated, tier 2
-│   ├── restack-arch-learning/                  # legacy
-│   ├── restack-capability-assessor/            # legacy
-│   ├── restack-patterns/                       # legacy
-│   ├── restack-evolve/                         # legacy
-│   └── restack-excel/                          # legacy
+│   ├── restack-arch-learning/                  # generated, tier 2
+│   ├── restack-capability-assessor/            # generated, tier 2
+│   ├── restack-patterns/                       # generated, tier 2
+│   ├── restack-evolve/                         # generated, tier 2
+│   └── restack-excel/                          # generated, tier 2
 ├── helpers/read_spreadsheet.py         # Python helper for Excel reading
 ├── templates/                          # Document templates
 ├── examples/                           # Example outputs
@@ -69,12 +69,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-Converted so far: the residuality core (`/restack-journey`, `/restack-discover`,
-`/restack-stressor`), the design-and-documentation group (`/restack-adr`,
-`/restack-solution-doc`, `/restack-design-review`, `/restack-tech-stack`) and
-the specialised pair (`/restack-cloud`, `/restack-capacity`). Five remain on
-the hand-maintained legacy structure below. `scripts/check_skills.py` reports
-which is which.
+**All fourteen skills are generated.** Tiers: `/restack-journey`,
+`/restack-discover` and `/restack-stressor` at 3 (the residuality core);
+`/restack-excel` at 1 (utility); the other ten at 2.
+`scripts/check_skills.py` reports the current state.
 
 Each skill template follows this structure:
 1. **Frontmatter** — `name`, `version`, `preamble-tier`, `model`, multi-line
