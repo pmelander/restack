@@ -10,9 +10,18 @@ Where the toolkit is, what is next, and what has deliberately been ruled out.
 
 Every skill is rendered from a template with a shared behavioural preamble, so
 cross-cutting behaviour — decision briefs, evidence rules, stop gates, the
-journey-state contract — is defined once rather than fourteen times. CI checks
-on every push that no generated file has drifted from its source and that the
-skills tree is valid.
+journey-state contract — is defined once rather than fourteen times.
+
+Installation is a `setup` script rather than a manual copy: it reports what
+changed, removes skills deleted upstream, and records where it installed from
+so `/restack-upgrade` can pull and reinstall in one command. `INSTALL.md`
+carries agent-followable instructions, so pointing a Claude session at the
+repository is a supported way in.
+
+CI checks on every push that no generated file has drifted from its source,
+that the skills tree is valid, and that **every install path a skill tells
+Claude to use actually resolves** — the check that would have caught the
+`/restack-excel` helper bug three refactors earlier.
 
 | | |
 |---|---|
@@ -22,12 +31,16 @@ skills tree is valid.
 | Compliance packs | 1 (GDPR) |
 | ADRs | 11 |
 
-The three architectural decisions behind this shape:
+The decisions behind this shape:
+[ADR-001](docs/adr/ADR-001-incorporate-residuality-theory.md) (Residuality
+Theory as the foundation),
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) (generated
 skills, tiered preamble, on-demand sections),
-[ADR-009](docs/adr/ADR-009-prefix-skill-names.md) (prefixed names), and
-[ADR-001](docs/adr/ADR-001-incorporate-residuality-theory.md) (Residuality
-Theory as the foundation).
+[ADR-009](docs/adr/ADR-009-prefix-skill-names.md) (prefixed names),
+[ADR-010](docs/adr/ADR-010-skills-are-self-contained.md) (skills ship their own
+runtime dependencies) and
+[ADR-011](docs/adr/ADR-011-setup-script-and-upgrade-skill.md) (setup script and
+upgrade skill).
 
 ---
 
@@ -65,13 +78,15 @@ reviews the audit log" is a stressor. See
 
 ### 3. Journey state as tooling rather than prose
 
-Currently the journey-state contract is instructions the model follows. Over a
-long session that degrades — the last open item from
+The journey-state contract is currently instructions the model follows, and
+over a long session that degrades. It is the last open follow-up from
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-A small helper that writes state atomically would make persistence
-structural instead of behavioural. Modest work, meaningful reliability gain on
-exactly the long-running engagements the toolkit is built for.
+A small helper writing state atomically would make persistence structural
+instead of behavioural — modest work, and the reliability gain lands on exactly
+the long-running engagements the toolkit exists for. The same argument that
+justified `setup` over `cp -R`: a step that matters should not depend on
+remembering to take it.
 
 ### 4. A worked end-to-end example
 
@@ -133,7 +148,7 @@ work from checklists will be turned down however useful it looks.
 
 | Version | What changed |
 |---|---|
-| **2.0.0** | Sep 2026 — all 14 skills generated from templates; shared tiered preamble; decision briefs with confidence and reversibility; three stop gates; on-demand sections; every skill wired to the residuality core; renamed to ReStack; all skills prefixed; CI |
+| **2.0.0** | Sep 2026 — all skills generated from templates; shared tiered preamble; decision briefs with confidence and reversibility; three stop gates; on-demand sections; every skill wired to the residuality core; renamed to ReStack; all skills prefixed; `setup` + `/restack-upgrade` + agent-followable install; CI |
 | 1.x | May 2026 — 14 skills as hand-maintained files. Residuality Theory adopted ([ADR-001](docs/adr/ADR-001-incorporate-residuality-theory.md)); Phase 2 redesigned around capability building ([ADR-002](docs/adr/ADR-002-redesign-phase-2-for-capability-building.md)); stressor analysis added ([ADR-003](docs/adr/ADR-003-add-stressor-analysis-skill.md)); risk assessor excluded ([ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md)); compliance moved to stressor packs ([ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md)) |
 
 ---

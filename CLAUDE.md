@@ -119,14 +119,21 @@ method without paying for it on every invocation.
 python scripts/gen_skills.py            # regenerate everything with a template
 python scripts/gen_skills.py journey    # one skill
 python scripts/gen_skills.py --check    # CI: fail on drift between .tmpl and SKILL.md
-python scripts/check_skills.py          # CI: frontmatter, banners, orphaned sections
+python scripts/check_skills.py          # CI: frontmatter, banners, sections, install paths
 ```
 
 Both run in CI on every push and pull request (`.github/workflows/skills.yml`).
 `check_skills.py` covers what the generator cannot: a skill with no
 `description` is undiscoverable, a generated file with its banner removed has
-been hand-edited, and a section file missing from `manifest.json` will never be
-read by anything.
+been hand-edited, a section file missing from `manifest.json` will never be
+read by anything, and **an install path a skill tells Claude to use must
+actually resolve** — `/restack-excel` invoked a helper by a path that was never
+installed and survived three refactors because nothing checked
+([ADR-010](docs/adr/ADR-010-skills-are-self-contained.md)).
+
+Paths written into the *user's* project (`docs/...`), placeholders and runtime
+state are deliberately not checked; the rule is conservative because a
+validator that cries wolf gets muted, and a muted check is a failed control.
 
 ### Key Design Principle
 

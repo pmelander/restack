@@ -35,7 +35,9 @@ every skill wired into the residuality core.
 - **`setup` / `setup.ps1` and `/restack-upgrade`** — installation that reports
   what changed and removes skills deleted upstream; upgrade by `git pull`.
 - CI (`.github/workflows/skills.yml`), `scripts/check_skills.py`, `VERSION`,
-  this changelog.
+  this changelog. `check_skills.py` verifies that **every install path a skill
+  tells Claude to use actually resolves** — the check that would have caught
+  the `/restack-excel` helper bug three refactors earlier.
 
 ### Changed
 

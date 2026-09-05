@@ -37,6 +37,73 @@ def frontmatter(text: str) -> str | None:
     return None if end == -1 else text[4:end]
 
 
+# Tokens that look like a file path: something ending in a known extension.
+PATH_TOKEN = re.compile(r"[A-Za-z0-9_.$~<>*/-]*\.(?:md|py|json|sh|yml|tmpl)\b")
+
+# Paths a skill writes into the USER's project, not paths inside the install.
+# These will not exist in this repository and must never be flagged.
+USER_OUTPUT_PREFIXES = ("docs/",)
+
+# Runtime state created at install time, not shipped.
+RUNTIME_STATE_PREFIXES = (".restack/", "~/.restack/", "$HOME/.restack/")
+
+# The installed location of the skills tree maps back onto skills/ here.
+INSTALLED_PREFIXES = ("~/.claude/skills/", "$HOME/.claude/skills/")
+
+
+def check_referenced_paths(skill_dir: Path) -> int:
+    """Verify every install path a skill tells Claude to use actually resolves.
+
+    This is the check neither gen_skills.py nor the frontmatter rules can make.
+    /restack-excel shipped for months invoking `python helpers/read_spreadsheet.py`
+    — a path that was never installed — and it survived three refactors because
+    nothing verified that a command a skill instructs Claude to run would work.
+
+    Deliberately conservative: anything ambiguous is skipped. A validator that
+    cries wolf gets muted, and a muted check is a failed control.
+    """
+    name = skill_dir.name
+    files = [skill_dir / "SKILL.md"] + sorted((skill_dir / "sections").glob("*.md"))
+    checked = 0
+
+    for f in files:
+        if not f.exists():
+            continue
+        for raw in PATH_TOKEN.findall(f.read_text(encoding="utf-8")):
+            token = raw.strip("`\"'()[],")
+
+            if "/" not in token:
+                continue                                    # bare filename, not a path
+            if any(c in token for c in "<>*") or "NNN" in token:
+                continue                                    # placeholder
+            if token.startswith(USER_OUTPUT_PREFIXES):
+                continue                                    # written into the user's project
+            if token.startswith(RUNTIME_STATE_PREFIXES):
+                continue                                    # created at install time
+
+            if token.startswith(".."):
+                target = (f.parent / token).resolve()       # relative to the file
+            else:
+                mapped = token
+                for prefix in INSTALLED_PREFIXES:
+                    if mapped.startswith(prefix):
+                        mapped = "skills/" + mapped[len(prefix):]
+                        break
+                if mapped.startswith("sections/"):
+                    target = skill_dir / mapped             # relative to this skill
+                else:
+                    target = ROOT / mapped                  # repo-relative
+
+            checked += 1
+            if not target.exists():
+                errors.append(
+                    f"skills/{name}/{f.name}: references '{token}' which does not exist "
+                    f"(looked for {target.relative_to(ROOT) if ROOT in target.parents else target}) "
+                    f"- the skill would tell Claude to use a path that is not installed"
+                )
+    return checked
+
+
 def check_skill(skill_dir: Path) -> dict:
     name = skill_dir.name
     rel = f"skills/{name}"
@@ -99,7 +166,14 @@ def check_skill(skill_dir: Path) -> dict:
                 f"it will never be read"
             )
 
-    return {"name": name, "generated": generated, "sections": len(registered)}
+    paths = check_referenced_paths(skill_dir)
+
+    return {
+        "name": name,
+        "generated": generated,
+        "sections": len(registered),
+        "paths": paths,
+    }
 
 
 def main(argv: list[str]) -> int:
@@ -116,10 +190,10 @@ def main(argv: list[str]) -> int:
         legacy = [r for r in results if not r["generated"]]
         print(f"{len(results)} skills: {len(converted)} generated, {len(legacy)} legacy\n")
         for r in converted:
-            print(f"  generated  /{r['name']:<22} {r['sections']} section(s)")
+            print(f"  generated  /{r['name']:<28} {r['sections']} section(s), {r['paths']} path(s)")
         for r in legacy:
             print(f"  legacy     /{r['name']}")
-        print()
+        print(f"\n{sum(r['paths'] for r in results)} install paths verified")
 
     for w in warnings:
         print(f"warning: {w}")

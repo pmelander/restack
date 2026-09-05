@@ -42,7 +42,8 @@ it looks.
 | **Generator** | `python scripts/gen_skills.py`, standard library only |
 | **Shared behaviour** | `scripts/preamble/`, composed by declared tier (1 utility, 2 decision-shaping, 3 residuality core) |
 | **On-demand depth** | `skills/<name>/sections/` — 42 sections, read when their situation applies rather than loaded every run |
-| **Validation** | `gen_skills.py --check` (drift) and `check_skills.py` (frontmatter, banners, orphaned sections), both in CI |
+| **Validation** | `gen_skills.py --check` (drift) and `check_skills.py` (frontmatter, banners, orphaned sections, install paths that must resolve), both in CI |
+| **Install** | `setup` / `setup.ps1`; `/restack-upgrade` pulls and re-runs it; `INSTALL.md` is agent-followable |
 | **Document formats** | `templates/` is canonical; skills carry method, not format |
 
 This structure exists so cross-cutting behaviour — how a decision is put to the
