@@ -1,0 +1,18 @@
+{
+  "note": "Preamble composition. Tier is declared per skill in SKILL.md.tmpl frontmatter as 'preamble-tier: N'. Each tier is the previous tier plus its own fragments, composed in listed order.",
+  "tiers": {
+    "1": {
+      "label": "Utility — helpers with no architectural judgement",
+      "fragments": ["voice.md", "completion-status.md"]
+    },
+    "2": {
+      "label": "Analytical — skills that make or shape architectural decisions",
+      "fragments": ["decision-brief.md", "evidence.md", "completeness.md", "confusion-protocol.md"]
+    },
+    "3": {
+      "label": "Residuality core — skills that drive the journey and the stressor loop",
+      "fragments": ["glossary.md", "stop-gates.md", "journey-state.md"]
+    }
+  },
+  "order": ["voice.md", "glossary.md", "decision-brief.md", "stop-gates.md", "evidence.md", "completeness.md", "confusion-protocol.md", "journey-state.md", "completion-status.md"]
+}

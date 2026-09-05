@@ -1,4 +1,4 @@
-# Contributing to Residual Architecture Skill Set
+# Contributing to ReStack
 
 Thank you for your interest in contributing! This toolkit is designed to evolve with the needs of Solution Architects using Claude Code.
 
@@ -27,7 +27,7 @@ Thank you for your interest in contributing! This toolkit is designed to evolve 
 ```bash
 # Fork and clone the repository
 git clone <your-fork-url>
-cd solution-architect-toolkit
+cd restack
 
 # Create a feature branch
 git checkout -b feature/your-feature-name
@@ -113,21 +113,38 @@ Before starting work, create an issue describing:
 
 **For New Skills:**
 
-```bash
-# Create the skill directory and file
-mkdir -p skills/skill-name
-cp templates/skill-template.md skills/skill-name/SKILL.md
+> **`SKILL.md` is generated — do not edit it.** Write
+> `skills/<name>/SKILL.md.tmpl` and run the generator. Hand edits to a
+> generated file are silently lost at the next build, and CI rejects the drift.
+> See [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-# Note: Claude Code expects skills/<name>/SKILL.md structure
-# Follow the skill structure template
-# Include frontmatter, commands, templates, etc.
+```bash
+# Create the skill directory and template
+mkdir -p skills/skill-name/sections
+$EDITOR skills/skill-name/SKILL.md.tmpl
+
+# Declare the tier in frontmatter (1 utility, 2 decision-shaping, 3 residuality
+# core), resolve {{PREAMBLE}} at the top of the body, and put any situational
+# depth in sections/ registered in sections/manifest.json.
+
+# Generate — Claude Code loads skills/<name>/SKILL.md
+python scripts/gen_skills.py skill-name
+
+# Verify the tree is consistent before committing
+python scripts/gen_skills.py --check
 
 # Add example output
 mkdir examples/skill-name
 touch examples/skill-name/example-output.md
 
 # Update README.md, QUICKREF.md, GETTING_STARTED.md, and CLAUDE.md to list the new skill
+# Commit BOTH the .tmpl and the generated SKILL.md
 ```
+
+**Changing shared behaviour** — how decision briefs are formatted, what counts
+as evidence, how a command reports completion — belongs in
+`scripts/preamble/*.md`, not in an individual skill. Edit the fragment,
+regenerate, and every skill at that tier picks it up.
 
 **For Improvements:**
 

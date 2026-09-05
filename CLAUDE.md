@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **Residual Architecture Skill Set** — a comprehensive collection of Claude Code skills built on **Residuality Theory**, designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
+**ReStack** is a collection of Claude Code skills built on **Residuality Theory**, designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
 
 ## Architecture
 
@@ -47,6 +47,7 @@ This is the **Residual Architecture Skill Set** — a comprehensive collection o
 ├── helpers/
 │   └── read_spreadsheet.py             # Python helper for Excel reading
 ├── templates/                          # Document templates
+│   ├── journey-state-template.md
 │   ├── adr-template.md
 │   ├── hld-template.md
 │   ├── tech-comparison-template.md
@@ -58,6 +59,12 @@ This is the **Residual Architecture Skill Set** — a comprehensive collection o
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
+    ├── journey/                        # Journey state tracking (REQUIRED)
+    │   ├── journey-state.md            # Current position, iteration log, artifacts
+    │   ├── stressor-iteration-history.md   # Detailed stressor iteration log
+    │   ├── decisions-log.md            # Lightweight decision log
+    │   ├── assumptions-register.md     # Assumptions and validation status
+    │   └── cadence-schedule.md         # Ongoing rhythm and triggers
     ├── adr/                            # ADRs documenting toolkit decisions
     │   ├── ADR-001-incorporate-residuality-theory.md
     │   ├── ADR-002-redesign-phase-2-for-capability-building.md
@@ -71,16 +78,58 @@ This is the **Residual Architecture Skill Set** — a comprehensive collection o
 
 ### Skill Development Pattern
 
-Each skill follows this structure:
-1. **Frontmatter** — YAML with `description` and `model: sonnet`
-2. **Role Definition** — clear statement of the skill's purpose
-3. **Capability Being Built** — what thinking the skill transfers to the architect
-4. **Residuality Goal** — what success looks like when the capability is internalised
-5. **Core Concept** — the key idea and compound effect
-6. **Commands** — slash commands with capability focus for each
-7. **Templates/Reference** — frameworks, patterns, and output formats
-8. **Workflow** — step-by-step process
-9. **Reflection Prompts** — questions that build the capability
+**`SKILL.md` is a build artifact — never edit it directly.** The source is
+`skills/<name>/SKILL.md.tmpl`; run `python scripts/gen_skills.py` to render.
+Hand edits to a generated file are lost at the next build. See
+[ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
+
+Converted so far: `/journey`, `/stressor`. The other twelve are still
+hand-maintained `SKILL.md` files and follow the legacy structure below until
+they are converted.
+
+Each skill template follows this structure:
+1. **Frontmatter** — `name`, `version`, `preamble-tier`, `model`, multi-line
+   `description` (including when to invoke proactively), `allowed-tools`,
+   `triggers`
+2. **`{{PREAMBLE}}`** — shared behaviour composed by tier (see below)
+3. **Role Definition** — clear statement of the skill's purpose
+4. **Capability Being Built** — what thinking the skill transfers to the architect
+5. **Residuality Goal** — what success looks like when the capability is internalised
+6. **Core Concept** — the key idea and compound effect
+7. **`{{SECTION_INDEX}}`** — the on-demand sections and when to read each
+8. **Commands** — numbered, executable steps; not bullet summaries. Each names
+   the section to read and the gates where it must **STOP**
+9. **`{{SECTION_SELF_CHECK}}`** — catches sections run from memory
+10. **Reflection Prompts** — questions that build the capability
+
+### Preamble tiers
+
+Declared per skill as `preamble-tier: N`. Each tier includes the ones below it.
+Fragments live in `scripts/preamble/`, composed per `manifest.json`.
+
+| Tier | For | Adds |
+|---|---|---|
+| 1 | utilities with no architectural judgement (`/excel`) | voice, completion status |
+| 2 | skills that shape architectural decisions | decision briefs, evidence rules, completeness, confusion protocol |
+| 3 | the residuality core (`/journey`, `/stressor`, `/discover`) | vocabulary, stop gates, journey state contract |
+
+Change a cross-cutting behaviour once, in the fragment, then regenerate.
+
+### Sections (on-demand depth)
+
+Content that applies to some runs and not others goes in
+`skills/<name>/sections/<id>.md`, registered in `sections/manifest.json` with a
+human-readable `trigger`. The manifest is a passive registry — the skeleton's
+prose decides when a section is read. This is what lets a skill carry deep
+method without paying for it on every invocation.
+
+### Build commands
+
+```bash
+python scripts/gen_skills.py            # regenerate everything with a template
+python scripts/gen_skills.py journey    # one skill
+python scripts/gen_skills.py --check    # CI: fail on drift between .tmpl and SKILL.md
+```
 
 ### Key Design Principle
 
@@ -103,12 +152,16 @@ cp -R skills/* ~/.claude/skills/
 
 ### Adding New Skills
 
-1. Create skill file in `skills/`
-2. Follow the naming convention: `skill-name.md`
-3. Include frontmatter: `description` and `model: sonnet`
-4. Follow the Skill Development Pattern above
-5. Document any significant design decisions as an ADR in `docs/adr/`
-6. Update `README.md`, `QUICKREF.md`, `GETTING_STARTED.md`, and `CLAUDE.md`
+1. Create `skills/<skill-name>/SKILL.md.tmpl`
+2. Declare frontmatter: `name`, `version`, `preamble-tier`, `model`,
+   `description`, `allowed-tools`, `triggers`
+3. Resolve `{{PREAMBLE}}` at the top of the body
+4. Put situational depth in `sections/`, registered in `sections/manifest.json`
+5. Follow the Skill Development Pattern above
+6. Run `python scripts/gen_skills.py <skill-name>` and commit both the template
+   and the generated `SKILL.md`
+7. Document any significant design decisions as an ADR in `docs/adr/`
+8. Update `README.md`, `QUICKREF.md`, `GETTING_STARTED.md`, and `CLAUDE.md`
 
 ### Adding Compliance Packs
 
@@ -185,6 +238,59 @@ git push origin feature/new-skill-name
 
 /excel read <file> [sheet]       # Excel/CSV Reader
 ```
+
+## Journey Memory Management
+
+**CRITICAL REQUIREMENT:** Journey progress MUST be persisted to file at every significant step.
+
+### Journey State Files
+
+When executing `/journey` commands, you MUST maintain these files in `docs/journey/`:
+
+1. **`journey-state.md`** — current position, aspiration, terrain type, iteration log, artifacts, gaps
+   - Update after EVERY `/journey` command
+   - Update after executing skills within the journey (discover, stressor, adr, etc.)
+   - This is the single source of truth for journey progress
+
+2. **`stressor-iteration-history.md`** — detailed log of each stressor iteration with impact matrices
+   - Update after every `/stressor analyze` and `/journey iterate`
+
+3. **`decisions-log.md`** — lightweight log of decision points (supplement to formal ADRs)
+   - Update whenever a significant decision is made
+
+4. **`assumptions-register.md`** — assumptions being carried forward with validation status
+   - Update when assumptions are identified or validated
+
+### When to Update
+
+**ALWAYS update journey state when:**
+- Starting a journey (`/journey start`)
+- Checking position (`/journey where`)
+- Making iteration decisions (`/journey iterate`)
+- Reviewing journey health (`/journey review`)
+- Establishing cadence (`/journey cadence`)
+- Completing discovery commands
+- Completing stressor analysis iterations
+- Creating ADRs
+- Generating solution documentation
+- Completing design reviews
+
+**Before executing a journey command:** Read `docs/journey/journey-state.md` to understand context.
+
+**After executing a journey command:** Update `docs/journey/journey-state.md` with outcomes.
+
+### Rationale
+
+Built-in memory in Claude Code is insufficient for long-running architectural journeys that may:
+- Span weeks or months
+- Resume after breaks
+- Involve multiple architects
+- Require audit trails
+- Need iteration history for learning
+
+File-based persistence ensures journey continuity, enables handoffs, and creates an audit trail of architectural thinking.
+
+---
 
 ## Key Principles
 
