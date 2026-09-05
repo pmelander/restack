@@ -1,0 +1,37 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-design-review",
+  "version": 1,
+  "sections": [
+    {
+      "id": "matrix-crosscheck",
+      "file": "matrix-crosscheck.md",
+      "title": "Cross-check findings against the stressor matrix",
+      "trigger": "any review run on a system that has had a stressor analysis - classifying each finding by whether the matrix should have caught it"
+    },
+    {
+      "id": "dimension-architecture",
+      "file": "dimension-architecture.md",
+      "title": "Architecture and data dimensions",
+      "trigger": "running /restack-design-review architecture or data, or the architecture and data passes of a complete review"
+    },
+    {
+      "id": "dimension-api-security",
+      "file": "dimension-api-security.md",
+      "title": "API and security dimensions",
+      "trigger": "running /restack-design-review api or security, or the API and security passes of a complete review"
+    },
+    {
+      "id": "dimension-performance",
+      "file": "dimension-performance.md",
+      "title": "Performance and scale dimension",
+      "trigger": "running /restack-design-review performance, or the performance pass of a complete review"
+    },
+    {
+      "id": "findings-and-report",
+      "file": "findings-and-report.md",
+      "title": "Writing findings and the review report",
+      "trigger": "writing up any review - severity, evidence standards, and the report format"
+    }
+  ]
+}

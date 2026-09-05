@@ -8,7 +8,7 @@
 
 **Technical Story:** Adopting proven skill-authoring patterns from gstack
 
-**Implementation Status:** partially implemented — `/restack-journey`, `/restack-discover` and `/restack-stressor` (the residuality core) converted and CI enforcing; eleven skills remain
+**Implementation Status:** partially implemented — 7 of 14 converted (the residuality core plus the design-and-documentation group), CI enforcing; seven remain
 
 **Implemented Date:** 2026-09-05
 
@@ -132,10 +132,12 @@ failure mode of this port.
 
 ## Follow-ups
 
-1. ~~Convert `/restack-discover` at tier 3~~ (done — completes the residuality core).
-   Convert the remaining eleven: `/restack-adr`, `/restack-solution-doc`, `/restack-tech-stack`,
-   `/restack-design-review`, `/restack-cloud`, `/restack-capacity`, `/restack-arch-learning`,
-   `/restack-capability-assessor`, `/restack-patterns`, `/restack-evolve` at tier 2; `/restack-excel` at tier 1.
+1. ~~Convert `/restack-discover` at tier 3~~ (done — completes the residuality
+   core). ~~Convert the design-and-documentation group at tier 2~~ (done —
+   `/restack-adr`, `/restack-solution-doc`, `/restack-design-review`,
+   `/restack-tech-stack`). Remaining: `/restack-cloud`, `/restack-capacity`,
+   `/restack-arch-learning`, `/restack-capability-assessor`,
+   `/restack-patterns`, `/restack-evolve` at tier 2; `/restack-excel` at tier 1.
 2. ~~Add `python scripts/gen_skills.py --check` to CI~~ (done —
    `.github/workflows/skills.yml`, alongside `scripts/check_skills.py`).
 3. ~~Resolve the `/design-review` name collision with gstack~~ (done — every

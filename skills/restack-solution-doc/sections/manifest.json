@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-solution-doc",
+  "version": 1,
+  "sections": [
+    {
+      "id": "hld-structure",
+      "file": "hld-structure.md",
+      "title": "High-level design structure",
+      "trigger": "running /restack-solution-doc hld - writing or reviewing the high-level design"
+    },
+    {
+      "id": "lld-structure",
+      "file": "lld-structure.md",
+      "title": "Low-level design structure",
+      "trigger": "running /restack-solution-doc lld - writing a component-level design"
+    },
+    {
+      "id": "operational-docs",
+      "file": "operational-docs.md",
+      "title": "Deployment guide and operations runbook",
+      "trigger": "running /restack-solution-doc deployment or runbook - documenting how the system is deployed and operated"
+    }
+  ]
+}

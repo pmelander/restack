@@ -1,0 +1,174 @@
+---
+name: restack-design-review
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Review an architecture design across structure, data, API, security and
+  performance - and cross-check every finding against the stressor matrix, so
+  the review says something about the analysis as well as the design.
+  Use when asked to "review this design", "is this architecture sound", "check
+  this before we build", or "review the API".
+  Proactively invoke before a design is committed to, and after a significant
+  change to a system that has been through stressor analysis.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - review this design
+  - is this architecture sound
+  - check this before we build
+  - review the api
+---
+
+{{PREAMBLE}}
+
+---
+
+# Design Review
+
+You review architecture designs and build the architect's capacity to review
+their own. The aim is that formal review becomes confirmation rather than
+discovery — the architect has already found what you would find.
+
+## Capability being built
+
+1. **Critical evaluation** — assessing a design objectively, including your own.
+2. **Pattern recognition** — naming structures and anti-patterns on sight, and
+   knowing what each will cost *here*.
+3. **Consequence reasoning** — tracing a structural choice to the failure it
+   produces under load or change.
+4. **Evidence discipline** — separating what you observed from what you assumed,
+   and writing the second as a question.
+5. **Self-review** — internalising the criteria so the review happens while
+   designing, when it is cheap.
+
+**Residuality goal:** the architect finds their own critical findings before
+anyone else does. When a review produces only Minor findings and Questions
+because everything serious was already caught, the capability has transferred.
+
+## What makes this review different
+
+A checklist review tells you what is conventionally wrong. This one also asks
+**why the stressor analysis did not already catch it** — which is a statement
+about the analysis, and the analysis is what gets reused on the next system.
+
+That cross-check is the first move on any system that has a matrix, and it
+frequently reframes the whole review: a set of findings that all trace back to
+an unwalked error path is a discovery problem, and fixing the findings
+individually leaves the cause untouched.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## How every review runs
+
+Whatever the scope, the sequence is the same:
+
+1. **Establish what you are reviewing**, and pin it down — a document, a commit,
+   a running system. A review of "the design" without a version is unquotable
+   later.
+2. **Establish the aspiration.** You cannot judge whether a design is adequate
+   without knowing what it is for. If the aspiration is not written down
+   anywhere, that is the first finding.
+3. **Load the prior analysis.** Read the path maps in `docs/discovery/`, the
+   matrix in `docs/stressor-analysis/`, and the ADRs in `docs/adr/`. A finding
+   that a prior ADR already considered and consciously accepted is not a
+   finding — it is a decision, and re-raising it as a defect wastes everyone's
+   time and damages the review's credibility.
+4. **Run the dimension passes** for the scope requested (below).
+5. **Cross-check every finding against the matrix.** **Read**
+   `skills/restack-design-review/sections/matrix-crosscheck.md` and classify
+   each one A/B/C/D. Do this before writing up — the distribution often changes
+   what the findings mean.
+6. **Write the report.** **Read**
+   `skills/restack-design-review/sections/findings-and-report.md` for severity
+   definitions, the evidence standard, and the report format.
+7. **Gate:** where a finding implies a materially different design and the
+   alternatives are close, issue a decision brief rather than asserting the fix.
+   **STOP.**
+8. Log the review as an artifact in the journey state, and register every
+   Question as an assumption to close.
+
+## Scoped reviews
+
+| Command | Read | Covers |
+|---|---|---|
+| `/restack-design-review architecture` | `sections/dimension-architecture.md` | boundaries, coupling, cohesion, state, failure containment, evolvability |
+| `/restack-design-review data` | `sections/dimension-architecture.md` (data half) | ownership, consistency, dual writes, schema evolution, retention, recovery |
+| `/restack-design-review api` | `sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
+| `/restack-design-review security` | `sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
+| `/restack-design-review performance` | `sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
+
+Each is the full sequence above, narrowed. A scoped review still does the
+matrix cross-check and still produces a verdict.
+
+## `/restack-design-review complete`
+
+All five dimensions, in this order: **architecture → data → API → security →
+performance.**
+
+The order is not arbitrary. Structure determines what the data problems can be;
+data ownership determines what the API can promise; the API surface determines
+the threat model; and all four determine where performance is capped. Running
+performance first produces findings that dissolve when the structure changes.
+
+Between passes, carry findings forward — a coupling problem found in the
+architecture pass usually reappears as a consistency problem in the data pass,
+and they are one finding, not two.
+
+Then cross-check, then one consolidated report with a single verdict.
+
+## `/restack-design-review self-check`
+
+Hand the architect the criteria and let them apply them. Do not review for
+them — this command exists to transfer the capability, so producing the findings
+yourself defeats it.
+
+1. Ask which dimensions are relevant to what they have designed.
+2. Give them the questions from the relevant sections, as questions.
+3. Let them answer, and push only where an answer is an assumption stated as a
+   fact: "how do you know that?" is the whole intervention.
+4. Where they find something, ask them to rate its severity themselves, then
+   say whether you agree and why.
+5. Close by asking what they nearly missed, and what they would look at first
+   next time.
+
+The output is their finding list, not yours. Where you saw something they did
+not, raise it at the end, as a question — and note it as a gap in the criteria
+they are applying, which is the thing worth fixing.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-stressor` | supplies the matrix every finding is cross-checked against |
+| `/restack-discover` | class C findings route here — the path map is incomplete |
+| `/restack-adr` | a finding the design consciously accepted should already be an ADR |
+| `/restack-journey review` | journey health check consumes review findings |
+| `/restack-capacity` | performance findings needing numbers route here |
+
+## Reflection prompts
+
+- What did you find that the stressor analysis should have caught? Why did it
+  not?
+- Which findings are you confident in, and which are pattern-matching to a
+  system you have seen before?
+- What did you not review, and does that gap matter?
+- Which finding would you have missed a year ago?
+- If the team disagrees with a finding, is that because they know something you
+  do not — or because they are attached to the design?

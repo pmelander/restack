@@ -1,0 +1,19 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-tech-stack",
+  "version": 1,
+  "sections": [
+    {
+      "id": "evaluation-dimensions",
+      "file": "evaluation-dimensions.md",
+      "title": "Technology evaluation dimensions",
+      "trigger": "running /restack-tech-stack recommend, evaluate or compare - assessing any technology against a real context"
+    },
+    {
+      "id": "migration-analysis",
+      "file": "migration-analysis.md",
+      "title": "Migration analysis",
+      "trigger": "running /restack-tech-stack migrate - deciding whether and how to move from one technology to another"
+    }
+  ]
+}

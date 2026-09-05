@@ -1,0 +1,198 @@
+---
+name: restack-solution-doc
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Produce solution documentation - high-level design, component designs,
+  deployment guide, operations runbook - in the toolkit's own vocabulary of
+  actors, intentions, paths and residuals, so the reasoning behind the shape of
+  the system survives alongside the shape itself.
+  Use when asked to "write the HLD", "document this component", "write a
+  runbook", or "document the deployment".
+  Proactively suggest documenting residuals when a stressor analysis has
+  produced them - an undocumented residual reads as unnecessary complexity to
+  whoever inherits the system, and gets removed.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - write the hld
+  - document this component
+  - write a runbook
+  - document the deployment
+---
+
+{{PREAMBLE}}
+
+---
+
+# Solution Documentation
+
+You produce architecture documentation and build the architect's ability to
+articulate a system clearly. Articulation is not a side activity — an
+architecture you cannot explain is usually one you have not finished designing,
+and the gaps show up first in the writing.
+
+## Capability being built
+
+1. **Systems articulation** — turning a mental model into something another
+   person can act on.
+2. **Abstraction control** — knowing what belongs at HLD level and what belongs
+   at LLD level, and not mixing them.
+3. **Audience awareness** — writing for the operator at 3am differently from
+   the architect reviewing the design.
+4. **Operational foresight** — thinking about deployment, failure and recovery
+   while the design can still change.
+5. **Reasoning preservation** — recording *why* the system is shaped this way,
+   which is what decays first and costs most to reconstruct.
+
+**Residuality goal:** the architect writes clearly because they think clearly,
+and reaches for documentation as a design tool — noticing that a section they
+cannot write is a decision they have not made.
+
+## The rule that governs all of it
+
+**Document the reasoning, not just the result.** Anyone can read the code and
+learn what the system does. Nobody can read the code and learn what was
+considered and rejected, which stressor a queue defends against, or why a
+boundary sits where it does.
+
+This is why every document here links to the analysis that produced it. A
+residual with no recorded purpose looks like over-engineering, and the first
+thing a new team does with unexplained complexity is delete it.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## Before writing anything
+
+Read what already exists, in this order, and confirm rather than re-ask:
+
+1. `docs/journey/journey-state.md` — aspiration, terrain, position
+2. `docs/discovery/` — path maps and actor profiles
+3. `docs/stressor-analysis/` — the matrix and the residuals
+4. `docs/adr/` — decisions already made and their reasoning
+5. The code, if it exists
+
+Most of what a document needs is already recorded. Re-asking questions the
+journey answered is how architects stop trusting the tooling, and it produces
+documents that contradict the analysis.
+
+Then ask only what is genuinely missing — one question at a time.
+
+## `/restack-solution-doc hld`
+
+**Read** `skills/restack-solution-doc/sections/hld-structure.md` and write from
+it.
+
+Two sections carry the value and are the ones most often omitted:
+
+- **Residuals and what they defend against** — each residual, the stressors it
+  clears, the ADR behind it, and what new paths it created.
+- **What this design does not do** — the explicit non-goals, which prevent the
+  standard misreading that everything unmentioned is either included or
+  forgotten.
+
+Write to `docs/architecture/HLD.md`. Close with a reflection prompt about what
+was hardest to articulate — that is reliably where the design is weakest.
+
+## `/restack-solution-doc lld [component]`
+
+**Read** `skills/restack-solution-doc/sections/lld-structure.md`.
+
+Write one per component that needs it, not per component that exists. The
+section names the four cases that justify an LLD; a document written for
+completeness will drift, and a drifted LLD is worse than none because people
+trust it.
+
+Failure behaviour (section 5) is the part that most repays being written before
+the code rather than after.
+
+Write to `docs/architecture/LLD-<component>.md`.
+
+## `/restack-solution-doc deployment`
+
+**Read** the deployment half of
+`skills/restack-solution-doc/sections/operational-docs.md`.
+
+Verification steps must be specific enough that two people would agree on
+whether the deploy worked, and the rollback section must name what **cannot**
+be rolled back. Write to `docs/deployment/DEPLOYMENT.md`.
+
+## `/restack-solution-doc runbook`
+
+**Read** the runbook half of
+`skills/restack-solution-doc/sections/operational-docs.md`.
+
+Populate the failure-modes section from the stressor matrix rather than
+inventing it: for each significant stressor, what an operator observes, which
+residual should absorb it, and what to do when the residual is not working.
+
+Include what **not** to do. It is the highest-value content in any runbook and
+is almost never written down. Write to `docs/operations/RUNBOOK.md`.
+
+## `/restack-solution-doc complete`
+
+HLD → LLDs (only where warranted) → deployment → runbook, in that order, each
+building on the last.
+
+Carry contradictions forward rather than quietly resolving them: if the runbook
+needs an operational lever the LLD does not describe, that is a design gap the
+documentation just found, and it is worth more than the documents.
+
+## `/restack-solution-doc update <type>`
+
+Read the current document, establish what changed and why, then update. Where
+the change reflects a decision, make sure an ADR exists — documentation is not
+a substitute for a decision record.
+
+Never quietly rewrite a design document to match what was built. If the
+implementation diverged, that divergence is the finding: either the design was
+wrong or the build was, and one of them needs a decision.
+
+## `/restack-solution-doc review <type>`
+
+Assess an existing document against the relevant structure section.
+
+The useful test is not completeness but **usability**: what would a new team
+member still have to ask after reading this? Read it as that person, list the
+questions, and treat each unanswered one as a gap.
+
+Check specifically for the three failures: residuals documented without their
+purpose, happy paths documented without error paths, and confident statements
+about existing-system behaviour that were never verified.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-discover` | path maps and actor profiles are the raw material |
+| `/restack-stressor` | supplies the residuals and what they defend against |
+| `/restack-adr` | decisions are linked, never restated |
+| `/restack-design-review` | reviews what this produces |
+| `/restack-capacity` | supplies the numbers for scaling sections |
+
+## Reflection prompts
+
+- What was hardest to articulate? That is where the design is least resolved.
+- Which section did you want to skip, and what does that tell you?
+- Would someone who has never seen this system be able to operate it from what
+  you wrote?
+- Which statements about the existing system did you verify, and which did you
+  assume?
+- What did you discover about the design by writing it down?

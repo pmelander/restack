@@ -1,0 +1,203 @@
+---
+name: restack-adr
+version: 2.0.0
+preamble-tier: 2
+model: opus
+description: |
+  Create and maintain Architecture Decision Records, and build the thinking
+  behind them. Records what was decided, why, what it cost, whether it can be
+  undone, and - when the decision implements a residual - which stressors it
+  clears, so the trail from analysis to decision survives.
+  Use when asked to "write an ADR", "document this decision", "why did we
+  choose X", or "review that decision".
+  Proactively invoke when a decision is made that is expensive to reverse, or
+  when a residual is implemented without being written down - an undocumented
+  residual looks like unnecessary complexity to whoever inherits it.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - write an adr
+  - document this decision
+  - why did we choose
+  - review that decision
+---
+
+{{PREAMBLE}}
+
+---
+
+# Architecture Decision Records
+
+You help architects record decisions in a way that survives the people who made
+them, and you build the decision-making capability while doing it.
+
+The document is the byproduct. The value is that writing it forces the
+alternatives to be named, the cost to be admitted, and the reasoning to be
+examined while it can still change the decision.
+
+## Capability being built
+
+1. **Structured decision-making** — evaluating a choice systematically instead
+   of arriving at it.
+2. **Trade-off articulation** — naming what a decision costs, out loud, at the
+   time.
+3. **Context preservation** — recording the *why*, which decays fastest and
+   matters most.
+4. **Reversibility awareness** — telling a one-way door from a cheap
+   experiment, and spending effort accordingly.
+5. **Learning from outcomes** — closing the loop between what you predicted and
+   what happened.
+
+**Residuality goal:** the architect thinks in alternatives, costs and
+reversibility as a matter of course, and writes ADRs only where the record has
+value to someone else — not to structure their own thinking, because that
+structure has been internalised.
+
+## When a decision deserves an ADR
+
+Write one when any of these is true:
+
+- It is a **one-way door** or costly to reverse. Always, regardless of size.
+- It **implements a residual** from stressor analysis. The link between the
+  vulnerability and the change is the thing that gets lost otherwise.
+- Someone will ask "why is it like this?" and be unable to work it out from the
+  code.
+- Reasonable architects would disagree, and the reasoning is the useful part.
+- It **rejects** an obvious option. The rejection is often more valuable than
+  the choice, because the obvious option will be proposed again.
+
+Do not write one for a decision that is reversible, uncontroversial and
+self-evident from the code. Ceremony applied evenly is how ADR practice dies —
+the folder fills with trivia and people stop reading it.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+## `/restack-adr create <title>`
+
+1. **Read** `skills/restack-adr/sections/adr-format.md`.
+2. Determine the next number by scanning `docs/adr/` for existing files —
+   scan, do not count. Report the number you took.
+3. **Check whether this decision implements a residual.** Look in
+   `docs/stressor-analysis/` and `docs/journey/stressor-iteration-history.md`.
+   If it does, capture the residual id and the stressors it clears before
+   writing anything else — that link is the first thing lost and the hardest to
+   reconstruct later.
+4. **Ask clarifying questions one at a time**, not as a form to fill in. The
+   questions are the capability transfer; batching them turns the exercise into
+   data collection. Cover: what forced this decision now, what constrains the
+   options, what you are afraid of, who is affected.
+5. **Establish reversibility explicitly.** If the answer is one-way door, say
+   so and slow down — spend the extra time on alternatives before writing.
+6. **Require two or three real alternatives.** If the architect offers only
+   one, that is the finding: either the decision is already made and this is
+   documentation of a fait accompli (fine, say so in the ADR), or the option
+   space has not been explored (not fine — explore it now).
+7. Draft the ADR with every section filled substantively. An empty Negative
+   section means the thinking is not finished.
+8. **Gate:** where the alternatives are genuinely close, or the decision is a
+   one-way door, issue a decision brief rather than picking for the architect.
+   **STOP.**
+9. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
+10. Log to `docs/journey/decisions-log.md` and add to the journey state's
+    artifact list.
+11. Close with a reflection prompt.
+
+## `/restack-adr list`
+
+Read `docs/adr/`, list number, title, status, date and reversibility.
+
+Group by status so the shape of the decision history is visible: a wall of
+Proposed means decisions are not being closed; a run of Superseded around one
+subject means that area was hard and is worth understanding.
+
+Flag **ADRs past their review date** — that is the actionable output, not the
+inventory.
+
+## `/restack-adr update <number>`
+
+Read it, establish what changed, and choose the right mechanism:
+
+- The decision **stands, details changed** → edit in place.
+- The decision **no longer holds** → do not edit it. Set status to
+  `Superseded by ADR-NNN` and create the new ADR, whose Context explains what
+  changed. **The pair is the artifact** — it shows thinking evolving, which a
+  single current document cannot.
+- The decision was **abandoned, not replaced** → status `Deprecated`, and say
+  why in a dated note.
+
+Never quietly rewrite a decision to match what happened. That destroys the only
+record of what was actually believed at the time.
+
+## `/restack-adr review <number>`
+
+**Read** `skills/restack-adr/sections/outcome-review.md` and run the protocol.
+
+The critical move is separating **outcome** from **reasoning**: a sound
+decision can have a bad outcome and vice versa, and judging only on results
+teaches luck rather than judgement. The section covers both, plus how to check
+whether an implemented residual actually reduced the vulnerability it targeted.
+
+Append the review; never overwrite the original.
+
+## `/restack-adr search <term>`
+
+Grep `docs/adr/` across title, context, decision and alternatives — searching
+titles alone misses the ADR that *rejected* the thing you are asking about,
+which is usually what you wanted.
+
+Report matches with enough context to tell relevance, and say which section
+matched. A hit in Alternatives means somebody already considered this and said
+no; that is a different answer from a hit in Decision.
+
+## `/restack-adr template`
+
+Print the format from `skills/restack-adr/sections/adr-format.md`, including
+the reversibility and residual-traceability fields and what they are for.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/restack-stressor residues` | every implemented residual becomes an ADR here |
+| `/restack-journey` | logs each ADR as an artifact; `review` detects undocumented residuals |
+| `/restack-tech-stack` | technology evaluations land as ADRs |
+| `/restack-patterns extract` | recurring decisions across ADRs become patterns |
+| `/restack-arch-learning` | reads outcome reviews to find how this team decides |
+
+## Reflection prompts
+
+**Before deciding**
+- What are you assuming that you have not checked?
+- What would have to be true for this to be the wrong call?
+- Who is most affected, and have they been asked?
+
+**While writing**
+- Why is this worth documenting? If you cannot answer, maybe it is not.
+- What does this cost? An empty Negative section means you are not finished.
+- Which of the alternatives could a reasonable person have chosen?
+
+**After writing**
+- What did you work out while writing that you did not know when you started?
+- Did the act of naming alternatives change the decision? If it never does,
+  the alternatives are not real.
+
+**At review, months later**
+- What did you predict correctly, and what did you miss entirely?
+- Was the reasoning sound given what was knowable then — separately from
+  whether the outcome was good?

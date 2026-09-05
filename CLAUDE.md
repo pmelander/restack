@@ -41,10 +41,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── SKILL.md
 │   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
 │   │   └── compliance-packs/                   #   regulatory stressor packs
-│   ├── restack-adr/                            # legacy
-│   ├── restack-solution-doc/                   # legacy
-│   ├── restack-tech-stack/                     # legacy
-│   ├── restack-design-review/                  # legacy
+│   ├── restack-adr/                            # generated, tier 2
+│   ├── restack-solution-doc/                   # generated, tier 2
+│   ├── restack-tech-stack/                     # generated, tier 2
+│   ├── restack-design-review/                  # generated, tier 2
 │   ├── restack-cloud/                          # legacy
 │   ├── restack-capacity/                       # legacy
 │   ├── restack-arch-learning/                  # legacy
@@ -69,10 +69,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-Converted so far: `/restack-journey`, `/restack-discover`, `/restack-stressor` — the residuality core.
-The other eleven are still hand-maintained `SKILL.md` files and follow the
-legacy structure below until they are converted. `scripts/check_skills.py`
-reports which is which.
+Converted so far: the residuality core (`/restack-journey`, `/restack-discover`,
+`/restack-stressor`) and the design-and-documentation group (`/restack-adr`,
+`/restack-solution-doc`, `/restack-design-review`, `/restack-tech-stack`).
+Seven remain on the hand-maintained legacy structure below.
+`scripts/check_skills.py` reports which is which.
 
 Each skill template follows this structure:
 1. **Frontmatter** — `name`, `version`, `preamble-tier`, `model`, multi-line

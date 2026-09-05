@@ -1,0 +1,19 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-adr",
+  "version": 1,
+  "sections": [
+    {
+      "id": "adr-format",
+      "file": "adr-format.md",
+      "title": "ADR format and field guidance",
+      "trigger": "writing or updating an ADR - the template, what each field is for, and the residual traceability fields"
+    },
+    {
+      "id": "outcome-review",
+      "file": "outcome-review.md",
+      "title": "Outcome review protocol",
+      "trigger": "running /restack-adr review - revisiting a decision months later to capture what actually happened"
+    }
+  ]
+}
