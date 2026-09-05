@@ -20,7 +20,7 @@ skills tree is valid.
 | Sections (on-demand depth) | 42 across 13 skills |
 | Preamble tiers | 3 at tier 3 (residuality core), 10 at tier 2, 1 at tier 1 |
 | Compliance packs | 1 (GDPR) |
-| ADRs | 9 |
+| ADRs | 10 |
 
 The three architectural decisions behind this shape:
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) (generated

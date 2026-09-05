@@ -71,17 +71,33 @@ skills that consume the data do that.
 This is deliberate. A utility that stays a utility is one people can trust to
 do exactly what it says.
 
+## Locating the helper (run this first)
+
+The reader script ships **inside this skill**, so it survives installation.
+Resolve it once per session — installed location first, repo checkout as the
+fallback — and use `$RS` for every command below:
+
+```bash
+RS="$HOME/.claude/skills/restack-excel/read_spreadsheet.py"
+[ -f "$RS" ] || RS="skills/restack-excel/read_spreadsheet.py"
+[ -f "$RS" ] || { echo "read_spreadsheet.py not found - reinstall the skill"; }
+```
+
+This matters because the skill is used from whatever project the architect is
+working in, not from the ReStack checkout. A bare relative path only resolves
+when the working directory happens to be the repository.
+
 ## Commands
 
-All four run `helpers/read_spreadsheet.py`.
+All four run `$RS`.
 
 ### `/restack-excel read <file> [sheet]`
 
 Read a file (or one named sheet) and output a markdown table.
 
 ```bash
-python helpers/read_spreadsheet.py <file>
-python helpers/read_spreadsheet.py <file> --sheet "<name>"
+python "$RS" <file>
+python "$RS" <file> --sheet "<name>"
 ```
 
 Report the row and column counts alongside the table, and say if anything was
@@ -95,7 +111,7 @@ it confirms the shape and the header row without pulling the whole file into
 the conversation.
 
 ```bash
-python helpers/read_spreadsheet.py <file> --rows <n>
+python "$RS" <file> --rows <n>
 ```
 
 ### `/restack-excel sheets <file>`
@@ -103,7 +119,7 @@ python helpers/read_spreadsheet.py <file> --rows <n>
 List the sheets, with dimensions.
 
 ```bash
-python helpers/read_spreadsheet.py <file> --list-sheets
+python "$RS" <file> --list-sheets
 ```
 
 ### `/restack-excel convert <file> [sheet]`

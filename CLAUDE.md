@@ -51,14 +51,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-capability-assessor/            # generated, tier 2
 │   ├── restack-patterns/                       # generated, tier 2
 │   ├── restack-evolve/                         # generated, tier 2
-│   └── restack-excel/                          # generated, tier 2
-├── helpers/read_spreadsheet.py         # Python helper for Excel reading
+│   └── restack-excel/                          # generated, tier 1
+│       └── read_spreadsheet.py                #   runtime helper, ships with the skill
 ├── templates/                          # Document templates
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-009
+    ├── adr/                            # ADR-001 .. ADR-010
     └── ...                             # Generated documentation location
 ```
 

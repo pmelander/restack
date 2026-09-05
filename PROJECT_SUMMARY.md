@@ -72,7 +72,7 @@ for it on every invocation.
 
 ## Decisions on record
 
-Nine ADRs. Four matter most to anyone evaluating the approach:
+Ten ADRs. Four matter most to anyone evaluating the approach:
 
 | ADR | Decision |
 |---|---|
@@ -85,7 +85,9 @@ Also: [002](docs/adr/ADR-002-redesign-phase-2-for-capability-building.md)
 capability-building redesign, [003](docs/adr/ADR-003-add-stressor-analysis-skill.md)
 stressor analysis, [004](docs/adr/ADR-004-add-excel-reading-utility.md) Excel
 utility, [005](docs/adr/ADR-005-add-architecture-learning-analyzer.md) learning
-analyzer, [009](docs/adr/ADR-009-prefix-skill-names.md) prefixed skill names.
+analyzer, [009](docs/adr/ADR-009-prefix-skill-names.md) prefixed skill names, and
+[010](docs/adr/ADR-010-skills-are-self-contained.md) skills ship their own
+runtime dependencies.
 
 ADR-006 and ADR-007 are the ones worth reading first — they show the philosophy
 actively deciding what *not* to build, which is the clearest statement of what
@@ -99,10 +101,9 @@ this toolkit is for.
 skills/restack-*/          14 skills: SKILL.md.tmpl (source) + SKILL.md + sections/
 scripts/                   generator, validator, preamble fragments
 templates/                 canonical document formats
-docs/adr/                  9 ADRs
+docs/adr/                  10 ADRs
 docs/                      installation, usage
 examples/                  example outputs
-helpers/                   read_spreadsheet.py
 ```
 
 ---

@@ -3,7 +3,7 @@
 Excel/CSV Reader Utility for ReStack
 
 Reads Excel (.xlsx, .xls) and CSV files and outputs markdown tables.
-Used by the excel-reader skill in skills/utilities/
+Ships inside the /restack-excel skill so it survives installation.
 
 Usage:
     python read_spreadsheet.py <file> [--sheet <name>] [--rows <max>] [--list-sheets]

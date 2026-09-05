@@ -40,6 +40,8 @@ We will **add Excel reading as a standalone utility skill** in a new `skills/uti
 **What we're building:**
 - **Utility skill:** `skills/utilities/excel-reader.md`
 - **Python helper:** `helpers/read_spreadsheet.py` (uses openpyxl)
+  — *moved to `skills/restack-excel/read_spreadsheet.py` in September 2026 so it
+  survives installation; see [ADR-010](ADR-010-skills-are-self-contained.md)*
 - **Commands:** `/restack-excel read`, `/restack-excel preview`, `/restack-excel sheets`, `/restack-excel convert`
 - **Integration:** `/restack-stressor import` command wraps excel reader
 - **Dependencies:** `requirements.txt` with openpyxl
