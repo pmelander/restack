@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-17  
-**Purpose:** Measure persistent value and capability transfer from using the Residual Architecture Skill Set
+**Purpose:** Measure persistent value and capability transfer from using ReStack
 
 ## Introduction
 

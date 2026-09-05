@@ -10,7 +10,7 @@
 
 ## Context
 
-After completing Phase 1 of the Residual Architecture Skill Set with four core skills (ADR, Solution Documentation, Tech Stack Advisor, Design Review), we discovered Barry O'Reilly's Residuality Theory, which fundamentally challenges how we think about the value our toolkit should deliver.
+After completing ReStack's Phase 1 with four core skills (ADR, Solution Documentation, Tech Stack Advisor, Design Review), we discovered Barry O'Reilly's Residuality Theory, which fundamentally challenges how we think about the value our toolkit should deliver.
 
 **The Problem:**
 Our initial Phase 1 implementation focused on **output generation** - producing documents, reports, and artifacts. While useful, this approach has limitations:
@@ -42,7 +42,7 @@ Our initial Phase 1 implementation focused on **output generation** - producing 
 
 ## Decision
 
-We will **refactor the Residual Architecture Skill Set to explicitly incorporate Residuality Theory principles**, shifting from a tool-centric approach to a capability-building system.
+We will **refactor ReStack to explicitly incorporate Residuality Theory principles**, shifting from a tool-centric approach to a capability-building system.
 
 **Phase 1 Refactor:**
 Enhance existing skills to include:

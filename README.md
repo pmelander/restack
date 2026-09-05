@@ -1,6 +1,8 @@
-# Residual Architecture Skill Set for Claude Code
+# ReStack
 
-A collection of Claude Code skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
+**Residual architecture skills for Claude Code.** A collection of skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
+
+> Formerly *Residual Architecture Skill Set*. Renamed to ReStack in September 2026; the history is unchanged.
 
 > **Philosophy:** Skills are designed to transfer capability to architects, not create dependency on tools. The measure of success is how little you need them.
 
@@ -65,8 +67,8 @@ You keep iterating until the system's vulnerability is sufficiently low — not 
 ## ⚡ Install
 
 ```bash
-git clone <repo-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 
 # Install all skills (Claude Code expects skills/<name>/SKILL.md)
 cp -R skills/* ~/.claude/skills/

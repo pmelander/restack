@@ -1,10 +1,10 @@
-# Residual Architecture Skill Set - Quick Reference
+# ReStack - Quick Reference
 
 ## Installation
 
 ```bash
-git clone <repo-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 cp -R skills/* ~/.claude/skills/
 pip install -r requirements.txt
 ```

@@ -1,8 +1,8 @@
-# Residual Architecture Skill Set — Project Summary
+# ReStack — Project Summary
 
 ## Overview
 
-The **Residual Architecture Skill Set** is a collection of Claude Code skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
+**ReStack** is a collection of Claude Code skills built on **Residuality Theory** — designed to build antifragile systems thinking and Solution Architect capabilities that compound over time.
 
 **Philosophy:** Skills transfer capability to architects, not create dependency on tools. The measure of success is how rarely you need the toolkit, because the thinking has been internalised.
 
@@ -13,7 +13,7 @@ The **Residual Architecture Skill Set** is a collection of Claude Code skills bu
 ## Project Structure
 
 ```
-solution-architect-toolkit/
+restack/
 ├── README.md
 ├── CLAUDE.md                       # Development guide (this project's CLAUDE.md)
 ├── QUICKREF.md                     # All commands at a glance

@@ -1,6 +1,6 @@
 # Usage Guide
 
-Detailed examples and best practices for the Residual Architecture Skill Set.
+Detailed examples and best practices for ReStack.
 
 ## Table of Contents
 

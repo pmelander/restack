@@ -155,7 +155,7 @@ This aligns the toolkit with modern thinking about organizational learning and s
 
 ## Conclusion
 
-The Residual Architecture Skill Set is now positioned as a **capability-building platform**, not just a documentation tool. This differentiation creates sustainable competitive advantage and delivers true residual value to organizations.
+ReStack is now positioned as a **capability-building platform**, not just a documentation tool. This differentiation creates sustainable competitive advantage and delivers true residual value to organizations.
 
 The shift from tool-centric to capability-centric represents a fundamental reframe that should resonate with growth-minded Solution Architects who want to develop, not just deliver.
 

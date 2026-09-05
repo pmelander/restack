@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Excel/CSV Reader Utility for Residual Architecture Skill Set
+Excel/CSV Reader Utility for ReStack
 
 Reads Excel (.xlsx, .xls) and CSV files and outputs markdown tables.
 Used by the excel-reader skill in skills/utilities/

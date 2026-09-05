@@ -1,4 +1,4 @@
-# Residual Architecture Skill Set - Python Dependencies
+# ReStack - Python Dependencies
 
 # Excel reading (for excel-reader utility skill)
 openpyxl>=3.1.0

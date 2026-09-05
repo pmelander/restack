@@ -1,4 +1,4 @@
-# Getting Started with Residual Architecture Skill Set
+# Getting Started with ReStack
 
 Welcome! This guide will get you up and running in under 5 minutes.
 
@@ -8,16 +8,16 @@ Welcome! This guide will get you up and running in under 5 minutes.
 
 **Linux/Mac:**
 ```bash
-git clone <repository-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 cp -R skills/* ~/.claude/skills/
 pip install -r requirements.txt
 ```
 
 **Windows:**
 ```powershell
-git clone <repository-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 Copy-Item -Recurse -Path "skills\*" -Destination "$env:USERPROFILE\.claude\skills\"
 pip install -r requirements.txt
 ```

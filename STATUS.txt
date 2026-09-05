@@ -1,5 +1,5 @@
 ================================================================================
-  RESIDUAL ARCHITECTURE SKILL SET - IMPLEMENTATION STATUS
+  RESTACK - IMPLEMENTATION STATUS
   Phase 1 Complete | 2026-05-17
 ================================================================================
 
@@ -71,7 +71,7 @@ Ready for Production:           YES ✅
 📂 DIRECTORY STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-solution-architect-toolkit/
+restack/
 ├── skills/                      (skill folders; each contains SKILL.md)
 ├── templates/
 ├── examples/
@@ -125,8 +125,8 @@ Phase 3 (Q1-Q2 2027):           💡 PLANNED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Installation Command:
-  git clone <repo-url> solution-architect-toolkit
-  cd solution-architect-toolkit
+  git clone git@github.com:pmelander/restack.git restack
+  cd restack
   cp skills/phase-1/*.md ~/.claude/skills/
 
 First Command to Try:

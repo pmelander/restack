@@ -4,7 +4,7 @@
 
 **Date:** 2026-05-18
 
-**Deciders:** Residual Architecture Skill Set maintainers
+**Deciders:** ReStack maintainers
 
 **Technical Story:** Phase 3 planning — evaluating which specialized skills to build
 
@@ -12,13 +12,13 @@
 
 **Implemented Date:** 2026-05-18
 
-**Implemented By:** Residual Architecture Skill Set team
+**Implemented By:** ReStack team
 
 **Review Date:** 2026-11-18
 
 ## Context
 
-Phase 3 of the Residual Architecture Skill Set originally planned a **Risk Assessor** skill to help architects identify architectural risks, build risk registers, define mitigation strategies, and track risk over time.
+ReStack's Phase 3 originally planned a **Risk Assessor** skill to help architects identify architectural risks, build risk registers, define mitigation strategies, and track risk over time.
 
 This was a carry-over from conventional Solution Architect practice, where risk management typically involves:
 - Probability × Impact matrices

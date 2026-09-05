@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide will help you install the Residual Architecture Skill Set skills for Claude Code.
+This guide will help you install the ReStack skills for Claude Code.
 
 ## Prerequisites
 
@@ -16,8 +16,8 @@ This method copies the skills directly to your Claude Code skills directory.
 
 ```bash
 # Clone the repository
-git clone <repository-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 
 # Copy all skills to Claude Code (Claude Code expects skills/<name>/SKILL.md)
 cp -R skills/* ~/.claude/skills/
@@ -39,8 +39,8 @@ This method creates symbolic links, so updates to the repository automatically r
 
 ```bash
 # Clone the repository
-git clone <repository-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 
 # Create symlinks for skills
 ln -s "$(pwd)/skills/adr" ~/.claude/skills/adr
@@ -70,8 +70,8 @@ For Windows users without symlink support:
 
 ```powershell
 # Clone the repository
-git clone <repository-url> solution-architect-toolkit
-cd solution-architect-toolkit
+git clone git@github.com:pmelander/restack.git restack
+cd restack
 
 # Copy all skills to Claude Code (Claude Code expects skills\<name>\SKILL.md)
 Copy-Item -Recurse -Path "skills\*" -Destination "$env:USERPROFILE\.claude\skills\"
@@ -123,7 +123,7 @@ Claude should start asking you questions to fill in the ADR template.
 ### For Direct Installation
 
 ```bash
-cd solution-architect-toolkit
+cd restack
 git pull origin main
 cp -R skills/* ~/.claude/skills/
 ```
@@ -131,7 +131,7 @@ cp -R skills/* ~/.claude/skills/
 ### For Symlink Installation
 
 ```bash
-cd solution-architect-toolkit
+cd restack
 git pull origin main
 # Changes are automatically available!
 ```
