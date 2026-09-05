@@ -12,67 +12,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 .
+├── .github/workflows/skills.yml        # CI: generator drift + skills-tree validation
+├── scripts/
+│   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
+│   ├── check_skills.py                 # validates frontmatter, banners, sections
+│   └── preamble/                       # shared behaviour, composed by tier
+│       ├── manifest.json               # tier -> fragment composition
+│       ├── voice.md                    # tier 1
+│       ├── completion-status.md        # tier 1
+│       ├── decision-brief.md           # tier 2
+│       ├── evidence.md                 # tier 2
+│       ├── completeness.md             # tier 2
+│       ├── confusion-protocol.md       # tier 2
+│       ├── glossary.md                 # tier 3
+│       ├── stop-gates.md               # tier 3
+│       └── journey-state.md            # tier 3
 ├── skills/                             # Claude Code layout: skills/<name>/SKILL.md
-│   ├── adr/
-│   │   └── SKILL.md                    # /adr
-│   ├── solution-doc/
-│   │   └── SKILL.md                    # /solution-doc
-│   ├── tech-stack/
-│   │   └── SKILL.md                    # /tech-stack
-│   ├── design-review/
-│   │   └── SKILL.md                    # /design-review
-│   ├── stressor/
-│   │   ├── SKILL.md                    # /stressor
-│   │   └── compliance-packs/           # Regulatory stressor packs
-│   │       ├── README.md
-│   │       └── gdpr.md
-│   ├── excel/
-│   │   └── SKILL.md                    # /excel
-│   ├── arch-learning/
-│   │   └── SKILL.md                    # /arch-learning
-│   ├── capability-assessor/
-│   │   └── SKILL.md                    # /capability-assessor
-│   ├── patterns/
-│   │   └── SKILL.md                    # /patterns
-│   ├── evolve/
-│   │   └── SKILL.md                    # /evolve
-│   ├── cloud/
-│   │   └── SKILL.md                    # /cloud
-│   ├── capacity/
-│   │   └── SKILL.md                    # /capacity
-│   ├── discover/
-│   │   └── SKILL.md                    # /discover
-│   └── journey/
-│       └── SKILL.md                    # /journey
-├── helpers/
-│   └── read_spreadsheet.py             # Python helper for Excel reading
+│   ├── journey/                        # /journey    generated, tier 3
+│   │   ├── SKILL.md.tmpl               #   source of truth
+│   │   ├── SKILL.md                    #   generated - do not edit
+│   │   └── sections/                   #   route maps + terrain classification
+│   ├── discover/                       # /discover   generated, tier 3
+│   │   ├── SKILL.md.tmpl
+│   │   ├── SKILL.md
+│   │   └── sections/                   #   confidence model, actor/intention protocols
+│   ├── stressor/                       # /stressor   generated, tier 3
+│   │   ├── SKILL.md.tmpl
+│   │   ├── SKILL.md
+│   │   ├── sections/                   #   walk, generation, matrix, residuals, workshop
+│   │   └── compliance-packs/           #   regulatory stressor packs
+│   ├── adr/                            # /adr              legacy
+│   ├── solution-doc/                   # /solution-doc     legacy
+│   ├── tech-stack/                     # /tech-stack       legacy
+│   ├── design-review/                  # /design-review    legacy
+│   ├── cloud/                          # /cloud            legacy
+│   ├── capacity/                       # /capacity         legacy
+│   ├── arch-learning/                  # /arch-learning    legacy
+│   ├── capability-assessor/            # /capability-assessor  legacy
+│   ├── patterns/                       # /patterns         legacy
+│   ├── evolve/                         # /evolve           legacy
+│   └── excel/                          # /excel            legacy
+├── helpers/read_spreadsheet.py         # Python helper for Excel reading
 ├── templates/                          # Document templates
-│   ├── journey-state-template.md
-│   ├── adr-template.md
-│   ├── hld-template.md
-│   ├── tech-comparison-template.md
-│   ├── stressor-analysis-template.md
-│   ├── capability-assessment-template.md
-│   ├── pattern-template.md
-│   ├── anti-pattern-template.md
-│   └── fitness-function-template.md
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
-    ├── journey/                        # Journey state tracking (REQUIRED)
-    │   ├── journey-state.md            # Current position, iteration log, artifacts
-    │   ├── stressor-iteration-history.md   # Detailed stressor iteration log
-    │   ├── decisions-log.md            # Lightweight decision log
-    │   ├── assumptions-register.md     # Assumptions and validation status
-    │   └── cadence-schedule.md         # Ongoing rhythm and triggers
-    ├── adr/                            # ADRs documenting toolkit decisions
-    │   ├── ADR-001-incorporate-residuality-theory.md
-    │   ├── ADR-002-redesign-phase-2-for-capability-building.md
-    │   ├── ADR-003-add-stressor-analysis-skill.md
-    │   ├── ADR-004-add-excel-reading-utility.md
-    │   ├── ADR-005-add-architecture-learning-analyzer.md
-    │   ├── ADR-006-exclude-risk-assessor-skill.md
-    │   └── ADR-007-compliance-via-stressor-packs.md
+    ├── journey/                        # Journey state for an engagement
+    ├── adr/                            # ADR-001 .. ADR-008
     └── ...                             # Generated documentation location
 ```
 
@@ -83,9 +69,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-Converted so far: `/journey`, `/stressor`. The other twelve are still
-hand-maintained `SKILL.md` files and follow the legacy structure below until
-they are converted.
+Converted so far: `/journey`, `/discover`, `/stressor` — the residuality core.
+The other eleven are still hand-maintained `SKILL.md` files and follow the
+legacy structure below until they are converted. `scripts/check_skills.py`
+reports which is which.
 
 Each skill template follows this structure:
 1. **Frontmatter** — `name`, `version`, `preamble-tier`, `model`, multi-line
@@ -129,7 +116,14 @@ method without paying for it on every invocation.
 python scripts/gen_skills.py            # regenerate everything with a template
 python scripts/gen_skills.py journey    # one skill
 python scripts/gen_skills.py --check    # CI: fail on drift between .tmpl and SKILL.md
+python scripts/check_skills.py          # CI: frontmatter, banners, orphaned sections
 ```
+
+Both run in CI on every push and pull request (`.github/workflows/skills.yml`).
+`check_skills.py` covers what the generator cannot: a skill with no
+`description` is undiscoverable, a generated file with its banner removed has
+been hand-edited, and a section file missing from `manifest.json` will never be
+read by anything.
 
 ### Key Design Principle
 
@@ -241,54 +235,19 @@ git push origin feature/new-skill-name
 
 ## Journey Memory Management
 
-**CRITICAL REQUIREMENT:** Journey progress MUST be persisted to file at every significant step.
+The journey-state contract — which files exist, when they are read, when they
+are written, and why conversation memory is not sufficient — is defined once,
+in `scripts/preamble/journey-state.md`, and composed into every tier-3 skill.
 
-### Journey State Files
+Read that fragment rather than restating it here. It is the authority; this
+file used to carry a second, differently-worded copy, which is exactly the
+duplication [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md)
+was written to remove.
 
-When executing `/journey` commands, you MUST maintain these files in `docs/journey/`:
-
-1. **`journey-state.md`** — current position, aspiration, terrain type, iteration log, artifacts, gaps
-   - Update after EVERY `/journey` command
-   - Update after executing skills within the journey (discover, stressor, adr, etc.)
-   - This is the single source of truth for journey progress
-
-2. **`stressor-iteration-history.md`** — detailed log of each stressor iteration with impact matrices
-   - Update after every `/stressor analyze` and `/journey iterate`
-
-3. **`decisions-log.md`** — lightweight log of decision points (supplement to formal ADRs)
-   - Update whenever a significant decision is made
-
-4. **`assumptions-register.md`** — assumptions being carried forward with validation status
-   - Update when assumptions are identified or validated
-
-### When to Update
-
-**ALWAYS update journey state when:**
-- Starting a journey (`/journey start`)
-- Checking position (`/journey where`)
-- Making iteration decisions (`/journey iterate`)
-- Reviewing journey health (`/journey review`)
-- Establishing cadence (`/journey cadence`)
-- Completing discovery commands
-- Completing stressor analysis iterations
-- Creating ADRs
-- Generating solution documentation
-- Completing design reviews
-
-**Before executing a journey command:** Read `docs/journey/journey-state.md` to understand context.
-
-**After executing a journey command:** Update `docs/journey/journey-state.md` with outcomes.
-
-### Rationale
-
-Built-in memory in Claude Code is insufficient for long-running architectural journeys that may:
-- Span weeks or months
-- Resume after breaks
-- Involve multiple architects
-- Require audit trails
-- Need iteration history for learning
-
-File-based persistence ensures journey continuity, enables handoffs, and creates an audit trail of architectural thinking.
+State lives in `docs/journey/`: `journey-state.md` (position, terrain,
+aspiration, artifacts), `stressor-iteration-history.md` (per-iteration
+matrices), `decisions-log.md` (every gate passed, with rationale), and
+`assumptions-register.md` (unverified beliefs and what would settle them).
 
 ---
 

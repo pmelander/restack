@@ -130,8 +130,9 @@ $EDITOR skills/skill-name/SKILL.md.tmpl
 # Generate — Claude Code loads skills/<name>/SKILL.md
 python scripts/gen_skills.py skill-name
 
-# Verify the tree is consistent before committing
+# Verify the tree is consistent before committing (both run in CI)
 python scripts/gen_skills.py --check
+python scripts/check_skills.py
 
 # Add example output
 mkdir examples/skill-name

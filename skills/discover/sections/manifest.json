@@ -1,0 +1,37 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "discover",
+  "version": 1,
+  "sections": [
+    {
+      "id": "anti-patterns",
+      "file": "anti-patterns.md",
+      "title": "Discovery anti-patterns",
+      "trigger": "starting any discovery session, and again whenever discovery feels finished or feels stuck"
+    },
+    {
+      "id": "actor-investigation",
+      "file": "actor-investigation.md",
+      "title": "Actor investigation protocol",
+      "trigger": "running /discover actor - probing what a specific actor actually does"
+    },
+    {
+      "id": "intention-tracing",
+      "file": "intention-tracing.md",
+      "title": "Intention tracing protocol",
+      "trigger": "running /discover intentions - following one intention end to end through the system"
+    },
+    {
+      "id": "organisational-stressors",
+      "file": "organisational-stressors.md",
+      "title": "Organisational resistance as stressors",
+      "trigger": "running /discover organisation - mapping stakeholders and translating resistance into stressors"
+    },
+    {
+      "id": "confidence-model",
+      "file": "confidence-model.md",
+      "title": "Confidence model and the confidence gate",
+      "trigger": "running /discover gaps or /discover confidence - rating what you know and deciding whether discovery is done"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+name: skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  generated-skills-are-current:
+    name: SKILL.md matches its template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The generator is standard-library only, so there is nothing to install.
+      - name: Check for drift between SKILL.md.tmpl and SKILL.md
+        run: python scripts/gen_skills.py --check
+
+      - name: Check every skill has valid frontmatter
+        run: python scripts/check_skills.py

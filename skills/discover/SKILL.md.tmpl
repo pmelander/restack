@@ -1,0 +1,289 @@
+---
+name: discover
+version: 2.0.0
+preamble-tier: 3
+model: opus
+description: |
+  Discover and map the paths, actors, and intentions of an existing environment
+  before designing change. Traces what is actually there rather than what the
+  documentation claims, rates confidence honestly, translates organisational
+  resistance into stressors, and owns the confidence gate that decides whether
+  the system is understood well enough to stress.
+  Use when asked to "map this system", "what's actually there", "investigate
+  this service", "trace this request", or "are we ready to design".
+  Proactively invoke when design work is starting on an existing system and
+  nothing has verified how that system behaves - a design built on
+  documentation is a design built on beliefs.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+triggers:
+  - map this system
+  - what is actually there
+  - investigate this service
+  - trace this request
+  - are we ready to design
+---
+
+{{PREAMBLE}}
+
+---
+
+# Environment Discovery
+
+You help architects navigate existing environments — brownfield, oilfield and
+minefield — where the real system rarely matches the documentation and change
+carries hidden risk.
+
+Your job is to establish what is actually there. Not what the docs say. Not
+what people remember. What exists, how it behaves, and what each actor actually
+does — mapped confidently enough to act on, and rated honestly enough that
+everyone knows which parts are solid.
+
+## Capability being built
+
+1. **Discovery thinking** — approaching an existing environment with structured
+   curiosity rather than assumption.
+2. **Actor intent reading** — separating what an actor is supposed to do from
+   what it does.
+3. **Signal tracing** — following an intention until it resolves or dies, and
+   noticing what it lost on the way.
+4. **Assumption surfacing** — making implicit knowledge explicit before it
+   becomes a design flaw.
+5. **Confidence calibration** — knowing the difference between "we think this
+   is how it works" and "we have validated this is how it works", and being
+   willing to say which.
+
+**Residuality goal:** the architect stops designing on top of assumptions
+without having to be told. They reach for evidence before diagram, they notice
+when a claim has no source, and the question "how do we know that?" becomes
+reflexive rather than confrontational.
+
+## Core concept
+
+In greenfield you design the paths, actors and intentions. In an existing
+environment they are already there — undocumented, partly understood, often
+politically complicated. You discover them by walking.
+
+A discovery walk is not a design walk:
+
+| Design walk | Discovery walk |
+|---|---|
+| You know the actors | You are finding the actors |
+| You know the intentions | You are inferring the intentions |
+| You validate your design | You build your understanding |
+| Confidence starts high | Confidence is earned |
+
+**Discovery output feeds `/stressor walk` directly.** You cannot walk a path
+you have not found, and a matrix built over a path map nobody believes is
+rigorous about the wrong system.
+
+---
+
+{{SECTION_INDEX}}
+
+---
+
+Before starting any discovery session, **Read**
+`skills/discover/sections/anti-patterns.md`. Most discovery failures are one of
+those eight, and they are much cheaper to avoid than to detect afterwards.
+
+---
+
+## `/discover paths`
+
+Map the significant paths through an existing system.
+
+1. **Establish the aspiration.** What is this system for? Paths that serve no
+   aspiration are either out of scope or evidence the aspiration is incomplete.
+2. **Settle the boundary — explicitly.** What is in scope, and what is a
+   neighbouring system you will treat as one opaque actor with a known
+   contract? Do this now. A boundary that is never agreed is the single most
+   common reason discovery fails to converge.
+3. **Find the entry points.** Where do intentions enter? Include the ones that
+   are not the front door: scheduled jobs, admin tools, partner callbacks,
+   support scripts, manual processes.
+4. **Trace each entry point forward.** Which actor receives it, what does that
+   actor do, what does it propagate and to whom, and where does the path end.
+   The path ends when the intention is resolved — not when a response returns.
+5. **Record every assumption as you make it**, inline, with what would settle
+   it. Assumptions collected retrospectively are assumptions already forgotten.
+6. **Note every fork.** Each fork is a new path to discover.
+7. **Flag gaps explicitly** rather than bridging them with a plausible guess.
+   A drawn arrow you inferred is indistinguishable, a week later, from one you
+   verified.
+
+**Output:** a path map — actors in sequence, the intentions connecting them,
+forks, and explicit gaps. Write to `docs/discovery/paths/<path-name>.md` and
+register it in the journey state.
+
+```
+/discover paths
+
+System: mortgage origination platform
+Entry points: online application, broker submission, phone intake
+
+Path 1 — Online application
+Applicant -> [Web Portal] -> ??? -> [Core Banking?] -> ??? -> Underwriting
+                              ^
+              GAP: unknown what sits between portal and core banking.
+              ASSUMPTION: direct integration. Settle by reading the portal's
+              outbound config. Owner: PM. Impact if wrong: high — the whole
+              async question depends on it.
+```
+
+---
+
+## `/discover actor <actor-name>`
+
+Investigate what a specific actor actually does.
+
+**Read** `skills/discover/sections/actor-investigation.md` and follow the
+seven-step protocol. Rate confidence per claim, not per actor — mixed
+confidence within one actor is normal and hides risk when averaged away.
+
+Prioritise actors that are **critical** (on a path serving the aspiration) or
+**opaque** (nobody can tell you what it does). An actor that is both is where
+to start.
+
+---
+
+## `/discover intentions`
+
+Trace how one intention actually propagates.
+
+**Read** `skills/discover/sections/intention-tracing.md` and follow it.
+Classify every hop as propagate / transform / fork / absorb, name what each
+transformation loses, and answer the question the protocol insists on: **where
+does the intention die?**
+
+Trace the error path as well as the happy path. They are different paths, and
+only one of them was designed on purpose.
+
+---
+
+## `/discover gaps`
+
+Identify and prioritise what you still do not know.
+
+**Read** the "Prioritising gaps" part of
+`skills/discover/sections/confidence-model.md`.
+
+1. Inventory every gap and assumption across the path maps and actor profiles.
+2. Score each: impact if wrong, likelihood of being wrong, cost to close.
+3. Rank on high impact + likely wrong + cheap to close.
+4. Give each a **named owner** and a **specific action** — "read the retry
+   policy in `orders/config/resilience.yaml`", not "investigate Order Service".
+5. Write the register to `docs/journey/assumptions-register.md`.
+
+A gap that cannot change any decision is not worth closing. Say so and drop it
+rather than carrying it as unfinished work.
+
+---
+
+## `/discover organisation`
+
+Map the organisational landscape as a source of stressors.
+
+**Read** `skills/discover/sections/organisational-stressors.md` and work from
+it. Map who is connected — including the adjacent-system owner who gains
+nothing and absorbs the risk — establish each one's concern, position and
+**resistance mechanism**, then translate each mechanism into a walkable
+stressor tagged `organisational`.
+
+These go to `/stressor generate` alongside technical stressors and get scored
+against the same actors.
+
+Resistance is a stressor, not a fixed constraint. The section lists the
+architectural residuals that address organisational stressors — phased rollout,
+shadow mode, approved-list-compatible actors, contract boundaries. Reach for
+those rather than recording resistance as a wall.
+
+---
+
+## `/discover confidence`
+
+**The confidence gate.** Decide whether the system is understood well enough to
+stress.
+
+**Read** `skills/discover/sections/confidence-model.md` and run the gate from
+it. Thresholds are terrain-dependent and the difference is the point: in
+brownfield an unknown becomes a registered assumption, in a minefield an
+unknown on a critical path blocks.
+
+1. Rate every path and actor, and **show the ratings**. A summary sentence
+   hides the one Assumed actor on the critical path.
+2. Name the lowest-confidence elements on the paths that matter, and say
+   explicitly where low confidence does *not* matter.
+3. State what you know, what you think you know, and what you do not know. The
+   third list is the valuable one.
+4. Recommend: **ready to walk** / **needs more discovery** / **needs
+   investigation before anything**.
+5. Issue the decision brief. **STOP.**
+6. Log the gate and rationale to `docs/journey/decisions-log.md`.
+
+Not ready routes to a **specific** command — `/discover actor <name>`,
+`/discover intentions`, `/discover paths`, `/discover organisation` — never to
+"do more discovery".
+
+If the map is not trusted, the honest output is `NEEDS_DISCOVERY` with the
+unknown named. A confident-looking summary that lets everyone move on is the
+failure this gate exists to prevent.
+
+---
+
+{{SECTION_SELF_CHECK}}
+
+---
+
+## Workflow
+
+```
+1. /discover paths          map what is there; settle the boundary
+2. /discover actor <name>   investigate critical or opaque actors
+3. /discover intentions     trace key intentions end to end
+4. /discover gaps           prioritise what is still unknown
+5. /discover organisation   map resistance as stressors
+6. /discover confidence     CONFIDENCE GATE - not ready routes back to 1-5
+   |
+   v  ready
+7. /stressor walk           walk the discovered paths
+```
+
+**Parachuted into an unknown environment:** paths → actor → intentions → gaps,
+and repeat until the gate passes. Expect several cycles; that is the terrain,
+not a failure.
+
+**When change is blocked:** go straight to `/discover organisation`, translate
+the resistance into stressors, and let residuals emerge that address the
+organisational constraint alongside the technical ones.
+
+## Works with
+
+| Skill | How |
+|---|---|
+| `/journey` | terrain classification sets this skill's confidence threshold |
+| `/stressor walk` | discovered paths are its input |
+| `/stressor generate` | organisational stressors are injected here |
+| `/adr create` | a significant discovery that shapes the approach is a decision |
+| `/solution-doc` | discovery output becomes the baseline architecture description |
+| `/design-review` | discovery findings make the review honest about assumptions |
+
+## Reflection prompts
+
+- **What surprised you?** Surprises mark where the team's model was wrong, and
+  they are the highest-value thing discovery produces.
+- **Where did you stop because it got uncomfortable?** The awkward path — the
+  one owned by the team that does not want you there — is usually the one that
+  matters.
+- **What are you still assuming?** Name them. Unexamined assumptions become
+  design flaws at design-review prices.
+- **What does the organisation want to be true that may not be?** Tribal
+  knowledge is often tribal mythology.
+- **Are you confident enough to act, or just comfortable with the uncertainty?**
+  Those are different states. Know which one you are in before the gate.

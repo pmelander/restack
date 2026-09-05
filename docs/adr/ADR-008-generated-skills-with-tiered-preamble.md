@@ -8,7 +8,7 @@
 
 **Technical Story:** Adopting proven skill-authoring patterns from gstack
 
-**Implementation Status:** partially implemented — `/journey` and `/stressor` converted; twelve skills remain
+**Implementation Status:** partially implemented — `/journey`, `/discover` and `/stressor` (the residuality core) converted and CI enforcing; eleven skills remain
 
 **Implemented Date:** 2026-09-05
 
@@ -132,11 +132,12 @@ failure mode of this port.
 
 ## Follow-ups
 
-1. Convert the remaining twelve skills, tiering each: `/discover` at tier 3;
-   `/adr`, `/solution-doc`, `/tech-stack`, `/design-review`, `/cloud`,
-   `/capacity`, `/arch-learning`, `/capability-assessor`, `/patterns`,
-   `/evolve` at tier 2; `/excel` at tier 1.
-2. Add `python scripts/gen_skills.py --check` to CI.
+1. ~~Convert `/discover` at tier 3~~ (done — completes the residuality core).
+   Convert the remaining eleven: `/adr`, `/solution-doc`, `/tech-stack`,
+   `/design-review`, `/cloud`, `/capacity`, `/arch-learning`,
+   `/capability-assessor`, `/patterns`, `/evolve` at tier 2; `/excel` at tier 1.
+2. ~~Add `python scripts/gen_skills.py --check` to CI~~ (done —
+   `.github/workflows/skills.yml`, alongside `scripts/check_skills.py`).
 3. Resolve the `/design-review` name collision with gstack — installing this
    toolkit's skills flat into `~/.claude/skills/` currently overwrites gstack's
    skill of the same name.
