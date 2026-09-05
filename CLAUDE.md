@@ -45,8 +45,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-solution-doc/                   # generated, tier 2
 │   ├── restack-tech-stack/                     # generated, tier 2
 │   ├── restack-design-review/                  # generated, tier 2
-│   ├── restack-cloud/                          # legacy
-│   ├── restack-capacity/                       # legacy
+│   ├── restack-cloud/                          # generated, tier 2
+│   ├── restack-capacity/                       # generated, tier 2
 │   ├── restack-arch-learning/                  # legacy
 │   ├── restack-capability-assessor/            # legacy
 │   ├── restack-patterns/                       # legacy
@@ -70,10 +70,11 @@ Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
 Converted so far: the residuality core (`/restack-journey`, `/restack-discover`,
-`/restack-stressor`) and the design-and-documentation group (`/restack-adr`,
-`/restack-solution-doc`, `/restack-design-review`, `/restack-tech-stack`).
-Seven remain on the hand-maintained legacy structure below.
-`scripts/check_skills.py` reports which is which.
+`/restack-stressor`), the design-and-documentation group (`/restack-adr`,
+`/restack-solution-doc`, `/restack-design-review`, `/restack-tech-stack`) and
+the specialised pair (`/restack-cloud`, `/restack-capacity`). Five remain on
+the hand-maintained legacy structure below. `scripts/check_skills.py` reports
+which is which.
 
 Each skill template follows this structure:
 1. **Frontmatter** — `name`, `version`, `preamble-tier`, `model`, multi-line

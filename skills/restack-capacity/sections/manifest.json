@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-capacity",
+  "version": 1,
+  "sections": [
+    {
+      "id": "demand-modelling",
+      "file": "demand-modelling.md",
+      "title": "Demand modelling and back-of-envelope estimation",
+      "trigger": "running /restack-capacity estimate or forecast - turning business numbers into resource requirements"
+    },
+    {
+      "id": "scaling-patterns",
+      "file": "scaling-patterns.md",
+      "title": "Scaling patterns and bottleneck analysis",
+      "trigger": "running /restack-capacity scale, bottleneck or right-size - deciding how each layer grows and where it stops"
+    },
+    {
+      "id": "load-testing",
+      "file": "load-testing.md",
+      "title": "Load testing and validating residuals",
+      "trigger": "running /restack-capacity load-test - designing a test that validates the estimate and the residuals"
+    }
+  ]
+}

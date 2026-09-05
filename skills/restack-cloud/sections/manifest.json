@@ -1,0 +1,31 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-cloud",
+  "version": 1,
+  "sections": [
+    {
+      "id": "cloud-residuals",
+      "file": "cloud-residuals.md",
+      "title": "Cloud primitives as residuals",
+      "trigger": "running /restack-cloud design, or any time a cloud capability is being added to absorb a failure - mapping the primitive to the residual shape and the stressors it clears"
+    },
+    {
+      "id": "well-architected",
+      "file": "well-architected.md",
+      "title": "Well-Architected pillars and their limits",
+      "trigger": "running /restack-cloud review - assessing a design against the six pillars and cross-checking against the matrix"
+    },
+    {
+      "id": "iac-generation",
+      "file": "iac-generation.md",
+      "title": "Infrastructure as code generation and its safety rules",
+      "trigger": "running /restack-cloud iac - generating Terraform, CloudFormation, Bicep or CDK"
+    },
+    {
+      "id": "migration-and-dr",
+      "file": "migration-and-dr.md",
+      "title": "Cloud migration strategies and disaster recovery tiers",
+      "trigger": "running /restack-cloud migrate or /restack-cloud dr"
+    }
+  ]
+}
