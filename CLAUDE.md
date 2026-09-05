@@ -12,6 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 .
+├── setup / setup.ps1                   # install the skills into ~/.claude/skills
+├── VERSION  CHANGELOG.md  INSTALL.md
 ├── .github/workflows/skills.yml        # CI: generator drift + skills-tree validation
 ├── scripts/
 │   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
@@ -51,14 +53,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-capability-assessor/            # generated, tier 2
 │   ├── restack-patterns/                       # generated, tier 2
 │   ├── restack-evolve/                         # generated, tier 2
-│   └── restack-excel/                          # generated, tier 1
-│       └── read_spreadsheet.py                #   runtime helper, ships with the skill
+│   ├── restack-excel/                          # generated, tier 1
+│   │   └── read_spreadsheet.py                #   runtime helper, ships with the skill
+│   └── restack-upgrade/                        # generated, tier 1
 ├── templates/                          # Document templates
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-010
+    ├── adr/                            # ADR-001 .. ADR-011
     └── ...                             # Generated documentation location
 ```
 
@@ -69,9 +72,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-**All fourteen skills are generated.** Tiers: `/restack-journey`,
+**All fifteen skills are generated.** Tiers: `/restack-journey`,
 `/restack-discover` and `/restack-stressor` at 3 (the residuality core);
-`/restack-excel` at 1 (utility); the other ten at 2.
+`/restack-excel` and `/restack-upgrade` at 1 (utilities); the other ten at 2.
 `scripts/check_skills.py` reports the current state.
 
 Each skill template follows this structure:
@@ -271,13 +274,13 @@ matrices), `decisions-log.md` (every gate passed, with rationale), and
 ## Installation
 
 ```bash
-# Copy method (stable use)
-cp -R skills/* ~/.claude/skills/
-pip install -r requirements.txt
-
-# Symlink method (development — changes reflected immediately)
-ln -s /path/to/repo/skills/* ~/.claude/skills/
+./setup                 # copy (stable use)
+./setup --symlink       # development — repository edits are live
+pip install -r requirements.txt   # optional; /restack-excel only
 ```
+
+Windows: `.\setup.ps1` with `-Symlink` / `-DryRun` / `-Target`.
+Update later with `/restack-upgrade`.
 
 ## Skills
 

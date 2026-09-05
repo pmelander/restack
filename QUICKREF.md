@@ -3,11 +3,12 @@
 Every command, in journey order. Type `/restack` in Claude Code to see them all.
 
 ```bash
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-cp -R skills/* ~/.claude/skills/
-pip install -r requirements.txt        # /restack-excel only
+git clone https://github.com/pmelander/restack.git ~/restack
+cd ~/restack && ./setup                # Windows: .\setup.ps1
 ```
+
+`./setup --dry-run` shows what would change · `--symlink` for development ·
+`/restack-upgrade` to update later. See [INSTALL.md](INSTALL.md).
 
 ---
 
@@ -187,9 +188,12 @@ A review that is mostly **C** is a discovery problem wearing a review's clothes.
 /restack-capability-assessor compare     # practices, never scores
 ```
 
-## Utility
+## Utility and maintenance
 
 ```bash
+/restack-upgrade                         # pull, reinstall, show what changed
+                                         #   also repairs a broken install
+
 /restack-excel read <file> [sheet]       # to a markdown table
 /restack-excel preview <file> [rows]     # check the shape first
 /restack-excel sheets <file>

@@ -1,0 +1,184 @@
+#!/bin/sh
+# ReStack setup — install or update the skills for Claude Code.
+#
+# Copies (or symlinks) every skills/restack-*/ directory into the Claude Code
+# skills directory, removes ReStack skills that no longer exist upstream, and
+# records where the install came from so /restack-upgrade can find it later.
+#
+# POSIX sh. No dependencies. Safe to re-run.
+#
+# SAFETY: this script only ever creates, replaces or removes directories whose
+# names begin with "restack-". Nothing else in the skills directory is touched,
+# so it cannot damage another skill suite — the failure mode that ADR-009 exists
+# to prevent.
+
+set -eu
+
+REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+VERSION=$(cat "$REPO_DIR/VERSION" 2>/dev/null || echo "unknown")
+SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+STATE_DIR="$HOME/.restack"
+
+METHOD="copy"
+DRY_RUN=""
+QUIET=""
+
+usage() {
+  cat <<EOF
+ReStack setup — install the skills for Claude Code
+
+Usage: ./setup [options]
+
+Options:
+  --symlink     Symlink instead of copying, so repository edits are live.
+                Use while developing ReStack itself.
+  --copy        Copy the skills (default).
+  --dry-run     Show what would change; write nothing.
+  --target DIR  Install into DIR instead of \$HOME/.claude/skills.
+  -q, --quiet   Only print the summary.
+  -h, --help    Show this help.
+
+Environment:
+  CLAUDE_SKILLS_DIR   Overrides the default skills directory.
+
+Re-running is safe: it updates what changed and reports what it did.
+EOF
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --symlink) METHOD="symlink" ;;
+    --copy)    METHOD="copy" ;;
+    --dry-run) DRY_RUN="yes" ;;
+    --quiet|-q) QUIET="yes" ;;
+    --target)  shift; [ $# -gt 0 ] || { echo "--target needs a directory" >&2; exit 2; }; SKILLS_DIR="$1" ;;
+    --help|-h) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+say() { [ -n "$QUIET" ] || printf '%s\n' "$*"; }
+
+# --- sanity ------------------------------------------------------------------
+
+[ -d "$REPO_DIR/skills" ] || {
+  echo "Error: no skills/ directory next to this script ($REPO_DIR)." >&2
+  echo "Run ./setup from a ReStack checkout." >&2
+  exit 1
+}
+
+set -- "$REPO_DIR"/skills/restack-*/
+[ -d "$1" ] || { echo "Error: no skills/restack-*/ directories found." >&2; exit 1; }
+
+# Refuse to install a skill that is missing its SKILL.md — Claude Code would
+# silently ignore it and the user would wonder why a command does not exist.
+for src in "$REPO_DIR"/skills/restack-*/; do
+  [ -f "$src/SKILL.md" ] || {
+    echo "Error: $(basename "$src") has no SKILL.md — refusing to install a broken tree." >&2
+    echo "If you are developing, run: python scripts/gen_skills.py" >&2
+    exit 1
+  }
+done
+
+say "ReStack v$VERSION"
+say "  from: $REPO_DIR"
+say "  into: $SKILLS_DIR  ($METHOD)"
+[ -n "$DRY_RUN" ] && say "  DRY RUN — nothing will be written"
+say ""
+
+[ -n "$DRY_RUN" ] || mkdir -p "$SKILLS_DIR"
+
+# --- install -----------------------------------------------------------------
+
+n_new=0; n_upd=0; n_same=0; n_del=0
+
+for src in "$REPO_DIR"/skills/restack-*/; do
+  name=$(basename "$src")
+  dest="$SKILLS_DIR/$name"
+
+  if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
+    action="install"; n_new=$((n_new + 1))
+  elif [ "$METHOD" = "symlink" ] && [ -L "$dest" ] && [ "$(readlink "$dest")" = "${src%/}" ]; then
+    action="unchanged"; n_same=$((n_same + 1))
+  elif [ "$METHOD" = "copy" ] && [ ! -L "$dest" ] && cmp -s "$src/SKILL.md" "$dest/SKILL.md" 2>/dev/null; then
+    action="unchanged"; n_same=$((n_same + 1))
+  else
+    action="update"; n_upd=$((n_upd + 1))
+  fi
+
+  [ "$action" = "unchanged" ] || say "  $action  /$name"
+
+  [ -n "$DRY_RUN" ] && continue
+  [ "$action" = "unchanged" ] && continue
+
+  rm -rf "$dest"
+  if [ "$METHOD" = "symlink" ]; then
+    ln -s "${src%/}" "$dest"
+  else
+    cp -R "${src%/}" "$dest"
+  fi
+done
+
+# --- remove skills deleted upstream -----------------------------------------
+# The reason `cp -R skills/* ~/.claude/skills/` is not good enough: a skill
+# removed or renamed upstream stays installed forever, and the user keeps
+# invoking a command that no longer exists in the project.
+
+for dest in "$SKILLS_DIR"/restack-*/; do
+  [ -d "$dest" ] || continue
+  name=$(basename "$dest")
+  case "$name" in restack-\*) continue ;; esac      # unexpanded glob
+  [ -d "$REPO_DIR/skills/$name" ] && continue
+  say "  remove   /$name  (no longer in ReStack)"
+  n_del=$((n_del + 1))
+  [ -n "$DRY_RUN" ] || rm -rf "$dest"
+done
+
+# --- record the install ------------------------------------------------------
+
+if [ -z "$DRY_RUN" ]; then
+  mkdir -p "$STATE_DIR"
+  cat > "$STATE_DIR/install.json" <<EOF
+{
+  "version": "$VERSION",
+  "repo": "$REPO_DIR",
+  "skills_dir": "$SKILLS_DIR",
+  "method": "$METHOD",
+  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+fi
+
+# --- optional dependency check ----------------------------------------------
+
+py=""
+for candidate in python3 python; do
+  command -v "$candidate" >/dev/null 2>&1 && { py="$candidate"; break; }
+done
+
+dep_note=""
+if [ -z "$py" ]; then
+  dep_note="Python not found — /restack-excel will not work. Everything else is unaffected."
+elif ! "$py" -c "import openpyxl" >/dev/null 2>&1; then
+  dep_note="openpyxl not installed — /restack-excel cannot read .xlsx (CSV still works). Fix: pip install -r requirements.txt"
+fi
+
+# --- summary -----------------------------------------------------------------
+
+say ""
+if [ $((n_new + n_upd + n_del)) -eq 0 ]; then
+  printf 'ReStack v%s — already up to date (%d skills).\n' "$VERSION" "$n_same"
+else
+  printf 'ReStack v%s — %d installed, %d updated, %d removed, %d unchanged.\n' \
+    "$VERSION" "$n_new" "$n_upd" "$n_del" "$n_same"
+fi
+
+[ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
+
+if [ -n "$DRY_RUN" ]; then
+  printf '\n(dry run — nothing was written)\n'
+else
+  printf '\nType /restack in Claude Code to see the skills.\n'
+  [ "$METHOD" = "symlink" ] && printf 'Symlinked: edits in %s are live.\n' "$REPO_DIR"
+fi

@@ -10,28 +10,56 @@ This guide will help you install the ReStack skills for Claude Code.
 
 ## Installation Methods
 
-### Method 1: Direct Installation (Recommended)
-
-This method copies the skills directly to your Claude Code skills directory.
+### Method 1: setup script (recommended)
 
 ```bash
-# Clone the repository
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-
-# Copy all skills to Claude Code (Claude Code expects skills/<name>/SKILL.md)
-cp -R skills/* ~/.claude/skills/
-
-# Verify installation — expect 14 directories
-ls -d ~/.claude/skills/restack-*/ | wc -l
+git clone https://github.com/pmelander/restack.git ~/restack
+cd ~/restack && ./setup
 ```
 
-**Result:** You should see skill folders like:
-- `restack-adr/`
-- `restack-solution-doc/`
-- `restack-tech-stack/`
-- `restack-design-review/`
-(each containing a `SKILL.md`)
+Windows, without a POSIX shell:
+
+```powershell
+git clone https://github.com/pmelander/restack.git $HOME
+estack
+cd $HOME
+estack
+.\setup.ps1
+```
+
+`setup` prints what it installed, updated, removed and left unchanged, and ends
+with a summary line. Re-running it is safe — that is also how you repair a
+partial install.
+
+Useful flags:
+
+| Flag | Effect |
+|---|---|
+| `--dry-run` | show what would change; write nothing |
+| `--symlink` | symlink instead of copy, so repository edits are live |
+| `--target DIR` | install somewhere other than `~/.claude/skills` |
+| `--quiet` | summary only |
+
+`CLAUDE_SKILLS_DIR` overrides the target for all of them.
+
+**Result:** fifteen directories in `~/.claude/skills/`, each named `restack-*`
+and each containing a `SKILL.md`. Verify with:
+
+```bash
+ls -d ~/.claude/skills/restack-*/ | wc -l    # expect 15
+```
+
+### What setup does that a plain copy does not
+
+- Removes ReStack skills that no longer exist upstream. A plain copy leaves a
+  renamed or deleted skill installed forever.
+- Reports what changed instead of overwriting silently.
+- Refuses to install a skill directory with no `SKILL.md` — Claude Code would
+  ignore it and the command would simply never appear.
+- Records the install in `~/.restack/install.json`, which is how
+  `/restack-upgrade` finds your checkout later.
+- Only ever touches directories named `restack-*`, so it cannot damage another
+  skill suite.
 
 ### Why every skill is prefixed
 
@@ -41,19 +69,20 @@ popular skill suites ship a `design-review`, a `review`, or a `patterns`, so an
 unprefixed install silently overwrites whichever was there first, and you lose a
 skill without being told.
 
-The `restack-` prefix makes ReStack coexist with anything else you have installed.
-The folder name and the command are always the same string, so there is no
-install-time renaming to remember and the symlink method below works unchanged.
+The `restack-` prefix makes ReStack coexist with anything else you have
+installed. The folder name and the command are always the same string, so there
+is no install-time renaming to remember and the symlink method below works
+unchanged. See [ADR-009](adr/ADR-009-prefix-skill-names.md).
 
-**Upgrading from an unprefixed install?** Versions before the rename installed as
-`~/.claude/skills/adr/`, `~/.claude/skills/stressor/` and so on. Those are now
-orphaned duplicates — remove them so `/` does not offer you two of everything:
+**Upgrading from an unprefixed install?** Versions before the rename installed
+as `~/.claude/skills/adr/`, `~/.claude/skills/stressor/` and so on. `setup`
+cannot remove those — it only touches `restack-*`, deliberately, since an
+unprefixed `design-review` may belong to a suite you still want. Inspect them
+before deleting anything:
 
 ```bash
-for s in adr arch-learning capability-assessor capacity cloud design-review \n         discover evolve excel journey patterns solution-doc stressor tech-stack; do
-  # check what it is before deleting - design-review in particular may belong
-  # to another suite you still want
-  head -3 ~/.claude/skills/$s/SKILL.md 2>/dev/null && echo "  ^ ~/.claude/skills/$s"
+for s in adr arch-learning capability-assessor capacity cloud design-review          discover evolve excel journey patterns solution-doc stressor tech-stack; do
+  [ -d ~/.claude/skills/$s ] && { head -3 ~/.claude/skills/$s/SKILL.md; echo "  ^ ~/.claude/skills/$s"; }
 done
 ```
 
@@ -77,21 +106,21 @@ ls -d ~/.claude/skills/restack-*/ | wc -l
 
 **Advantage:** Edit skills in the repository and changes are immediately available in Claude Code.
 
-### Method 3: Windows Installation
+### Method 3: Windows
 
-For Windows users without symlink support:
+`setup.ps1` is the Windows-native equivalent and takes the same options.
 
 ```powershell
-# Clone the repository
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-
-# Copy all skills to Claude Code (Claude Code expects skills\<name>\SKILL.md)
-Copy-Item -Recurse -Path "skills\*" -Destination "$env:USERPROFILE\.claude\skills\"
-
-# Verify installation
-dir "$env:USERPROFILE\.claude\skills\"
+git clone https://github.com/pmelander/restack.git $HOME
+estack
+cd $HOME
+estack
+.\setup.ps1                 # -DryRun, -Symlink, -Target, -Quiet
 ```
+
+`-Symlink` needs Developer Mode or an elevated shell; without either, use the
+default copy. Git Bash users can run `./setup` instead — the two are
+behaviourally identical.
 
 ## Verification
 
@@ -115,39 +144,46 @@ Try creating your first ADR:
 
 Claude should start asking you questions to fill in the ADR template.
 
-## Directory Structure After Installation
+## Directory structure after installation
 
 ```
-~/.claude/
-  skills/
-    adr/
-      SKILL.md              # ✅ Installed
-    solution-doc/
-      SKILL.md              # ✅ Installed
-    tech-stack/
-      SKILL.md              # ✅ Installed
-    design-review/
-      SKILL.md              # ✅ Installed
-    [other existing skills]
+~/.claude/skills/
+  restack-journey/      SKILL.md + sections/
+  restack-discover/     SKILL.md + sections/
+  restack-stressor/     SKILL.md + sections/ + compliance-packs/
+  restack-adr/          ...
+  ... 15 in total, all prefixed restack-
+  restack-excel/        SKILL.md + read_spreadsheet.py
+  restack-upgrade/      SKILL.md
+  [your other skills, untouched]
+
+~/.restack/
+  install.json          version, repo path, method, date
 ```
 
-## Updating Skills
+## Updating
 
-### For Direct Installation
+```
+/restack-upgrade
+```
+
+It finds your checkout from `~/.restack/install.json`, compares installed,
+local and remote versions, pulls, re-runs `setup`, and summarises the changelog
+between the two. Uncommitted changes or unpushed commits stop it and require an
+explicit answer — it will not discard work.
+
+By hand:
 
 ```bash
-cd restack
-git pull origin main
-cp -R skills/* ~/.claude/skills/
+cd ~/restack && git pull && ./setup
 ```
 
-### For Symlink Installation
+A symlink install still needs `./setup` after a pull, because a newly added
+skill has no symlink yet. Edits to existing skills are live without it.
 
-```bash
-cd restack
-git pull origin main
-# Changes are automatically available!
-```
+`/restack-upgrade` is also the repair path — re-running `setup` fixes almost
+every partial-install symptom. Use `./setup --dry-run` first to see what it
+would change.
 
 ## Uninstallation
 
@@ -217,20 +253,22 @@ If you use a different skills directory, adjust the paths accordingly:
 
 ```bash
 # If your skills are in ~/my-skills/
-cp -R skills/* ~/my-skills/
+./setup --target ~/my-skills
 ```
 
-### Selective Installation
+### Selective installation
 
-Install only the skills you need:
+`setup` installs all fifteen. If you want a subset, copy the directories you
+want — the skills work independently, though `/restack-journey` will reference
+commands that are not installed:
 
 ```bash
-# Install only ADR skill
-cp -R skills/restack-adr ~/.claude/skills/
-
-# Install only documentation skills
-cp -R skills/restack-solution-doc ~/.claude/skills/
+cp -R skills/restack-journey skills/restack-stressor ~/.claude/skills/
 ```
+
+Note that `/restack-upgrade` and `setup` still manage the full set: re-running
+`setup` would install the rest. A subset is best kept with `--target` and a
+skills directory of your own.
 
 ## Next Steps
 

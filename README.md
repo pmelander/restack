@@ -2,9 +2,9 @@
 
 **Architecture skills for Claude Code, built on Residuality Theory.**
 
-Fourteen skills that walk you through designing systems which survive things
-nobody predicted — and build the thinking so that eventually you do it without
-them.
+Fifteen skills — fourteen that walk you through designing systems which
+survive things nobody predicted, and one that keeps them up to date. They build
+the thinking so that eventually you do it without them.
 
 > Formerly *Residual Architecture Skill Set*. Renamed to ReStack in September 2026; the history is unchanged.
 
@@ -156,7 +156,8 @@ in front of you, rather than by drifting onward.
 
 ## The skills
 
-Fourteen, organised by where you are rather than by what they are called.
+Fourteen for the work, organised by where you are rather than by what they
+are called — plus `/restack-upgrade`.
 
 **Orchestration**
 
@@ -201,11 +202,12 @@ Fourteen, organised by where you are rather than by what they are called.
 | [`/restack-evolve`](skills/restack-evolve/SKILL.md) | brittleness, incremental change, fitness functions that stop residuals eroding |
 | [`/restack-capability-assessor`](skills/restack-capability-assessor/SKILL.md) | team capability rated on practice under deadline, not on knowledge |
 
-**Utility**
+**Utility and maintenance**
 
 | | |
 |---|---|
 | [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
+| [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install |
 
 ### Two things deliberately absent
 
@@ -226,14 +228,22 @@ structurally rather than satisfying a control on paper
 ## Install
 
 ```bash
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-
-cp -R skills/* ~/.claude/skills/     # Claude Code reads skills/<name>/SKILL.md
-pip install -r requirements.txt      # openpyxl, for /restack-excel only
+git clone https://github.com/pmelander/restack.git ~/restack
+cd ~/restack && ./setup          # Windows: .\setup.ps1
 ```
 
-Open Claude Code and type `/restack` to see all fourteen.
+Open Claude Code and type `/restack`. Later, `/restack-upgrade` pulls and
+reinstalls in one step.
+
+`setup` reports what it installed, updated and removed, and — unlike a plain
+copy — removes ReStack skills that no longer exist upstream. `--dry-run` shows
+what it would do; `--symlink` makes repository edits live. Python and
+`openpyxl` are optional and affect only `/restack-excel`.
+
+**Installing with an agent?** Point Claude Code at
+[INSTALL.md](INSTALL.md) — "install ReStack from
+https://github.com/pmelander/restack" — and it has step-by-step instructions to
+follow, including confirming with you before it writes anything.
 
 Every skill is prefixed so ReStack coexists with other skill suites — an
 unprefixed `design-review` or `patterns` silently overwrites whatever was
@@ -245,8 +255,8 @@ symlink method, upgrading from an unprefixed install, and troubleshooting.
 
 ## Status
 
-All fourteen skills are at **v2.0.0**, generated from templates with a shared
-behavioural preamble. CI checks on every push that no generated file has
+All fourteen architecture skills are at **v2.0.0**, generated from templates
+with a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 
 **These skills are the deliverable; they have not yet been run end to end on a
@@ -286,6 +296,8 @@ See [Contributing](CONTRIBUTING.md).
 | [QUICKREF.md](QUICKREF.md) | every command, and the gates |
 | [docs/USAGE.md](docs/USAGE.md) | worked examples per skill |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | install, upgrade, troubleshoot |
+| [INSTALL.md](INSTALL.md) | install methods, and instructions an agent can follow |
+| [CHANGELOG.md](CHANGELOG.md) | what changed, by version |
 | [CLAUDE.md](CLAUDE.md) | architecture of the toolkit itself |
 | [docs/adr/](docs/adr/) | decisions made while building it |
 

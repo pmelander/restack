@@ -9,13 +9,13 @@ contribute to this toolkit. For what it does and why, read the
 
 ## What it is
 
-Fourteen Claude Code skills implementing
+Fifteen Claude Code skills implementing
 [Residuality Theory](RESIDUALITY.md) as a working architectural practice —
 walking paths, stress-testing them against scenarios including deliberately
 absurd ones, and identifying the discrete architectural changes (residuals)
 that reduce whole classes of exposure at once.
 
-**Status:** v2.0.0, September 2026. All fourteen skills generated from
+**Status:** v2.0.0, September 2026. All fifteen skills generated from
 templates with a shared behavioural preamble. CI enforces that generated files
 match their source. Not yet run end to end on a live engagement in this form.
 
@@ -72,7 +72,7 @@ for it on every invocation.
 
 ## Decisions on record
 
-Ten ADRs. Four matter most to anyone evaluating the approach:
+Eleven ADRs. Four matter most to anyone evaluating the approach:
 
 | ADR | Decision |
 |---|---|
@@ -87,7 +87,9 @@ stressor analysis, [004](docs/adr/ADR-004-add-excel-reading-utility.md) Excel
 utility, [005](docs/adr/ADR-005-add-architecture-learning-analyzer.md) learning
 analyzer, [009](docs/adr/ADR-009-prefix-skill-names.md) prefixed skill names, and
 [010](docs/adr/ADR-010-skills-are-self-contained.md) skills ship their own
-runtime dependencies.
+runtime dependencies, and
+[011](docs/adr/ADR-011-setup-script-and-upgrade-skill.md) setup script and
+upgrade skill.
 
 ADR-006 and ADR-007 are the ones worth reading first — they show the philosophy
 actively deciding what *not* to build, which is the clearest statement of what
@@ -98,10 +100,11 @@ this toolkit is for.
 ## Layout
 
 ```
-skills/restack-*/          14 skills: SKILL.md.tmpl (source) + SKILL.md + sections/
+skills/restack-*/          15 skills: SKILL.md.tmpl (source) + SKILL.md + sections/
+setup, setup.ps1           installer; /restack-upgrade re-runs it
 scripts/                   generator, validator, preamble fragments
 templates/                 canonical document formats
-docs/adr/                  10 ADRs
+docs/adr/                  11 ADRs
 docs/                      installation, usage
 examples/                  example outputs
 ```

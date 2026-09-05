@@ -8,29 +8,26 @@ Install in two minutes, then walk through a first engagement end to end.
 
 **Linux / macOS**
 ```bash
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-cp -R skills/* ~/.claude/skills/
-pip install -r requirements.txt
+git clone https://github.com/pmelander/restack.git ~/restack
+cd ~/restack && ./setup
 ```
 
 **Windows**
 ```powershell
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-Copy-Item -Recurse -Path "skills\*" -Destination "$env:USERPROFILE\.claude\skills\"
-pip install -r requirements.txt
+git clone https://github.com/pmelander/restack.git $HOME\restack
+cd $HOME\restack
+.\setup.ps1
 ```
 
-Python and `openpyxl` are needed only by `/restack-excel`. Everything else works
-without them.
+`setup` tells you exactly what it installed. Python and `openpyxl` are optional
+and needed only by `/restack-excel` — it will say so if they are missing.
 
-**Verify:** open Claude Code and type `/restack`. You should see fourteen
-skills. If you see none, check they landed in `~/.claude/skills/restack-*/`,
-each containing a `SKILL.md`.
+**Verify:** type `/restack` in Claude Code. You should see fifteen skills —
+fourteen for the work, plus `/restack-upgrade`.
 
-Prefer symlinks while developing, or upgrading from an unprefixed install? See
-[Installation](docs/INSTALLATION.md).
+Want an agent to install it for you? Point Claude Code at
+[INSTALL.md](INSTALL.md). Developing ReStack, or upgrading from an unprefixed
+install? See [Installation](docs/INSTALLATION.md).
 
 **Before your first engagement**, read
 [Introduction to Residuality Theory](RESIDUALITY.md). It is short, and every
@@ -218,7 +215,7 @@ a three-week gap, a handoff, or an audit.
 
 ## Checklist
 
-- [ ] Installed; `/restack` shows fourteen skills
+- [ ] Installed; `/restack` shows fifteen skills
 - [ ] Read [Residuality Theory](RESIDUALITY.md) — the vocabulary is load-bearing
 - [ ] `/restack-journey start` and confirmed the terrain
 - [ ] Walked one path, including its error path
@@ -237,5 +234,6 @@ a three-week gap, a handoff, or an audit.
 | [QUICKREF.md](QUICKREF.md) | every command, and the gates |
 | [docs/USAGE.md](docs/USAGE.md) | worked examples per skill |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | symlinks, upgrades, troubleshooting |
+| [INSTALL.md](INSTALL.md) | install methods, and agent-followable instructions |
 | [ROADMAP.md](ROADMAP.md) | what is next |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | compliance packs and new skills |

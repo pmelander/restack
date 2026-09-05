@@ -1,0 +1,15 @@
+# Shell scripts and the Python helper must keep LF endings. A CRLF `setup`
+# fails on Linux and macOS with "bad interpreter: /bin/sh^M", which is a
+# confusing way to discover a line-ending problem.
+setup           text eol=lf
+*.sh            text eol=lf
+*.py            text eol=lf
+
+# PowerShell is fine either way; CRLF is the native convention.
+*.ps1           text eol=crlf
+
+# Markdown and data files: normalise in the repository, let checkout decide.
+*.md            text
+*.json          text
+*.yml           text
+VERSION         text eol=lf

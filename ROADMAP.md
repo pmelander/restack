@@ -6,7 +6,7 @@ Where the toolkit is, what is next, and what has deliberately been ruled out.
 
 ## Where it is now
 
-**v2.0.0 — all fourteen skills generated, September 2026.**
+**v2.0.0 — all fifteen skills generated, September 2026.**
 
 Every skill is rendered from a template with a shared behavioural preamble, so
 cross-cutting behaviour — decision briefs, evidence rules, stop gates, the
@@ -16,11 +16,11 @@ skills tree is valid.
 
 | | |
 |---|---|
-| Skills | 14, all v2.0.0 |
+| Skills | 15 (14 architecture + `/restack-upgrade`) |
 | Sections (on-demand depth) | 42 across 13 skills |
-| Preamble tiers | 3 at tier 3 (residuality core), 10 at tier 2, 1 at tier 1 |
+| Preamble tiers | 3 at tier 3 (residuality core), 10 at tier 2, 2 at tier 1 |
 | Compliance packs | 1 (GDPR) |
-| ADRs | 10 |
+| ADRs | 11 |
 
 The three architectural decisions behind this shape:
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) (generated
