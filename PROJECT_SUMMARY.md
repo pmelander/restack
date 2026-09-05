@@ -72,47 +72,47 @@ restack/
 
 | Skill | Command | Capability Built |
 |-------|---------|-----------------|
-| Architect's Journey | `/journey` | Sequencing, orchestration, and iteration across the full architectural journey |
-| Environment Discovery | `/discover` | Confident path mapping in brownfield and minefield environments |
+| Architect's Journey | `/restack-journey` | Sequencing, orchestration, and iteration across the full architectural journey |
+| Environment Discovery | `/restack-discover` | Confident path mapping in brownfield and minefield environments |
 
 ### Stressor Analysis
 
 | Skill | Command | Capability Built |
 |-------|---------|-----------------|
-| Stressor Analysis | `/stressor` | Antifragility thinking and resilience design |
+| Stressor Analysis | `/restack-stressor` | Antifragility thinking and resilience design |
 
-**Extension:** `/stressor compliance <pack>` injects regulatory frameworks as stressor sets, so compliance requirements emerge as architectural residues rather than a checklist process.
+**Extension:** `/restack-stressor compliance <pack>` injects regulatory frameworks as stressor sets, so compliance requirements emerge as architectural residues rather than a checklist process.
 
 ### Design & Documentation
 
 | Skill | Command | Capability Built |
 |-------|---------|-----------------|
-| Architecture Decision Records | `/adr` | Structured decision-making and trade-off thinking |
-| Solution Documentation | `/solution-doc` | Systems thinking and communication |
-| Technology Stack Advisor | `/tech-stack` | Objective evaluation without hype |
-| Design Review | `/design-review` | Self-assessment and pattern recognition |
+| Architecture Decision Records | `/restack-adr` | Structured decision-making and trade-off thinking |
+| Solution Documentation | `/restack-solution-doc` | Systems thinking and communication |
+| Technology Stack Advisor | `/restack-tech-stack` | Objective evaluation without hype |
+| Design Review | `/restack-design-review` | Self-assessment and pattern recognition |
 
 ### Cloud & Infrastructure
 
 | Skill | Command | Capability Built |
 |-------|---------|-----------------|
-| Cloud Architect | `/cloud` | Cloud-native thinking, IaC discipline, Well-Architected mindset |
-| Capacity Planner | `/capacity` | Demand modelling, scaling intuition, bottleneck identification |
+| Cloud Architect | `/restack-cloud` | Cloud-native thinking, IaC discipline, Well-Architected mindset |
+| Capacity Planner | `/restack-capacity` | Demand modelling, scaling intuition, bottleneck identification |
 
 ### Organisational Capabilities
 
 | Skill | Command | Capability Built |
 |-------|---------|-----------------|
-| Architecture Learning Analyzer | `/arch-learning` | Systematic learning from past decisions |
-| Team Capability Assessor | `/capability-assessor` | Team maturity self-awareness and growth |
-| Pattern Extractor | `/patterns` | Institutional knowledge and pattern libraries |
-| Evolutionary Coach | `/evolve` | Continuous architecture improvement mindset |
+| Architecture Learning Analyzer | `/restack-arch-learning` | Systematic learning from past decisions |
+| Team Capability Assessor | `/restack-capability-assessor` | Team maturity self-awareness and growth |
+| Pattern Extractor | `/restack-patterns` | Institutional knowledge and pattern libraries |
+| Evolutionary Coach | `/restack-evolve` | Continuous architecture improvement mindset |
 
 ### Utilities
 
 | Skill | Command | Purpose |
 |-------|---------|---------|
-| Excel Reader | `/excel` | Import stressor matrices and data from Excel/CSV |
+| Excel Reader | `/restack-excel` | Import stressor matrices and data from Excel/CSV |
 
 ---
 
@@ -127,8 +127,8 @@ Seven ADRs document the significant decisions made while building this toolkit:
 | ADR-003 | Add Stressor Analysis skill |
 | ADR-004 | Add Excel reading utility |
 | ADR-005 | Add Architecture Learning Analyzer |
-| ADR-006 | **Exclude Risk Assessor** — covered by antifragility thinking via `/stressor` |
-| ADR-007 | **Replace Compliance Checker** with `/stressor compliance` packs — compliance as byproduct of antifragile design |
+| ADR-006 | **Exclude Risk Assessor** — covered by antifragility thinking via `/restack-stressor` |
+| ADR-007 | **Replace Compliance Checker** with `/restack-stressor compliance` packs — compliance as byproduct of antifragile design |
 
 ADR-006 and ADR-007 are particularly important: they show the toolkit's philosophy actively shaping what *not* to build.
 
@@ -161,7 +161,7 @@ ADR-006 and ADR-007 are particularly important: they show the toolkit's philosop
 
 The most valuable open contribution area is **compliance packs** — curated stressor sets for GDPR, HIPAA, PCI DSS, ISO 27001, and SOC 2. These require regulatory expertise and make the toolkit immediately useful for compliance-heavy organisations without compromising its philosophical consistency.
 
-See `skills/stressor/compliance-packs/README.md` for the pack structure.
+See `skills/restack-stressor/compliance-packs/README.md` for the pack structure.
 
 Other contributions: new Phase 4 skills, examples, template refinements. See [CONTRIBUTING.md](../CONTRIBUTING.md).
 

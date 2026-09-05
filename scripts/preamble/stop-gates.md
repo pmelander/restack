@@ -25,4 +25,4 @@ Three rules:
    `docs/journey/decisions-log.md` before continuing. A gate that leaves no
    trace did not happen.
 3. **A gate reached with Low confidence routes backwards**, not forwards. The
-   correct output is `NEEDS_DISCOVERY` and a specific `/discover` command.
+   correct output is `NEEDS_DISCOVERY` and a specific `/restack-discover` command.

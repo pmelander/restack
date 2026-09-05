@@ -27,11 +27,35 @@ ls ~/.claude/skills/
 ```
 
 **Result:** You should see skill folders like:
-- `adr/`
-- `solution-doc/`
-- `tech-stack/`
-- `design-review/`
+- `restack-adr/`
+- `restack-solution-doc/`
+- `restack-tech-stack/`
+- `restack-design-review/`
 (each containing a `SKILL.md`)
+
+### Why every skill is prefixed
+
+Claude Code resolves a skill by its folder name, so `~/.claude/skills/design-review/`
+is the command `/design-review` — and only one folder can own that name. Several
+popular skill suites ship a `design-review`, a `review`, or a `patterns`, so an
+unprefixed install silently overwrites whichever was there first, and you lose a
+skill without being told.
+
+The `restack-` prefix makes ReStack coexist with anything else you have installed.
+The folder name and the command are always the same string, so there is no
+install-time renaming to remember and the symlink method below works unchanged.
+
+**Upgrading from an unprefixed install?** Versions before the rename installed as
+`~/.claude/skills/adr/`, `~/.claude/skills/stressor/` and so on. Those are now
+orphaned duplicates — remove them so `/` does not offer you two of everything:
+
+```bash
+for s in adr arch-learning capability-assessor capacity cloud design-review \n         discover evolve excel journey patterns solution-doc stressor tech-stack; do
+  # check what it is before deleting - design-review in particular may belong
+  # to another suite you still want
+  head -3 ~/.claude/skills/$s/SKILL.md 2>/dev/null && echo "  ^ ~/.claude/skills/$s"
+done
+```
 
 ### Method 2: Symlink Installation (For Developers)
 
@@ -43,20 +67,20 @@ git clone git@github.com:pmelander/restack.git restack
 cd restack
 
 # Create symlinks for skills
-ln -s "$(pwd)/skills/adr" ~/.claude/skills/adr
-ln -s "$(pwd)/skills/solution-doc" ~/.claude/skills/solution-doc
-ln -s "$(pwd)/skills/tech-stack" ~/.claude/skills/tech-stack
-ln -s "$(pwd)/skills/design-review" ~/.claude/skills/design-review
-ln -s "$(pwd)/skills/stressor" ~/.claude/skills/stressor
-ln -s "$(pwd)/skills/excel" ~/.claude/skills/excel
-ln -s "$(pwd)/skills/arch-learning" ~/.claude/skills/arch-learning
-ln -s "$(pwd)/skills/capability-assessor" ~/.claude/skills/capability-assessor
-ln -s "$(pwd)/skills/patterns" ~/.claude/skills/patterns
-ln -s "$(pwd)/skills/evolve" ~/.claude/skills/evolve
-ln -s "$(pwd)/skills/cloud" ~/.claude/skills/cloud
-ln -s "$(pwd)/skills/capacity" ~/.claude/skills/capacity
-ln -s "$(pwd)/skills/discover" ~/.claude/skills/discover
-ln -s "$(pwd)/skills/journey" ~/.claude/skills/journey
+ln -s "$(pwd)/skills/restack-adr" ~/.claude/skills/restack-adr
+ln -s "$(pwd)/skills/restack-solution-doc" ~/.claude/skills/restack-solution-doc
+ln -s "$(pwd)/skills/restack-tech-stack" ~/.claude/skills/restack-tech-stack
+ln -s "$(pwd)/skills/restack-design-review" ~/.claude/skills/restack-design-review
+ln -s "$(pwd)/skills/restack-stressor" ~/.claude/skills/restack-stressor
+ln -s "$(pwd)/skills/restack-excel" ~/.claude/skills/restack-excel
+ln -s "$(pwd)/skills/restack-arch-learning" ~/.claude/skills/restack-arch-learning
+ln -s "$(pwd)/skills/restack-capability-assessor" ~/.claude/skills/restack-capability-assessor
+ln -s "$(pwd)/skills/restack-patterns" ~/.claude/skills/restack-patterns
+ln -s "$(pwd)/skills/restack-evolve" ~/.claude/skills/restack-evolve
+ln -s "$(pwd)/skills/restack-cloud" ~/.claude/skills/restack-cloud
+ln -s "$(pwd)/skills/restack-capacity" ~/.claude/skills/restack-capacity
+ln -s "$(pwd)/skills/restack-discover" ~/.claude/skills/restack-discover
+ln -s "$(pwd)/skills/restack-journey" ~/.claude/skills/restack-journey
 
 # Verify installation
 ls -la ~/.claude/skills/
@@ -85,10 +109,10 @@ dir "$env:USERPROFILE\.claude\skills\"
 1. **Open Claude Code**
 2. **Type `/` in the chat**
 3. **Look for these skills:**
-   - `/adr` - Architecture Decision Records
-   - `/solution-doc` - Solution Documentation Generator
-   - `/tech-stack` - Technology Stack Advisor
-   - `/design-review` - Design Review
+   - `/restack-adr` - Architecture Decision Records
+   - `/restack-solution-doc` - Solution Documentation Generator
+   - `/restack-tech-stack` - Technology Stack Advisor
+   - `/restack-design-review` - Design Review
 
 If you see these skills, installation was successful!
 
@@ -97,7 +121,7 @@ If you see these skills, installation was successful!
 Try creating your first ADR:
 
 ```
-/adr create Use PostgreSQL for primary database
+/restack-adr create Use PostgreSQL for primary database
 ```
 
 Claude should start asking you questions to fill in the ADR template.
@@ -142,10 +166,10 @@ To remove the skills:
 
 ```bash
 # Remove skills
-rm -rf ~/.claude/skills/adr
-rm -rf ~/.claude/skills/solution-doc
-rm -rf ~/.claude/skills/tech-stack
-rm -rf ~/.claude/skills/design-review
+rm -rf ~/.claude/skills/restack-adr
+rm -rf ~/.claude/skills/restack-solution-doc
+rm -rf ~/.claude/skills/restack-tech-stack
+rm -rf ~/.claude/skills/restack-design-review
 ```
 
 Or on Windows:
@@ -183,7 +207,7 @@ Remove-Item -Recurse "$env:USERPROFILE\.claude\skills\design-review"
 
 1. **Check the skill file has proper frontmatter:**
    ```bash
-   head -5 ~/.claude/skills/adr/SKILL.md
+   head -5 ~/.claude/skills/restack-adr/SKILL.md
    ```
    Should show YAML frontmatter with `---` delimiters.
 
@@ -213,10 +237,10 @@ Install only the skills you need:
 
 ```bash
 # Install only ADR skill
-cp -R skills/adr ~/.claude/skills/
+cp -R skills/restack-adr ~/.claude/skills/
 
 # Install only documentation skills
-cp -R skills/solution-doc ~/.claude/skills/
+cp -R skills/restack-solution-doc ~/.claude/skills/
 ```
 
 ## Next Steps

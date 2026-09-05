@@ -30,7 +30,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into the entire ReSt
 #### 1. ADR Skill (Architecture Decision Records)
 **Capability Built:** Structured decision-making thinking
 - Added reflection prompts for decision process
-- New `/adr review` command for outcome-based learning
+- New `/restack-adr review` command for outcome-based learning
 - Learning Notes section for capturing insights
 - Capability growth rubric (Novice → Expert)
 
@@ -39,7 +39,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into the entire ReSt
 #### 2. Solution Documentation Skill
 **Capability Built:** Clear architectural communication
 - Reflection prompts for HLD, LLD, deployment, runbook
-- New `/solution-doc review` command for quality assessment
+- New `/restack-solution-doc review` command for quality assessment
 - Documentation as thinking tool, not just output
 - Audience awareness and systems thinking development
 
@@ -48,7 +48,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into the entire ReSt
 #### 3. Tech Stack Advisor Skill  
 **Capability Built:** Strategic technology evaluation
 - Reflection prompts about biases and hidden costs
-- New `/tech-stack retro` command for retrospectives
+- New `/restack-tech-stack retro` command for retrospectives
 - Hype-resistance and context-awareness building
 - Multi-dimensional evaluation thinking
 
@@ -57,7 +57,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into the entire ReSt
 #### 4. Design Review Skill
 **Capability Built:** Critical self-evaluation  
 - Reflection prompts for self-review
-- New `/design-review self-check` command
+- New `/restack-design-review self-check` command
 - Pattern recognition and prevention thinking
 - Self-criticism as mastery goal
 
@@ -336,10 +336,10 @@ The most successful tool is one that becomes less necessary as users internalize
 5. **Residuality Measurement Framework** - How to measure success
 
 ### Skills (Refactored)
-1. **skills/adr/SKILL.md** - Decision-making capability
-2. **skills/solution-doc/SKILL.md** - Communication capability
-3. **skills/tech-stack/SKILL.md** - Strategic thinking capability
-4. **skills/design-review/SKILL.md** - Critical evaluation capability
+1. **skills/restack-adr/SKILL.md** - Decision-making capability
+2. **skills/restack-solution-doc/SKILL.md** - Communication capability
+3. **skills/restack-tech-stack/SKILL.md** - Strategic thinking capability
+4. **skills/restack-design-review/SKILL.md** - Critical evaluation capability
 
 ### Supporting Docs
 - **ROADMAP.md** - Updated with Phase 2 vision

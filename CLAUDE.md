@@ -27,38 +27,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── glossary.md                 # tier 3
 │       ├── stop-gates.md               # tier 3
 │       └── journey-state.md            # tier 3
-├── skills/                             # Claude Code layout: skills/<name>/SKILL.md
-│   ├── journey/                        # /journey    generated, tier 3
-│   │   ├── SKILL.md.tmpl               #   source of truth
-│   │   ├── SKILL.md                    #   generated - do not edit
-│   │   └── sections/                   #   route maps + terrain classification
-│   ├── discover/                       # /discover   generated, tier 3
+├── skills/                                     # Claude Code layout: skills/<name>/SKILL.md
+│   ├── restack-journey/                        # generated, tier 3
+│   │   ├── SKILL.md.tmpl                       #   source of truth
+│   │   ├── SKILL.md                            #   generated - do not edit
+│   │   └── sections/                           #   route maps + terrain classification
+│   ├── restack-discover/                       # generated, tier 3
 │   │   ├── SKILL.md.tmpl
 │   │   ├── SKILL.md
-│   │   └── sections/                   #   confidence model, actor/intention protocols
-│   ├── stressor/                       # /stressor   generated, tier 3
+│   │   └── sections/                           #   confidence model, actor/intention protocols
+│   ├── restack-stressor/                       # generated, tier 3
 │   │   ├── SKILL.md.tmpl
 │   │   ├── SKILL.md
-│   │   ├── sections/                   #   walk, generation, matrix, residuals, workshop
-│   │   └── compliance-packs/           #   regulatory stressor packs
-│   ├── adr/                            # /adr              legacy
-│   ├── solution-doc/                   # /solution-doc     legacy
-│   ├── tech-stack/                     # /tech-stack       legacy
-│   ├── design-review/                  # /design-review    legacy
-│   ├── cloud/                          # /cloud            legacy
-│   ├── capacity/                       # /capacity         legacy
-│   ├── arch-learning/                  # /arch-learning    legacy
-│   ├── capability-assessor/            # /capability-assessor  legacy
-│   ├── patterns/                       # /patterns         legacy
-│   ├── evolve/                         # /evolve           legacy
-│   └── excel/                          # /excel            legacy
+│   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
+│   │   └── compliance-packs/                   #   regulatory stressor packs
+│   ├── restack-adr/                            # legacy
+│   ├── restack-solution-doc/                   # legacy
+│   ├── restack-tech-stack/                     # legacy
+│   ├── restack-design-review/                  # legacy
+│   ├── restack-cloud/                          # legacy
+│   ├── restack-capacity/                       # legacy
+│   ├── restack-arch-learning/                  # legacy
+│   ├── restack-capability-assessor/            # legacy
+│   ├── restack-patterns/                       # legacy
+│   ├── restack-evolve/                         # legacy
+│   └── restack-excel/                          # legacy
 ├── helpers/read_spreadsheet.py         # Python helper for Excel reading
 ├── templates/                          # Document templates
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-008
+    ├── adr/                            # ADR-001 .. ADR-009
     └── ...                             # Generated documentation location
 ```
 
@@ -69,7 +69,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-Converted so far: `/journey`, `/discover`, `/stressor` — the residuality core.
+Converted so far: `/restack-journey`, `/restack-discover`, `/restack-stressor` — the residuality core.
 The other eleven are still hand-maintained `SKILL.md` files and follow the
 legacy structure below until they are converted. `scripts/check_skills.py`
 reports which is which.
@@ -96,9 +96,9 @@ Fragments live in `scripts/preamble/`, composed per `manifest.json`.
 
 | Tier | For | Adds |
 |---|---|---|
-| 1 | utilities with no architectural judgement (`/excel`) | voice, completion status |
+| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, completion status |
 | 2 | skills that shape architectural decisions | decision briefs, evidence rules, completeness, confusion protocol |
-| 3 | the residuality core (`/journey`, `/stressor`, `/discover`) | vocabulary, stop gates, journey state contract |
+| 3 | the residuality core (`/restack-journey`, `/restack-stressor`, `/restack-discover`) | vocabulary, stop gates, journey state contract |
 
 Change a cross-cutting behaviour once, in the fragment, then regenerate.
 
@@ -135,10 +135,10 @@ Skills are **capability transfer tools**, not dependency-creating tools. Every s
 
 ```bash
 # View skill content
-cat skills/adr/SKILL.md
+cat skills/restack-adr/SKILL.md
 
 # Symlink for development (changes reflected immediately)
-ln -s "$(pwd)/skills/adr" ~/.claude/skills/adr
+ln -s "$(pwd)/skills/restack-adr" ~/.claude/skills/restack-adr
 
 # Copy all for stable use
 cp -R skills/* ~/.claude/skills/
@@ -159,8 +159,8 @@ cp -R skills/* ~/.claude/skills/
 
 ### Adding Compliance Packs
 
-1. Create `skills/stressor/compliance-packs/<framework>.md`
-2. Follow the pack structure defined in `skills/stressor/SKILL.md`
+1. Create `skills/restack-stressor/compliance-packs/<framework>.md`
+2. Follow the pack structure defined in `skills/restack-stressor/SKILL.md`
 3. Each stressor must be a concrete scenario (not a control statement)
 4. Include regulation reference and explanation of the real harm
 5. List common residuals that emerge from the analysis
@@ -178,59 +178,59 @@ git push origin feature/new-skill-name
 ### Journey & Discovery (start here)
 
 ```bash
-/journey start           # Begin any engagement — assess terrain, map the route
-/journey where           # Mid-project: where am I, what comes next?
-/journey iterate         # Iterate stressor loop or proceed?
-/journey review          # Journey health check
-/journey cadence         # Establish an ongoing rhythm
+/restack-journey start           # Begin any engagement — assess terrain, map the route
+/restack-journey where           # Mid-project: where am I, what comes next?
+/restack-journey iterate         # Iterate stressor loop or proceed?
+/restack-journey review          # Journey health check
+/restack-journey cadence         # Establish an ongoing rhythm
 
-/discover paths                  # Map paths through an existing system
-/discover actor <name>           # Investigate what an actor actually does
-/discover intentions             # Trace how an intention propagates
-/discover gaps                   # Identify and prioritise confidence gaps
-/discover organisation           # Map organisational resistance as stressors
-/discover confidence             # Assess readiness to proceed to stressor analysis
+/restack-discover paths                  # Map paths through an existing system
+/restack-discover actor <name>           # Investigate what an actor actually does
+/restack-discover intentions             # Trace how an intention propagates
+/restack-discover gaps                   # Identify and prioritise confidence gaps
+/restack-discover organisation           # Map organisational resistance as stressors
+/restack-discover confidence             # Assess readiness to proceed to stressor analysis
 ```
 
 ### Individual Capabilities
 
 ```bash
-/adr create <title>              # Architecture Decision Records
-/solution-doc hld                # Solution Documentation
-/tech-stack recommend            # Technology Stack Advisor
-/design-review complete          # Design Review
-/stressor walk [path-name]       # Walk a path, evaluating each actor in sequence
-/stressor analyze                # Stressor Analysis — build impact matrix
-/stressor compliance <pack>      # Inject compliance stressor pack
+/restack-adr create <title>              # Architecture Decision Records
+/restack-solution-doc hld                # Solution Documentation
+/restack-tech-stack recommend            # Technology Stack Advisor
+/restack-design-review complete          # Design Review
+/restack-stressor walk [path-name]       # Walk a path, evaluating each actor in sequence
+/restack-stressor analyze                # Stressor Analysis — build impact matrix
+/restack-stressor compliance <pack>      # Inject compliance stressor pack
 ```
 
 ### Organisational Capabilities
 
 ```bash
-/arch-learning analyze           # Architecture Learning Analyzer
-/capability-assessor assess      # Team Capability Assessor
-/patterns extract                # Pattern Extractor
-/evolve assess                   # Evolutionary Architecture Coach
+/restack-arch-learning analyze           # Architecture Learning Analyzer
+/restack-capability-assessor assess      # Team Capability Assessor
+/restack-patterns extract                # Pattern Extractor
+/restack-evolve assess                   # Evolutionary Architecture Coach
 ```
 
 ### Specialised Tools
 
 ```bash
-/cloud design <architecture>     # Cloud Architect
-/cloud iac <provider>
-/cloud review
-/cloud cost
-/cloud migrate <to-cloud>
-/cloud dr
+/restack-cloud design <architecture>     # Cloud Architect
+/restack-cloud iac <provider>
+/restack-cloud review
+/restack-cloud cost
+/restack-cloud migrate <to-cloud>
+/restack-cloud dr
 
-/capacity estimate               # Capacity Planner
-/capacity scale <strategy>
-/capacity bottleneck
-/capacity load-test
-/capacity forecast
-/capacity right-size
+/restack-capacity estimate               # Capacity Planner
+/restack-capacity scale <strategy>
+/restack-capacity bottleneck
+/restack-capacity load-test
+/restack-capacity forecast
+/restack-capacity right-size
 
-/excel read <file> [sheet]       # Excel/CSV Reader
+/restack-excel read <file> [sheet]       # Excel/CSV Reader
 ```
 
 ## Journey Memory Management
@@ -283,20 +283,20 @@ ln -s /path/to/repo/skills/* ~/.claude/skills/
 
 | Skill | Command | Category |
 |-------|---------|----------|
-| Architect's Journey | `/journey` | Orchestration |
-| Environment Discovery | `/discover` | Discovery |
-| Architecture Decision Records | `/adr` | Individual |
-| Solution Documentation | `/solution-doc` | Individual |
-| Technology Stack Advisor | `/tech-stack` | Individual |
-| Design Review | `/design-review` | Individual |
-| Stressor Analysis | `/stressor` | Individual |
-| Architecture Learning Analyzer | `/arch-learning` | Organisational |
-| Team Capability Assessor | `/capability-assessor` | Organisational |
-| Pattern Extractor | `/patterns` | Organisational |
-| Evolutionary Coach | `/evolve` | Organisational |
-| Cloud Architect | `/cloud` | Specialised |
-| Capacity Planner | `/capacity` | Specialised |
-| Excel Reader | `/excel` | Utility |
+| Architect's Journey | `/restack-journey` | Orchestration |
+| Environment Discovery | `/restack-discover` | Discovery |
+| Architecture Decision Records | `/restack-adr` | Individual |
+| Solution Documentation | `/restack-solution-doc` | Individual |
+| Technology Stack Advisor | `/restack-tech-stack` | Individual |
+| Design Review | `/restack-design-review` | Individual |
+| Stressor Analysis | `/restack-stressor` | Individual |
+| Architecture Learning Analyzer | `/restack-arch-learning` | Organisational |
+| Team Capability Assessor | `/restack-capability-assessor` | Organisational |
+| Pattern Extractor | `/restack-patterns` | Organisational |
+| Evolutionary Coach | `/restack-evolve` | Organisational |
+| Cloud Architect | `/restack-cloud` | Specialised |
+| Capacity Planner | `/restack-capacity` | Specialised |
+| Excel Reader | `/restack-excel` | Utility |
 
 ## Contributing
 

@@ -37,13 +37,13 @@ If architects understand the *harm behind the control* rather than the *control 
 2. Practically superior — the residue addresses the root harm, not just the letter of the control
 3. More durable — structural protections outlast regulatory updates
 
-Compliance controls, expressed as stressors, integrate naturally into the existing `/stressor` skill. The residues that emerge from the analysis address the harms — and can be traced back to compliance controls for audit purposes.
+Compliance controls, expressed as stressors, integrate naturally into the existing `/restack-stressor` skill. The residues that emerge from the analysis address the harms — and can be traced back to compliance controls for audit purposes.
 
 ## Decision
 
 We will **not build a Compliance Checker skill**. Instead, we will:
 
-1. **Extend the `/stressor` skill** with a `/stressor compliance <pack>` command that injects curated compliance stressor packs into a standard stressor analysis
+1. **Extend the `/restack-stressor` skill** with a `/restack-stressor compliance <pack>` command that injects curated compliance stressor packs into a standard stressor analysis
 2. **Define a compliance pack structure** — a clear template for expressing regulatory frameworks as stressor sets
 3. **Create a `compliance-packs/` directory** as the extension point for future packs
 4. **Leave specific framework packs** (GDPR, HIPAA, PCI DSS, etc.) to be added as future contributions
@@ -64,13 +64,13 @@ This approach means:
 - Residues improve overall system antifragility, not just compliance posture
 
 ### Negative
-- Specific compliance packs (GDPR, HIPAA, etc.) are not yet built — architects using the tool today cannot immediately run `/stressor compliance gdpr`
+- Specific compliance packs (GDPR, HIPAA, etc.) are not yet built — architects using the tool today cannot immediately run `/restack-stressor compliance gdpr`
 - Organisations with auditors expecting traditional compliance artefacts may need to do additional mapping from residues to controls
 - Creating high-quality compliance packs requires deep regulatory knowledge
 
 ### Neutral
 - Phase 3 is reduced from 3 remaining skills to 2 (Capacity Planner + Cloud Architect already complete)
-- The `/stressor` skill grows in scope but retains its core philosophy
+- The `/restack-stressor` skill grows in scope but retains its core philosophy
 
 ## Alternatives Considered
 
@@ -82,7 +82,7 @@ This approach means:
 ### Build a "Compliance as Stressors" section within each compliance framework's own skill
 - **Pros:** Keeps each framework self-contained
 - **Cons:** Duplicates the stressor analysis machinery; architects would need to switch between skills
-- **Why rejected:** The existing `/stressor` skill is the right home — compliance packs are just domain-specific stressor inputs
+- **Why rejected:** The existing `/restack-stressor` skill is the right home — compliance packs are just domain-specific stressor inputs
 
 ### Build compliance packs immediately for major frameworks
 - **Pros:** Immediately actionable
@@ -109,7 +109,7 @@ This approach means:
 ### Baseline Metrics
 
 - Compliance Checker skill: not built
-- `/stressor compliance` command: available, packs pending
+- `/restack-stressor compliance` command: available, packs pending
 
 ### Collected Metrics
 

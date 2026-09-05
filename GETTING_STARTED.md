@@ -22,7 +22,7 @@ Copy-Item -Recurse -Path "skills\*" -Destination "$env:USERPROFILE\.claude\skill
 pip install -r requirements.txt
 ```
 
-> **Note:** Excel reading requires Python and openpyxl. If `/excel` commands fail, run: `pip install -r requirements.txt`
+> **Note:** Excel reading requires Python and openpyxl. If `/restack-excel` commands fail, run: `pip install -r requirements.txt`
 
 ---
 
@@ -31,22 +31,22 @@ pip install -r requirements.txt
 Open Claude Code and type `/` — you should see:
 
 **Orchestration & Discovery:**
-`/journey` `/discover`
+`/restack-journey` `/restack-discover`
 
 **Stressor Analysis:**
-`/stressor`
+`/restack-stressor`
 
 **Design & Documentation:**
-`/adr` `/solution-doc` `/tech-stack` `/design-review`
+`/restack-adr` `/restack-solution-doc` `/restack-tech-stack` `/restack-design-review`
 
 **Cloud & Infrastructure:**
-`/cloud` `/capacity`
+`/restack-cloud` `/restack-capacity`
 
 **Organisational Capabilities:**
-`/arch-learning` `/capability-assessor` `/patterns` `/evolve`
+`/restack-arch-learning` `/restack-capability-assessor` `/restack-patterns` `/restack-evolve`
 
 **Utilities:**
-`/excel`
+`/restack-excel`
 
 ✅ If you see these, installation was successful.
 
@@ -57,7 +57,7 @@ Open Claude Code and type `/` — you should see:
 The first thing to do with any new engagement isn't to open a specific skill — it's to understand where you are and what the terrain demands.
 
 ```
-/journey start
+/restack-journey start
 ```
 
 Tell Claude about the system you're working on — what you're trying to achieve, what exists today, and any constraints. It will assess the terrain and map your recommended skill sequence from there.
@@ -74,35 +74,35 @@ The journey looks different depending on what you're walking into:
 You have an aspiration and nothing yet exists. You design the paths, then walk and stress them.
 
 ```
-/journey start
-→ /tech-stack → /adr → /solution-doc hld
-→ /stressor walk → /stressor generate → /stressor analyze → /stressor residues
+/restack-journey start
+→ /restack-tech-stack → /restack-adr → /restack-solution-doc hld
+→ /restack-stressor walk → /restack-stressor generate → /restack-stressor analyze → /restack-stressor residues
 → [iterate until impact sufficiently low]
-→ /adr → /design-review → /solution-doc deployment
+→ /restack-adr → /restack-design-review → /restack-solution-doc deployment
 ```
 
 ### Brownfield — existing system
 Something is already there. You need to discover it before you can change it.
 
 ```
-/journey start
-→ /discover paths → /discover actor → /discover organisation → /discover confidence
-→ /stressor walk → /stressor generate → /stressor analyze → /stressor residues
+/restack-journey start
+→ /restack-discover paths → /restack-discover actor → /restack-discover organisation → /restack-discover confidence
+→ /restack-stressor walk → /restack-stressor generate → /restack-stressor analyze → /restack-stressor residues
 → [iterate until impact sufficiently low]
-→ /adr → /design-review → /solution-doc
+→ /restack-adr → /restack-design-review → /restack-solution-doc
 ```
 
 ### Minefield — high fragility, high complexity
 An existing system with fragile dependencies, unclear paths, and organisational resistance. Discover extensively before touching anything.
 
 ```
-/journey start
-→ /discover paths → /discover actor → /discover intentions → /discover gaps
-→ /discover organisation → /discover confidence
+/restack-journey start
+→ /restack-discover paths → /restack-discover actor → /restack-discover intentions → /restack-discover gaps
+→ /restack-discover organisation → /restack-discover confidence
 → [if not confident — keep discovering]
-→ /stressor walk → /stressor generate → /stressor analyze → /stressor residues
+→ /restack-stressor walk → /restack-stressor generate → /restack-stressor analyze → /restack-stressor residues
 → [iterate more cycles than brownfield]
-→ /adr → /design-review → /solution-doc
+→ /restack-adr → /restack-design-review → /restack-solution-doc
 ```
 
 ---
@@ -117,7 +117,7 @@ walk paths → generate stressors → build matrix → find residuals
   re-walk ←← implement residuals ←← impact low enough? ←←
 ```
 
-You keep iterating until the system's vulnerability is **sufficiently low** — not zero, but low enough given the aspiration and the cost of further improvement. Use `/journey iterate` to make that judgment explicitly rather than by instinct.
+You keep iterating until the system's vulnerability is **sufficiently low** — not zero, but low enough given the aspiration and the cost of further improvement. Use `/restack-journey iterate` to make that judgment explicitly rather than by instinct.
 
 ---
 
@@ -126,7 +126,7 @@ You keep iterating until the system's vulnerability is **sufficiently low** — 
 Already mid-project and not sure which skill to reach for next?
 
 ```
-/journey where
+/restack-journey where
 ```
 
 Describe what you've done so far. Claude will tell you where you are, what's been skipped, and what comes next.
@@ -138,51 +138,51 @@ Describe what you've done so far. Claude will tell you where you are, what's bee
 ### The Journey Orchestrator
 | Skill | When to use |
 |-------|------------|
-| `/journey start` | Beginning any new engagement |
-| `/journey where` | Mid-project, unsure what's next |
-| `/journey iterate` | After stressor analysis — proceed or loop? |
-| `/journey review` | Health check — what's been missed? |
-| `/journey cadence` | Establishing rhythm for a live system |
+| `/restack-journey start` | Beginning any new engagement |
+| `/restack-journey where` | Mid-project, unsure what's next |
+| `/restack-journey iterate` | After stressor analysis — proceed or loop? |
+| `/restack-journey review` | Health check — what's been missed? |
+| `/restack-journey cadence` | Establishing rhythm for a live system |
 
 ### Discovery (Brownfield / Minefield)
 | Skill | When to use |
 |-------|------------|
-| `/discover paths` | Map what's actually in an existing system |
-| `/discover actor` | Confirm what an actor actually does |
-| `/discover intentions` | Trace how a signal propagates |
-| `/discover gaps` | Prioritise what's still unknown |
-| `/discover organisation` | Map resistance patterns as stressors |
-| `/discover confidence` | Are you ready to walk? |
+| `/restack-discover paths` | Map what's actually in an existing system |
+| `/restack-discover actor` | Confirm what an actor actually does |
+| `/restack-discover intentions` | Trace how a signal propagates |
+| `/restack-discover gaps` | Prioritise what's still unknown |
+| `/restack-discover organisation` | Map resistance patterns as stressors |
+| `/restack-discover confidence` | Are you ready to walk? |
 
 ### Stressor Analysis (every journey)
 | Skill | When to use |
 |-------|------------|
-| `/stressor walk` | Traverse a path — the foundational step |
-| `/stressor generate` | Generate stressors, including absurd ones 🐉 |
-| `/stressor analyze` | Build the impact matrix |
-| `/stressor vulnerabilities` | Find the most exposed actors |
-| `/stressor residues` | Identify residuals to reduce impact |
-| `/stressor iterate` | Re-walk after implementing residuals |
-| `/stressor compliance <pack>` | Inject compliance stressors |
+| `/restack-stressor walk` | Traverse a path — the foundational step |
+| `/restack-stressor generate` | Generate stressors, including absurd ones 🐉 |
+| `/restack-stressor analyze` | Build the impact matrix |
+| `/restack-stressor vulnerabilities` | Find the most exposed actors |
+| `/restack-stressor residues` | Identify residuals to reduce impact |
+| `/restack-stressor iterate` | Re-walk after implementing residuals |
+| `/restack-stressor compliance <pack>` | Inject compliance stressors |
 
 ### Design & Documentation
 | Skill | When to use |
 |-------|------------|
-| `/adr create` | Document every significant decision |
-| `/solution-doc hld` | High-Level Design |
-| `/solution-doc complete` | Full documentation set |
-| `/design-review complete` | Validate before building |
-| `/tech-stack recommend` | Technology selection |
-| `/cloud design` | Cloud-native architecture |
-| `/capacity estimate` | Resource sizing |
+| `/restack-adr create` | Document every significant decision |
+| `/restack-solution-doc hld` | High-Level Design |
+| `/restack-solution-doc complete` | Full documentation set |
+| `/restack-design-review complete` | Validate before building |
+| `/restack-tech-stack recommend` | Technology selection |
+| `/restack-cloud design` | Cloud-native architecture |
+| `/restack-capacity estimate` | Resource sizing |
 
 ### Organisational Capabilities (ongoing)
 | Skill | Cadence |
 |-------|---------|
-| `/arch-learning analyze` | Quarterly |
-| `/capability-assessor assess` | Every 6 months |
-| `/patterns evolve` | Quarterly |
-| `/evolve health` | Monthly |
+| `/restack-arch-learning analyze` | Quarterly |
+| `/restack-capability-assessor assess` | Every 6 months |
+| `/restack-patterns evolve` | Quarterly |
+| `/restack-evolve health` | Monthly |
 
 ---
 
@@ -231,10 +231,10 @@ docs/
 
 - [ ] Install and verify (`/` in Claude Code shows the skills)
 - [ ] Read [Introduction to Residuality Theory](RESIDUALITY.md)
-- [ ] Start your first journey (`/journey start`)
-- [ ] Walk your first path (`/stressor walk`)
+- [ ] Start your first journey (`/restack-journey start`)
+- [ ] Walk your first path (`/restack-stressor walk`)
 - [ ] Generate stressors — include at least one absurd one 🐉
-- [ ] Create your first ADR (`/adr create`)
+- [ ] Create your first ADR (`/restack-adr create`)
 - [ ] Star the repository ⭐
 
 ---

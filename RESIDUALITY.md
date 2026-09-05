@@ -180,7 +180,7 @@ Every compliance control exists because a real harm occurred. GDPR exists becaus
 
 When you understand the **harm behind the control** — not just the control itself — you can design architecture that makes that harm structurally impossible. This is deeper than compliance and more durable than a checklist.
 
-In practice: run a stressor analysis with compliance stressor packs (`/stressor compliance <pack>`). The stressors express regulatory requirements as concrete scenarios — "*a user requests deletion of all their personal data and we cannot locate or purge it*". The residuals that emerge address the underlying harm, satisfy the compliance control, and often protect against unrelated threats simultaneously.
+In practice: run a stressor analysis with compliance stressor packs (`/restack-stressor compliance <pack>`). The stressors express regulatory requirements as concrete scenarios — "*a user requests deletion of all their personal data and we cannot locate or purge it*". The residuals that emerge address the underlying harm, satisfy the compliance control, and often protect against unrelated threats simultaneously.
 
 Compliance becomes a byproduct of antifragile design, not a separate audit exercise.
 
@@ -194,7 +194,7 @@ Residuality Theory does not replace this for known threats. It supersedes the ne
 
 The stressor analysis process naturally surfaces what a risk register would call "high-probability, high-impact risks" — they appear as stressors that affect many actors across many paths. But it also surfaces threats no risk register would contain, because the stressor list includes the absurd.
 
-This is why the toolkit has no Risk Assessor skill. The stressor analysis skill (`/stressor`) is a superset of risk assessment — philosophically consistent and architecturally superior.
+This is why the toolkit has no Risk Assessor skill. The stressor analysis skill (`/restack-stressor`) is a superset of risk assessment — philosophically consistent and architecturally superior.
 
 ---
 
@@ -212,12 +212,12 @@ Every skill in this toolkit builds a thinking capability grounded in Residuality
 
 | Skill | Residuality connection |
 |-------|----------------------|
-| `/stressor` | The core analysis tool — walks, paths, actors, residuals |
-| `/adr` | Documents the decisions that produce residuals |
-| `/design-review` | Identifies brittleness before stressors expose it |
-| `/evolve` | Fitness functions as automated residual validation |
-| `/cloud` | Cloud-native design as a class of architectural residuals |
-| `/capacity` | Elastic scaling as residual against load stressors |
+| `/restack-stressor` | The core analysis tool — walks, paths, actors, residuals |
+| `/restack-adr` | Documents the decisions that produce residuals |
+| `/restack-design-review` | Identifies brittleness before stressors expose it |
+| `/restack-evolve` | Fitness functions as automated residual validation |
+| `/restack-cloud` | Cloud-native design as a class of architectural residuals |
+| `/restack-capacity` | Elastic scaling as residual against load stressors |
 
 The measure of success is not how much you use the toolkit — it is how deeply the thinking becomes natural. When you instinctively walk paths during design, when you generate stressors before you finalise architecture, when you see residuals rather than patches — the capability has transferred.
 

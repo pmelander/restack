@@ -12,7 +12,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into all Phase 1 ski
 ### 1. ADR Skill ✅
 **New Capabilities Added:**
 - Reflection prompts for decision-making process
-- New `/adr review` command for outcome-based learning
+- New `/restack-adr review` command for outcome-based learning
 - Learning Notes section for capturing insights
 - Capability growth assessment (Novice → Expert)
 
@@ -23,7 +23,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into all Phase 1 ski
 ### 2. Solution Documentation Skill ✅  
 **New Capabilities Added:**
 - Reflection prompts for HLD, LLD, deployment, runbook
-- New `/solution-doc review` command for quality assessment
+- New `/restack-solution-doc review` command for quality assessment
 - Learning capture for documentation insights
 - Documentation as thinking tool, not just output
 
@@ -34,7 +34,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into all Phase 1 ski
 ### 3. Tech Stack Advisor Skill ✅
 **New Capabilities Added:**
 - Reflection prompts about biases and hidden costs
-- New `/tech-stack retro` command for retrospectives
+- New `/restack-tech-stack retro` command for retrospectives
 - Learning Notes to track judgment development
 - Hype-resistance and context-awareness building
 
@@ -45,7 +45,7 @@ Successfully integrated Barry O'Reilly's Residuality Theory into all Phase 1 ski
 ### 4. Design Review Skill ✅
 **New Capabilities Added:**
 - Reflection prompts for self-review
-- New `/design-review self-check` command
+- New `/restack-design-review self-check` command
 - Learning capture from review insights
 - Self-criticism as mastery goal
 

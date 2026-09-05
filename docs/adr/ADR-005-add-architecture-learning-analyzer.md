@@ -83,12 +83,12 @@ Add to `templates/adr-template.md`:
 ### 2. Architecture Learning Analyzer Skill
 Create `skills/phase-2/arch-learning.md` with 6 commands:
 
-- `/arch-learning analyze` - Analyze all ADRs, extract patterns, show timeline
-- `/arch-learning patterns` - Extract and catalog recurring patterns
-- `/arch-learning outcomes` - Review and track decision outcomes
-- `/arch-learning retrospective` - Facilitate team retrospective
-- `/arch-learning lessons` - Generate lessons learned report
-- `/arch-learning trends` - Identify trends over time
+- `/restack-arch-learning analyze` - Analyze all ADRs, extract patterns, show timeline
+- `/restack-arch-learning patterns` - Extract and catalog recurring patterns
+- `/restack-arch-learning outcomes` - Review and track decision outcomes
+- `/restack-arch-learning retrospective` - Facilitate team retrospective
+- `/restack-arch-learning lessons` - Generate lessons learned report
+- `/restack-arch-learning trends` - Identify trends over time
 
 **Follows Phase 1 patterns:**
 - Capability Being Built section
@@ -259,7 +259,7 @@ Create `skills/phase-2/arch-learning.md` with 6 commands:
 - `templates/adr-template.md` - Added outcome tracking fields
 
 ### Commands Added
-Six new commands, all under `/arch-learning`:
+Six new commands, all under `/restack-arch-learning`:
 - `analyze` - Comprehensive ADR analysis
 - `patterns` - Pattern catalog extraction
 - `outcomes` - Outcome review and tracking
@@ -290,7 +290,7 @@ Defined 4 levels of organizational learning maturity:
 - Knowledge persists through team changes
 
 **Usage Metrics:**
-- `/arch-learning` commands used regularly
+- `/restack-arch-learning` commands used regularly
 - Outcome sections completed within review period
 - Pattern catalog grows and stays current
 - Retrospectives attended by team
@@ -338,7 +338,7 @@ Defined 4 levels of organizational learning maturity:
 
 ### Phase 3: Validation (Future)
 1. Apply to existing ADRs (fill outcomes for ADR-001 through ADR-005)
-2. Run `/arch-learning analyze` on toolkit's own ADRs
+2. Run `/restack-arch-learning analyze` on toolkit's own ADRs
 3. Extract patterns from toolkit development
 4. Conduct retrospective on Phase 1
 5. Refine based on dogfooding

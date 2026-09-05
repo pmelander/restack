@@ -110,12 +110,12 @@ Phase 1 provides Solution Architects with:
 
 **Commands:**
 ```bash
-/arch-learning analyze          # Analyze architectural decision history
-/arch-learning patterns         # Extract patterns from decisions
-/arch-learning outcomes         # Review decision outcomes
-/arch-learning retrospective    # Guided architectural retrospective
-/arch-learning lessons          # Generate lessons learned
-/arch-learning trends           # Identify trends in decisions
+/restack-arch-learning analyze          # Analyze architectural decision history
+/restack-arch-learning patterns         # Extract patterns from decisions
+/restack-arch-learning outcomes         # Review decision outcomes
+/restack-arch-learning retrospective    # Guided architectural retrospective
+/restack-arch-learning lessons          # Generate lessons learned
+/restack-arch-learning trends           # Identify trends in decisions
 ```
 
 **Enhancements:**
@@ -194,12 +194,12 @@ Phase 1 provides Solution Architects with:
 
 **Commands:**
 ```bash
-/patterns extract               # Extract patterns from codebase/decisions
-/patterns catalog               # View pattern catalog
-/patterns suggest <scenario>    # Suggest patterns for situation
-/patterns effectiveness         # Track pattern success
-/patterns anti-patterns         # Document what doesn't work
-/patterns evolve                # Update patterns based on learning
+/restack-patterns extract               # Extract patterns from codebase/decisions
+/restack-patterns catalog               # View pattern catalog
+/restack-patterns suggest <scenario>    # Suggest patterns for situation
+/restack-patterns effectiveness         # Track pattern success
+/restack-patterns anti-patterns         # Document what doesn't work
+/restack-patterns evolve                # Update patterns based on learning
 ```
 
 **Pattern Types:**
@@ -235,12 +235,12 @@ Phase 1 provides Solution Architects with:
 
 **Commands:**
 ```bash
-/evolve assess                  # Assess evolutionary readiness
-/evolve fitness-functions       # Define/review fitness functions
-/evolve brittleness             # Identify brittle areas
-/evolve increment               # Plan incremental improvements
-/evolve health                  # Track architectural health
-/evolve coach                   # Guided evolutionary thinking
+/restack-evolve assess                  # Assess evolutionary readiness
+/restack-evolve fitness-functions       # Define/review fitness functions
+/restack-evolve brittleness             # Identify brittle areas
+/restack-evolve increment               # Plan incremental improvements
+/restack-evolve health                  # Track architectural health
+/restack-evolve coach                   # Guided evolutionary thinking
 ```
 
 **Key Concepts Taught:**
@@ -308,7 +308,7 @@ Phase 2 is successful when:
 
 **Status:** ✅ Complete (3 of 3 complete)
 
-> **Note:** Risk Assessor was removed from Phase 3. Traditional risk management (probability × impact matrices, risk registers) conflicts with the toolkit's Residuality Theory foundation. Antifragile design via `/stressor` is a superset of risk assessment — it covers known and unknown threats. See [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) for full rationale.
+> **Note:** Risk Assessor was removed from Phase 3. Traditional risk management (probability × impact matrices, risk registers) conflicts with the toolkit's Residuality Theory foundation. Antifragile design via `/restack-stressor` is a superset of risk assessment — it covers known and unknown threats. See [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) for full rationale.
 >
 > Compliance Checker was replaced by stressor compliance packs. See [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md).
 >
@@ -330,19 +330,19 @@ Phase 2 is successful when:
 
 **Commands:**
 ```bash
-/cloud design <architecture>    # Design cloud architecture
-/cloud iac <provider>           # Generate IaC templates
-/cloud review                   # Well-Architected review
-/cloud cost                     # Cost analysis and optimization
-/cloud dr                       # Disaster recovery plan
-/cloud migrate <to-cloud>       # Cloud migration strategy
+/restack-cloud design <architecture>    # Design cloud architecture
+/restack-cloud iac <provider>           # Generate IaC templates
+/restack-cloud review                   # Well-Architected review
+/restack-cloud cost                     # Cost analysis and optimization
+/restack-cloud dr                       # Disaster recovery plan
+/restack-cloud migrate <to-cloud>       # Cloud migration strategy
 ```
 
 ---
 
 #### ~~2. Compliance Checker~~ — Replaced by Stressor Compliance Packs
 
-> **Replaced by [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md):** A standalone Compliance Checker would train architects to think in checklists, conflicting with Residuality Theory. Instead, compliance frameworks are expressed as **stressor packs** that feed into the existing `/stressor` skill. Compliance becomes a byproduct of antifragile design. The `/stressor compliance <pack>` command and extension point have been added to the Stressor Analysis skill.
+> **Replaced by [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md):** A standalone Compliance Checker would train architects to think in checklists, conflicting with Residuality Theory. Instead, compliance frameworks are expressed as **stressor packs** that feed into the existing `/restack-stressor` skill. Compliance becomes a byproduct of antifragile design. The `/restack-stressor compliance <pack>` command and extension point have been added to the Stressor Analysis skill.
 
 ---
 
@@ -360,12 +360,12 @@ Phase 2 is successful when:
 
 **Commands:**
 ```bash
-/capacity estimate              # Estimate resource requirements
-/capacity scale <strategy>      # Design scaling approach
-/capacity bottleneck            # Identify capacity constraints
-/capacity load-test             # Design load testing strategy
-/capacity forecast              # Model future capacity needs
-/capacity right-size            # Identify and reduce over-provisioning
+/restack-capacity estimate              # Estimate resource requirements
+/restack-capacity scale <strategy>      # Design scaling approach
+/restack-capacity bottleneck            # Identify capacity constraints
+/restack-capacity load-test             # Design load testing strategy
+/restack-capacity forecast              # Model future capacity needs
+/restack-capacity right-size            # Identify and reduce over-provisioning
 ```
 
 ---
@@ -383,12 +383,12 @@ Phase 2 is successful when:
 
 **Commands:**
 ```bash
-/discover paths                 # Map paths through an existing system
-/discover actor <name>          # Investigate what an actor actually does
-/discover intentions            # Trace how an intention propagates
-/discover gaps                  # Identify and prioritise confidence gaps
-/discover organisation          # Map organisational resistance as stressors
-/discover confidence            # Assess readiness to proceed to stressor analysis
+/restack-discover paths                 # Map paths through an existing system
+/restack-discover actor <name>          # Investigate what an actor actually does
+/restack-discover intentions            # Trace how an intention propagates
+/restack-discover gaps                  # Identify and prioritise confidence gaps
+/restack-discover organisation          # Map organisational resistance as stressors
+/restack-discover confidence            # Assess readiness to proceed to stressor analysis
 ```
 
 ---
@@ -406,14 +406,14 @@ Phase 2 is successful when:
 
 **Commands:**
 ```bash
-/journey start           # Begin a new journey — assess terrain, map the route
-/journey where           # Where am I in the journey? What comes next?
-/journey iterate         # Should I iterate stressor analysis or proceed?
-/journey review          # Journey health check — completeness and quality
-/journey cadence         # Establish an ongoing iteration rhythm
+/restack-journey start           # Begin a new journey — assess terrain, map the route
+/restack-journey where           # Where am I in the journey? What comes next?
+/restack-journey iterate         # Should I iterate stressor analysis or proceed?
+/restack-journey review          # Journey health check — completeness and quality
+/restack-journey cadence         # Establish an ongoing iteration rhythm
 ```
 
-> **Excluded by [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md):** Traditional risk assessment contradicts Residuality Theory. The `/stressor` skill (Phase 1) already provides an antifragility-based alternative that is philosophically consistent and architecturally superior.
+> **Excluded by [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md):** Traditional risk assessment contradicts Residuality Theory. The `/restack-stressor` skill (Phase 1) already provides an antifragility-based alternative that is philosophically consistent and architecturally superior.
 
 ---
 

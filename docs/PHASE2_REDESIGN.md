@@ -74,12 +74,12 @@ Building systems that support continuous evolution
 
 **Commands:**
 ```bash
-/arch-learning analyze          # Analyze architectural decision history
-/arch-learning patterns         # Extract patterns from decisions
-/arch-learning outcomes         # Review decision outcomes
-/arch-learning retrospective    # Guided architectural retrospective
-/arch-learning lessons          # Generate lessons learned
-/arch-learning trends           # Identify trends in decisions
+/restack-arch-learning analyze          # Analyze architectural decision history
+/restack-arch-learning patterns         # Extract patterns from decisions
+/restack-arch-learning outcomes         # Review decision outcomes
+/restack-arch-learning retrospective    # Guided architectural retrospective
+/restack-arch-learning lessons          # Generate lessons learned
+/restack-arch-learning trends           # Identify trends in decisions
 ```
 
 **Residuality Goal:** Organizations that systematically learn from architectural decisions and build institutional knowledge that persists beyond individual architects.
@@ -157,12 +157,12 @@ Building systems that support continuous evolution
 
 **Commands:**
 ```bash
-/patterns extract               # Extract patterns from codebase/decisions
-/patterns catalog               # View pattern catalog
-/patterns suggest <scenario>    # Suggest patterns for situation
-/patterns effectiveness         # Track pattern success
-/patterns anti-patterns         # Document what doesn't work
-/patterns evolve                # Update patterns based on learning
+/restack-patterns extract               # Extract patterns from codebase/decisions
+/restack-patterns catalog               # View pattern catalog
+/restack-patterns suggest <scenario>    # Suggest patterns for situation
+/restack-patterns effectiveness         # Track pattern success
+/restack-patterns anti-patterns         # Document what doesn't work
+/restack-patterns evolve                # Update patterns based on learning
 ```
 
 **Pattern Types:**
@@ -198,12 +198,12 @@ Building systems that support continuous evolution
 
 **Commands:**
 ```bash
-/evolve assess                  # Assess evolutionary readiness
-/evolve fitness-functions       # Define/review fitness functions
-/evolve brittleness             # Identify brittle areas
-/evolve increment               # Plan incremental improvements
-/evolve health                  # Track architectural health
-/evolve coach                   # Guided evolutionary thinking
+/restack-evolve assess                  # Assess evolutionary readiness
+/restack-evolve fitness-functions       # Define/review fitness functions
+/restack-evolve brittleness             # Identify brittle areas
+/restack-evolve increment               # Plan incremental improvements
+/restack-evolve health                  # Track architectural health
+/restack-evolve coach                   # Guided evolutionary thinking
 ```
 
 **Key Concepts Taught:**

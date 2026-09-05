@@ -22,7 +22,7 @@ Do not start a fresh journey over the top of an in-flight one.
 
 ### Write last
 
-Update state **at the end of every command**, not only `/journey` commands.
+Update state **at the end of every command**, not only `/restack-journey` commands.
 A command that produced an artifact, passed a gate, identified a residual, or
 registered an assumption and did not write it down has lost that work.
 

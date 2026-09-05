@@ -40,12 +40,12 @@ We will **add Stressor Analysis as a Phase 1 skill**, making it the **5th core c
 ### What It Does
 
 **Commands:**
-- `/stressor generate` - Generate creative stressors (realistic + absurd)
-- `/stressor analyze` - Map impacts to architecture components
-- `/stressor vulnerabilities` - Identify high-impact areas
-- `/stressor residues` - Suggest architectural improvements
-- `/stressor iterate` - Re-analyze after adding residues
-- `/stressor workshop` - Facilitate team workshop
+- `/restack-stressor generate` - Generate creative stressors (realistic + absurd)
+- `/restack-stressor analyze` - Map impacts to architecture components
+- `/restack-stressor vulnerabilities` - Identify high-impact areas
+- `/restack-stressor residues` - Suggest architectural improvements
+- `/restack-stressor iterate` - Re-analyze after adding residues
+- `/restack-stressor workshop` - Facilitate team workshop
 
 **Capability Built:**
 - **Antifragility Thinking** - Designing systems that benefit from stress
@@ -81,7 +81,7 @@ We will **add Stressor Analysis as a Phase 1 skill**, making it the **5th core c
 **Stressor Analysis + ADR:**
 - Stressor analysis reveals needed resilience patterns
 - Document high-leverage residues as ADRs
-- Example: `/stressor analyze` → identifies need for circuit breakers → `/adr create Add circuit breakers for API resilience`
+- Example: `/restack-stressor analyze` → identifies need for circuit breakers → `/restack-adr create Add circuit breakers for API resilience`
 
 **Stressor Analysis + Solution Doc:**
 - Include stressor analysis results in HLD

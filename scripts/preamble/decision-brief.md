@@ -36,7 +36,7 @@ serves, that is itself the finding — surface it instead of the question.
 set rests on beliefs about the system that have not been verified. Say what
 would raise it ("read the Order Service retry config", "ask the DBA whether
 replication is synchronous"). A `Low`-confidence brief on a **One-way door** is
-a signal to stop and run `/discover` instead of deciding.
+a signal to stop and run `/restack-discover` instead of deciding.
 
 **Reversibility** governs how hard the architect should think. Reversible
 decisions should be made fast and revisited cheaply. One-way doors — data model

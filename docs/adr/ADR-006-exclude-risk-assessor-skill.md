@@ -49,14 +49,14 @@ Residuality Theory, as embedded throughout the toolkit (especially in the Stress
 - **Compound protection** — a single architectural residue (e.g., circuit breaker, decoupled data store) protects against many unrelated stressors simultaneously
 - **Tool Independence** — capability is built so architects think this way naturally, not only when running a risk process
 
-The `/stressor` skill already provides a richer, philosophically consistent alternative to risk assessment.
+The `/restack-stressor` skill already provides a richer, philosophically consistent alternative to risk assessment.
 
 ## Decision
 
-We will **not build a Risk Assessor skill** for Phase 3 or any future phase. The capability is intentionally covered by the Stressor Analysis skill (`/stressor`) and the antifragility thinking built across all Phase 1 skills.
+We will **not build a Risk Assessor skill** for Phase 3 or any future phase. The capability is intentionally covered by the Stressor Analysis skill (`/restack-stressor`) and the antifragility thinking built across all Phase 1 skills.
 
 If architects trained with this toolkit encounter traditional risk management requirements (e.g., risk registers for compliance or governance), they should:
-1. Use `/stressor` to identify high-leverage architectural improvements
+1. Use `/restack-stressor` to identify high-leverage architectural improvements
 2. Map residues to risk language for compliance purposes if required
 3. Recognise that the stressor/residue model is a **superset** of traditional risk management — it covers known risks and unknown ones
 
@@ -66,7 +66,7 @@ If architects trained with this toolkit encounter traditional risk management re
 - Maintains philosophical consistency with Residuality Theory throughout the toolkit
 - Avoids training architects in a reductive mental model (probability × impact) that creates false confidence
 - Keeps Phase 3 focused on genuinely differentiated, high-value capabilities
-- The existing `/stressor` skill already provides a superior alternative
+- The existing `/restack-stressor` skill already provides a superior alternative
 - Architects build antifragility thinking rather than risk catalogue thinking
 
 ### Negative

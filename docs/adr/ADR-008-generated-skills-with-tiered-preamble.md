@@ -8,7 +8,7 @@
 
 **Technical Story:** Adopting proven skill-authoring patterns from gstack
 
-**Implementation Status:** partially implemented — `/journey`, `/discover` and `/stressor` (the residuality core) converted and CI enforcing; eleven skills remain
+**Implementation Status:** partially implemented — `/restack-journey`, `/restack-discover` and `/restack-stressor` (the residuality core) converted and CI enforcing; eleven skills remain
 
 **Implemented Date:** 2026-09-05
 
@@ -23,15 +23,15 @@ were getting worse as the toolkit grew.
 
 **Cross-cutting behaviour was duplicated or absent.** The journey-state
 persistence contract was written twice, in `CLAUDE.md` and in
-`skills/journey/SKILL.md`, in different words. The Residuality vocabulary
-existed only in `skills/stressor/SKILL.md`, so every other skill either
+`skills/restack-journey/SKILL.md`, in different words. The Residuality vocabulary
+existed only in `skills/restack-stressor/SKILL.md`, so every other skill either
 restated it loosely or assumed it. There was no shared statement of how to ask
 the architect a question, what counts as evidence about an existing system, or
 how to close a command — so those behaviours were inconsistent where they
 existed at all, and mostly they did not.
 
-**Instruction depth varied without reason.** `/stressor walk` was specified as
-six executable steps. `/stressor analyze`, `vulnerabilities`, `residues` and
+**Instruction depth varied without reason.** `/restack-stressor walk` was specified as
+six executable steps. `/restack-stressor analyze`, `vulnerabilities`, `residues` and
 `iterate` were four or five summary bullets each — enough to describe the
 command, not enough to execute it. The model narrates a bulleted description
 and executes a numbered protocol, and the difference showed in output quality
@@ -83,11 +83,11 @@ verified beliefs about the system, and what would raise it) and
 **reversibility** (reversible / costly / one-way door), and carries an
 **aspiration** line so a decision that serves no stated aspiration is visible as
 scope creep. Those are the axes architecture decisions actually turn on, and
-`Confidence: Low` on a one-way door routes to `/discover` instead of to a
+`Confidence: Low` on a one-way door routes to `/restack-discover` instead of to a
 choice.
 
 gstack's completion statuses end with `NEEDS_CONTEXT`. Ours is
-`NEEDS_DISCOVERY`, naming the specific unknown and the `/discover` command that
+`NEEDS_DISCOVERY`, naming the specific unknown and the `/restack-discover` command that
 closes it — which makes the toolkit's own route the remedy.
 
 ### What we deliberately did not take
@@ -105,9 +105,9 @@ failure mode of this port.
 
 - Cross-cutting behaviour is changed once. Amending the decision-brief format
   updates every skill at the next generate.
-- Depth is now affordable. `/stressor` carries a full matrix-construction and
+- Depth is now affordable. `/restack-stressor` carries a full matrix-construction and
   residual-leverage method in sections, at no cost on runs that do not need them.
-- Weak commands were forced into the open. Converting `/stressor` required
+- Weak commands were forced into the open. Converting `/restack-stressor` required
   writing the analyze/vulnerabilities/residues method that was previously
   implied — the conversion was the audit.
 - Drift is detectable. `--check` in CI catches a hand-edited `SKILL.md`, and
@@ -120,7 +120,7 @@ failure mode of this port.
 - Two-step authoring. Contributors edit a template and run a generator; a
   hand-edit to `SKILL.md` is silently lost at the next build. Mitigated by the
   banner, the `--check` mode, and documentation in `CONTRIBUTING.md`.
-- Python is now required to develop the toolkit, not just to use `/excel`. The
+- Python is now required to develop the toolkit, not just to use `/restack-excel`. The
   generator is standard-library-only to keep that cost at zero installs.
 - Mixed state until the remaining twelve skills are converted: some skills have
   the shared preamble and some do not.
@@ -132,14 +132,14 @@ failure mode of this port.
 
 ## Follow-ups
 
-1. ~~Convert `/discover` at tier 3~~ (done — completes the residuality core).
-   Convert the remaining eleven: `/adr`, `/solution-doc`, `/tech-stack`,
-   `/design-review`, `/cloud`, `/capacity`, `/arch-learning`,
-   `/capability-assessor`, `/patterns`, `/evolve` at tier 2; `/excel` at tier 1.
+1. ~~Convert `/restack-discover` at tier 3~~ (done — completes the residuality core).
+   Convert the remaining eleven: `/restack-adr`, `/restack-solution-doc`, `/restack-tech-stack`,
+   `/restack-design-review`, `/restack-cloud`, `/restack-capacity`, `/restack-arch-learning`,
+   `/restack-capability-assessor`, `/restack-patterns`, `/restack-evolve` at tier 2; `/restack-excel` at tier 1.
 2. ~~Add `python scripts/gen_skills.py --check` to CI~~ (done —
    `.github/workflows/skills.yml`, alongside `scripts/check_skills.py`).
-3. Resolve the `/design-review` name collision with gstack — installing this
-   toolkit's skills flat into `~/.claude/skills/` currently overwrites gstack's
-   skill of the same name.
+3. ~~Resolve the `/design-review` name collision with gstack~~ (done — every
+   skill is now prefixed `restack-`, see
+   [ADR-009](ADR-009-prefix-skill-names.md)).
 4. Consider replacing prose-instructed journey-state writes with a small helper
    binary, so persistence does not depend on the model remembering to do it.

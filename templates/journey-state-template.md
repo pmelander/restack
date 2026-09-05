@@ -32,7 +32,7 @@
 **Chronological log of commands executed and key decisions:**
 
 ### [YYYY-MM-DD] — Journey Start
-- **Command:** `/journey start`
+- **Command:** `/restack-journey start`
 - **Terrain identified:** [Greenfield/Brownfield/Minefield]
 - **Initial route mapped:** [Phase 1 → Phase 2 → Phase 3...]
 - **First move:** [skill] — [rationale]

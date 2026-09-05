@@ -130,7 +130,7 @@ Installation Command:
   cp skills/phase-1/*.md ~/.claude/skills/
 
 First Command to Try:
-  /adr create Your First Architecture Decision
+  /restack-adr create Your First Architecture Decision
 
 Documentation Entry Point:
   Start with GETTING_STARTED.md

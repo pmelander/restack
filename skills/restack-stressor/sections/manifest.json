@@ -1,0 +1,37 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "stressor",
+  "version": 1,
+  "sections": [
+    {
+      "id": "walk-protocol",
+      "file": "walk-protocol.md",
+      "title": "Path walk protocol",
+      "trigger": "running /restack-stressor walk - traversing a path actor by actor, with or without a stressor applied"
+    },
+    {
+      "id": "stressor-generation",
+      "file": "stressor-generation.md",
+      "title": "Stressor generation method",
+      "trigger": "running /restack-stressor generate, or extending an existing stressor set with a new class"
+    },
+    {
+      "id": "matrix-construction",
+      "file": "matrix-construction.md",
+      "title": "Impact matrix construction and reading",
+      "trigger": "running /restack-stressor analyze or /restack-stressor vulnerabilities - building the matrix, scoring it, or interpreting what it shows"
+    },
+    {
+      "id": "residual-identification",
+      "file": "residual-identification.md",
+      "title": "Residual identification and leverage",
+      "trigger": "running /restack-stressor residues - proposing residuals and ranking them by leverage"
+    },
+    {
+      "id": "workshop-facilitation",
+      "file": "workshop-facilitation.md",
+      "title": "Workshop facilitation",
+      "trigger": "running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect"
+    }
+  ]
+}

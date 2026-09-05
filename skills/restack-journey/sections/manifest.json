@@ -1,0 +1,37 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "journey",
+  "version": 1,
+  "sections": [
+    {
+      "id": "route-greenfield",
+      "file": "route-greenfield.md",
+      "title": "Greenfield route",
+      "trigger": "the terrain has been classified Greenfield and you are mapping or re-checking the route"
+    },
+    {
+      "id": "route-brownfield",
+      "file": "route-brownfield.md",
+      "title": "Brownfield / oilfield route",
+      "trigger": "the terrain has been classified Brownfield or Oilfield and you are mapping or re-checking the route"
+    },
+    {
+      "id": "route-minefield",
+      "file": "route-minefield.md",
+      "title": "Minefield route",
+      "trigger": "the terrain has been classified Minefield and you are mapping or re-checking the route"
+    },
+    {
+      "id": "route-ongoing",
+      "file": "route-ongoing.md",
+      "title": "Ongoing evolution route and cadence",
+      "trigger": "the system is live and you are running /restack-journey cadence, or the terrain has been classified Ongoing Evolution"
+    },
+    {
+      "id": "terrain-classification",
+      "file": "terrain-classification.md",
+      "title": "Terrain classification protocol",
+      "trigger": "running /restack-journey start, or re-classifying terrain mid-journey because the ground has changed"
+    }
+  ]
+}

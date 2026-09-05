@@ -29,7 +29,7 @@ Architectural journeys often:
 
 ### When Starting a Journey
 
-1. Execute `/journey start`
+1. Execute `/restack-journey start`
 2. The skill will create `docs/journey/journey-state.md` with:
    - Aspiration
    - Terrain type
@@ -45,19 +45,19 @@ Architectural journeys often:
 - Any decisions made
 
 **Key commands that update journey state:**
-- `/journey start` — creates initial state
-- `/journey where` — updates current position
-- `/journey iterate` — logs iteration decision and rationale
-- `/journey review` — logs health assessment
-- `/journey cadence` — creates ongoing schedule
+- `/restack-journey start` — creates initial state
+- `/restack-journey where` — updates current position
+- `/restack-journey iterate` — logs iteration decision and rationale
+- `/restack-journey review` — logs health assessment
+- `/restack-journey cadence` — creates ongoing schedule
 
 **Skills within the journey that update state:**
-- `/discover *` — logs discoveries, updates confidence
-- `/stressor analyze` — logs impact scores, adds to iteration history
-- `/stressor residues` — logs residuals identified
-- `/adr create` — adds to artifacts list
-- `/solution-doc *` — adds to artifacts list
-- `/design-review` — logs findings
+- `/restack-discover *` — logs discoveries, updates confidence
+- `/restack-stressor analyze` — logs impact scores, adds to iteration history
+- `/restack-stressor residues` — logs residuals identified
+- `/restack-adr create` — adds to artifacts list
+- `/restack-solution-doc *` — adds to artifacts list
+- `/restack-design-review` — logs findings
 
 ### When Resuming a Journey
 
@@ -68,7 +68,7 @@ Architectural journeys often:
 - What assumptions are being carried
 - What gaps exist
 
-Then execute `/journey where` to confirm position and get recommendations.
+Then execute `/restack-journey where` to confirm position and get recommendations.
 
 ## File Structure
 
@@ -159,7 +159,7 @@ Fill in the "Next Session Prep" section before ending a session. Your future sel
 
 ### If You Have an In-Flight Journey
 
-1. Execute `/journey where` — this will create `journey-state.md` retrospectively
+1. Execute `/restack-journey where` — this will create `journey-state.md` retrospectively
 2. Review the generated state for accuracy
 3. Fill in any gaps (especially iteration history if you've done stressor analysis)
 4. From now on, the state file is the source of truth
@@ -167,7 +167,7 @@ Fill in the "Next Session Prep" section before ending a session. Your future sel
 ### If Journey State Exists But Is Stale
 
 1. Read the existing `journey-state.md`
-2. Execute `/journey where` to update it
+2. Execute `/restack-journey where` to update it
 3. Correct any drift between file and reality
 4. Continue with updated state
 
@@ -178,7 +178,7 @@ The requirements are now documented in `CLAUDE.md` so that:
 - The memory persistence instructions are always active
 - New architects working in the codebase understand the pattern
 
-**When executing `/journey` commands, Claude Code will automatically:**
+**When executing `/restack-journey` commands, Claude Code will automatically:**
 - Read existing journey state before making recommendations
 - Update journey state after every command
 - Create missing state files when needed

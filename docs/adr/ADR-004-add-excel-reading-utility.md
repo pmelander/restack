@@ -40,8 +40,8 @@ We will **add Excel reading as a standalone utility skill** in a new `skills/uti
 **What we're building:**
 - **Utility skill:** `skills/utilities/excel-reader.md`
 - **Python helper:** `helpers/read_spreadsheet.py` (uses openpyxl)
-- **Commands:** `/excel read`, `/excel preview`, `/excel sheets`, `/excel convert`
-- **Integration:** `/stressor import` command wraps excel reader
+- **Commands:** `/restack-excel read`, `/restack-excel preview`, `/restack-excel sheets`, `/restack-excel convert`
+- **Integration:** `/restack-stressor import` command wraps excel reader
 - **Dependencies:** `requirements.txt` with openpyxl
 
 **What makes it a utility:**
@@ -53,7 +53,7 @@ We will **add Excel reading as a standalone utility skill** in a new `skills/uti
 ## Alternatives Considered
 
 ### Alternative 1: Integrate into Stressor Analysis Only
-**What:** Add `/stressor import <excel>` without general excel-reader skill
+**What:** Add `/restack-stressor import <excel>` without general excel-reader skill
 
 **Pros:**
 - Focused, purpose-built for stressor matrices
@@ -197,13 +197,13 @@ examples/excel-reader/
 ```
 
 ### Commands
-- `/excel read <file> [sheet]` - Read and display as markdown table
-- `/excel preview <file> [rows]` - Show first N rows (default 10)
-- `/excel sheets <file>` - List available sheets
-- `/excel convert <file> [sheet]` - Save to docs/imports/
+- `/restack-excel read <file> [sheet]` - Read and display as markdown table
+- `/restack-excel preview <file> [rows]` - Show first N rows (default 10)
+- `/restack-excel sheets <file>` - List available sheets
+- `/restack-excel convert <file> [sheet]` - Save to docs/imports/
 
 ### Integration
-- `/stressor import <excel>` wraps `/excel read` for stressor matrices
+- `/restack-stressor import <excel>` wraps `/restack-excel read` for stressor matrices
 - Future skills can call excel-reader as needed
 - Helper script works standalone via CLI for advanced users
 
@@ -234,7 +234,7 @@ examples/excel-reader/
 ## Metrics for Success
 
 **Usage Metrics:**
-- Number of `/excel read` commands used
+- Number of `/restack-excel read` commands used
 - Excel imports per stressor analysis session
 - Utility skill adoption rate
 
@@ -277,7 +277,7 @@ examples/excel-reader/
 3. ✅ Create `skills/utilities/README.md` (explain category)
 4. ✅ Create `skills/utilities/excel-reader.md` (skill spec)
 5. ✅ Create `requirements.txt` with openpyxl
-6. ✅ Add `/stressor import` to stressor-analysis.md
+6. ✅ Add `/restack-stressor import` to stressor-analysis.md
 7. 📋 Create example files (sample-data.xlsx)
 8. 📋 Update documentation (README, QUICKREF, GETTING_STARTED, ROADMAP, CLAUDE.md)
 9. 📋 Test on Windows/Mac/Linux

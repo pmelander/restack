@@ -9,7 +9,7 @@ Close every command with exactly one status line:
   one thing that would unblock it.
 - **NEEDS_DISCOVERY** — the analysis cannot be trusted because the system is
   not sufficiently known. Name the specific unknown (which actor, which path,
-  which integration) and route to the `/discover` command that closes it.
+  which integration) and route to the `/restack-discover` command that closes it.
 
 `NEEDS_DISCOVERY` is not a failure. Producing a confident-looking impact matrix
 over a path map you do not believe is the failure.

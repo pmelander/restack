@@ -21,7 +21,7 @@
 The first thing to do with any new engagement isn't to open a specific skill — it's to understand where you are and what the terrain demands.
 
 ```
-/journey start
+/restack-journey start
 ```
 
 Tell Claude about the system you're working on — what you're trying to achieve, what exists today, and any constraints. It will assess the terrain and map your recommended skill sequence from there.
@@ -52,15 +52,15 @@ You keep iterating until the system's vulnerability is sufficiently low — not 
 
 | Category | Skills |
 |----------|--------|
-| Orchestration | `/journey` |
-| Discovery | `/discover` |
-| Stressor Analysis | `/stressor` |
-| Design & Documentation | `/adr` `/solution-doc` `/tech-stack` `/design-review` |
-| Cloud & Infrastructure | `/cloud` `/capacity` |
-| Organisational Capabilities | `/arch-learning` `/capability-assessor` `/patterns` `/evolve` |
-| Utilities | `/excel` |
+| Orchestration | `/restack-journey` |
+| Discovery | `/restack-discover` |
+| Stressor Analysis | `/restack-stressor` |
+| Design & Documentation | `/restack-adr` `/restack-solution-doc` `/restack-tech-stack` `/restack-design-review` |
+| Cloud & Infrastructure | `/restack-cloud` `/restack-capacity` |
+| Organisational Capabilities | `/restack-arch-learning` `/restack-capability-assessor` `/restack-patterns` `/restack-evolve` |
+| Utilities | `/restack-excel` |
 
-> **Note on Risk and Compliance:** A standalone Risk Assessor and Compliance Checker were deliberately excluded. Residuality Theory covers risk through antifragility thinking (`/stressor`) — risk registers create false confidence in enumerated threats. Compliance is handled through **stressor compliance packs** (`/stressor compliance <pack>`), so regulatory requirements emerge as residues of antifragile design rather than a separate checklist process. See [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) and [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md).
+> **Note on Risk and Compliance:** A standalone Risk Assessor and Compliance Checker were deliberately excluded. Residuality Theory covers risk through antifragility thinking (`/restack-stressor`) — risk registers create false confidence in enumerated threats. Compliance is handled through **stressor compliance packs** (`/restack-stressor compliance <pack>`), so regulatory requirements emerge as residues of antifragile design rather than a separate checklist process. See [ADR-006](docs/adr/ADR-006-exclude-risk-assessor-skill.md) and [ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md).
 
 ---
 
@@ -77,7 +77,11 @@ cp -R skills/* ~/.claude/skills/
 pip install -r requirements.txt
 ```
 
-Open Claude Code and type `/` to see your skills.
+Open Claude Code and type `/restack` to see them all.
+
+Every skill is prefixed so ReStack coexists with other skill suites — an
+unprefixed `design-review` or `patterns` silently overwrites whatever was
+installed there first. See [Installation](docs/INSTALLATION.md#why-every-skill-is-prefixed).
 
 📖 See [Installation Guide](docs/INSTALLATION.md) for detailed setup and troubleshooting.
 
@@ -148,7 +152,7 @@ See [Roadmap](ROADMAP.md) for future considerations.
 ## 🤝 Contributing
 
 Contributions welcome — especially:
-- 📋 **Compliance packs** for regulatory frameworks (GDPR, HIPAA, PCI DSS, ISO 27001, SOC 2) — see `skills/stressor/compliance-packs/README.md`
+- 📋 **Compliance packs** for regulatory frameworks (GDPR, HIPAA, PCI DSS, ISO 27001, SOC 2) — see `skills/restack-stressor/compliance-packs/README.md`
 - 💡 **New skill ideas** that align with Residuality Theory
 - 📝 **Documentation improvements**
 - 🐛 **Bug fixes and refinements**
