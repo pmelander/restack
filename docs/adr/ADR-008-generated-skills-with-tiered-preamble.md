@@ -43,7 +43,8 @@ is minefield, workshop facilitation when there is no workshop — was paid for o
 every invocation. That capped how deep any single skill could afford to go,
 which is the opposite of what this toolkit is for.
 
-We evaluated gstack (Garry Tan's skill suite) as a reference implementation.
+We evaluated [gstack](https://github.com/garrytan/gstack) (Garry Tan's skill
+suite) as a reference implementation.
 Its skills are generated from templates, compose shared behaviour by declared
 tier, split situational depth into on-demand sections, and gate architect
 decisions behind a structured brief format. Those mechanics are independent of

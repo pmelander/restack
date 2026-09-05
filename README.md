@@ -291,4 +291,18 @@ See [Contributing](CONTRIBUTING.md).
 
 ---
 
+## Acknowledgements
+
+The skill-authoring mechanics — generated skills, the tiered preamble,
+on-demand sections, and structured decision briefs — were adapted from
+[Garry Tan's gstack](https://github.com/garrytan/gstack). The residuality
+method, and everything the skills actually do, is our own.
+[ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) records
+what was taken, what was changed, and what was deliberately left behind.
+
+Residuality Theory is the work of **Barry O'Reilly**. See
+[RESIDUALITY.md](RESIDUALITY.md).
+
+---
+
 MIT licensed. Built for Solution Architects using Claude Code.

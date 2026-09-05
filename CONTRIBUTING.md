@@ -142,6 +142,13 @@ touch examples/skill-name/example-output.md
 # Commit BOTH the .tmpl and the generated SKILL.md
 ```
 
+> **Where this structure came from.** The template + tiered preamble + on-demand
+> sections pattern is adapted from [gstack](https://github.com/garrytan/gstack),
+> which is worth reading if you are extending the authoring system rather than
+> writing a skill — it is a larger, more mature implementation of the same
+> mechanics. What we changed and what we left out is recorded in
+> [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
+
 **Changing shared behaviour** — how decision briefs are formatted, what counts
 as evidence, how a command reports completion — belongs in
 `scripts/preamble/*.md`, not in an individual skill. Edit the fragment,
