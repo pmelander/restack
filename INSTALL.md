@@ -15,9 +15,10 @@ Everything below is for an agent installing on someone's behalf.
 
 ## For Claude: installing ReStack when pointed at this repository
 
-If someone has asked you to install ReStack — by URL, by pointing at a
-checkout, or by saying "install this" — follow these steps exactly. They are
-executable instructions, not reference material.
+If someone has asked you to install ReStack — *"install ReStack from
+https://github.com/pmelander/restack"*, by pointing at a checkout, or just
+"install this" — follow these steps exactly. They are executable instructions,
+not reference material.
 
 ### What you are about to do
 

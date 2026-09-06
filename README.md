@@ -80,6 +80,84 @@ it arrives as a datacentre fire.
 
 ---
 
+## Install
+
+**Easiest — have Claude Code install it.** Paste this into a session:
+
+> install ReStack from https://github.com/pmelander/restack
+
+It follows [INSTALL.md](INSTALL.md): tells you what it is about to do, shows
+you a dry run first, and asks before writing anything into `~/.claude/skills/`.
+It will not touch skills that are not ReStack's, and it will not install the
+optional extras without asking.
+
+**Or do it yourself:**
+
+```bash
+git clone https://github.com/pmelander/restack.git ~/restack
+cd ~/restack && ./setup          # Windows: .\setup.ps1
+```
+
+Either way: type `/restack` in Claude Code to see the fifteen skills, and
+`/restack-upgrade` when you want to update.
+
+### Optional extras
+
+Neither is required — fourteen of the fifteen skills work without either, and
+`setup` tells you which are present.
+
+```bash
+pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
+npm i -g @openai/codex            # Codex CLI — a genuine outside voice
+codex login
+```
+
+**Codex is what makes the second opinion worth having.** Without it the outside
+opinion still runs, using a fresh subagent — which removes conversation bias but
+shares training, and therefore shares blind spots. In this toolkit's own terms
+it is a weaker residual: it defends against fewer stressor classes. Its
+disagreement still counts; its agreement is close to worthless.
+
+Every skill is prefixed so ReStack coexists with other suites — an unprefixed
+`design-review` or `patterns` silently overwrites whatever was installed there
+first. [Installation](docs/INSTALLATION.md) covers the symlink method,
+upgrading from an unprefixed install, and troubleshooting.
+
+---
+
+## Start here
+
+```
+/restack-journey start
+```
+
+Describe the system, what you are trying to achieve, and what already exists.
+It classifies the terrain and maps the route from there — because the route
+genuinely differs:
+
+| Terrain | You are | First move |
+|---|---|---|
+| **Greenfield** | designing paths that do not exist yet | design, then stress before building |
+| **Brownfield** | changing a system you partly understand | discover before you touch anything |
+| **Minefield** | changing a fragile system with real blast radius | discover extensively; gaps block, they do not become assumptions |
+
+At the centre of every route is a loop, not a line:
+
+```
+walk paths → generate stressors → build matrix → find residuals
+     ↑                                                  ↓
+  re-walk ←← implement residuals ←← impact low enough? ←←
+```
+
+You iterate until vulnerability is low enough — not zero, but low enough given
+the aspiration and what further reduction would cost. That judgement stays
+yours; the toolkit's job is to make you make it deliberately, with the matrix
+in front of you, rather than by drifting onward.
+
+→ **[Getting Started](GETTING_STARTED.md)** · **[All commands](QUICKREF.md)** · **[The theory](RESIDUALITY.md)**
+
+---
+
 ## What makes these skills behave differently
 
 **They stop and make you decide.** Every point where judgement is genuinely
@@ -127,39 +205,6 @@ every bit of the analytical weight a real vendor name does.
 **They compound.** Residuals that recur across engagements become patterns.
 Decisions carry predictions, which makes them falsifiable, which is what lets
 the next analysis be better than the last.
-
----
-
-## Start here
-
-```
-/restack-journey start
-```
-
-Describe the system, what you are trying to achieve, and what already exists.
-It classifies the terrain and maps the route from there — because the route
-genuinely differs:
-
-| Terrain | You are | First move |
-|---|---|---|
-| **Greenfield** | designing paths that do not exist yet | design, then stress before building |
-| **Brownfield** | changing a system you partly understand | discover before you touch anything |
-| **Minefield** | changing a fragile system with real blast radius | discover extensively; gaps block, they do not become assumptions |
-
-At the centre of every route is a loop, not a line:
-
-```
-walk paths → generate stressors → build matrix → find residuals
-     ↑                                                  ↓
-  re-walk ←← implement residuals ←← impact low enough? ←←
-```
-
-You iterate until vulnerability is low enough — not zero, but low enough given
-the aspiration and what further reduction would cost. That judgement stays
-yours; the toolkit's job is to make you make it deliberately, with the matrix
-in front of you, rather than by drifting onward.
-
-→ **[Getting Started](GETTING_STARTED.md)** · **[All commands](QUICKREF.md)** · **[The theory](RESIDUALITY.md)**
 
 ---
 
@@ -231,51 +276,6 @@ Compliance enters as **stressor packs**
 scenarios to walk, and the residuals that emerge address the underlying harm
 structurally rather than satisfying a control on paper
 ([ADR-007](docs/adr/ADR-007-compliance-via-stressor-packs.md)).
-
----
-
-## Install
-
-```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup          # Windows: .\setup.ps1
-```
-
-Open Claude Code and type `/restack`. Later, `/restack-upgrade` pulls and
-reinstalls in one step.
-
-`setup` reports what it installed, updated and removed, and — unlike a plain
-copy — removes ReStack skills that no longer exist upstream. `--dry-run` shows
-what it would do; `--symlink` makes repository edits live.
-
-### Optional extras
-
-Neither is required. Fourteen of the fifteen skills work without either.
-
-```bash
-pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
-npm i -g @openai/codex            # Codex CLI — a genuine outside voice
-codex login
-```
-
-**Codex is what makes the second opinion worth having.** Without it the outside
-opinion still runs, using a fresh subagent — which removes conversation bias but
-shares training, and therefore shares blind spots. In this toolkit's own terms
-it is a weaker residual: it defends against fewer stressor classes. Its
-disagreement still counts; its agreement is close to worthless.
-
-`setup` reports whether either is present and what it affects.
-
-**Installing with an agent?** Point Claude Code at
-[INSTALL.md](INSTALL.md) — "install ReStack from
-https://github.com/pmelander/restack" — and it has step-by-step instructions to
-follow, including confirming with you before it writes anything.
-
-Every skill is prefixed so ReStack coexists with other skill suites — an
-unprefixed `design-review` or `patterns` silently overwrites whatever was
-installed there first. See
-[Installation](docs/INSTALLATION.md#why-every-skill-is-prefixed) for the
-symlink method, upgrading from an unprefixed install, and troubleshooting.
 
 ---
 
