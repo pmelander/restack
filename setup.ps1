@@ -203,7 +203,13 @@ if (($nNew + $nUpd + $nDel) -eq 0) {
     Write-Host "ReStack v$Version - $nNew installed, $nUpd updated, $nDel removed, $nSame unchanged."
 }
 
+$codexNote = ''
+if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
+    $codexNote = 'Codex CLI not found - the outside opinion falls back to a same-family subagent (weaker; shares blind spots). Optional: npm i -g @openai/codex && codex login'
+}
+
 if ($depNote) { Write-Host ""; Write-Host "Note: $depNote" }
+if ($codexNote) { Write-Host ""; Write-Host "Note: $codexNote" }
 
 if ($SymlinkDegraded) {
     Write-Host ""

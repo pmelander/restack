@@ -8,6 +8,15 @@ This guide will help you install the ReStack skills for Claude Code.
 - Git (optional, for cloning the repository)
 - Text editor (for viewing/editing skills)
 
+### Optional extras
+
+Neither is required; `setup` reports whether each is present.
+
+| | Install | Affects |
+|---|---|---|
+| **openpyxl** | `pip install -r requirements.txt` | `/restack-excel` reading `.xlsx`. CSV works without it. |
+| **Codex CLI** | `npm i -g @openai/codex` then `codex login` | The outside opinion in `/restack-stressor` and `/restack-design-review`. Without it they fall back to a fresh subagent — same model family, so it shares blind spots; its disagreement still counts, its agreement is weak evidence. |
+
 ## Installation Methods
 
 ### Method 1: setup script (recommended)

@@ -26,7 +26,9 @@ Say this to the user before running anything, so they can decline:
 > ReStack is 15 Claude Code skills for architecture work, built on Residuality
 > Theory. Installing means cloning the repository and copying 15 directories
 > into `~/.claude/skills/`, all named `restack-*`. It will not touch any other
-> skill. Python and `openpyxl` are optional and only affect `/restack-excel`.
+> skill. Two optional extras exist — openpyxl for spreadsheet import, and the
+> Codex CLI for cross-model second opinions — and I will not install either
+> without asking.
 
 **Get an explicit yes before writing anything into `~/.claude/skills/`.**
 Installing skills changes how their Claude Code behaves in every future
@@ -69,18 +71,31 @@ cd ~\restack; .\setup.ps1
 Report the summary line verbatim. It states how many skills were installed,
 updated, removed and unchanged.
 
-### Step 4 — the optional dependency
+### Step 4 — the optional extras
 
-`setup` reports whether Python and `openpyxl` are available. They are needed
-only by `/restack-excel`; the other 14 skills do not care.
+`setup` reports whether each is present and what it affects. Neither is
+required.
 
-If it reports them missing and the user wants spreadsheet import:
+**openpyxl** — only `/restack-excel` needs it, for `.xlsx` (CSV works without).
 
 ```bash
 cd ~/restack && pip install -r requirements.txt
 ```
 
-Do not install Python packages without asking. It is their environment.
+**Codex CLI** — makes the outside opinion a genuine outside voice. Without it,
+`/restack-stressor` and `/restack-design-review` fall back to a fresh subagent:
+same model family, so it shares blind spots and its agreement is weak evidence.
+
+```bash
+npm i -g @openai/codex
+codex login
+```
+
+`codex login` is interactive and opens a browser. Do not attempt it on the
+user's behalf, and never ask for or handle an API key.
+
+**Do not install either without asking.** It is their machine, and a global npm
+install in particular is not implied by "install ReStack".
 
 ### Step 5 — verify and hand over
 

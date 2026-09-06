@@ -6,8 +6,6 @@ Fifteen skills — fourteen that walk you through designing systems which
 survive things nobody predicted, and one that keeps them up to date. They build
 the thinking so that eventually you do it without them.
 
-> Formerly *Residual Architecture Skill Set*. Renamed to ReStack in September 2026; the history is unchanged.
-
 ---
 
 ## The problem this addresses
@@ -248,8 +246,25 @@ reinstalls in one step.
 
 `setup` reports what it installed, updated and removed, and — unlike a plain
 copy — removes ReStack skills that no longer exist upstream. `--dry-run` shows
-what it would do; `--symlink` makes repository edits live. Python and
-`openpyxl` are optional and affect only `/restack-excel`.
+what it would do; `--symlink` makes repository edits live.
+
+### Optional extras
+
+Neither is required. Fourteen of the fifteen skills work without either.
+
+```bash
+pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
+npm i -g @openai/codex            # Codex CLI — a genuine outside voice
+codex login
+```
+
+**Codex is what makes the second opinion worth having.** Without it the outside
+opinion still runs, using a fresh subagent — which removes conversation bias but
+shares training, and therefore shares blind spots. In this toolkit's own terms
+it is a weaker residual: it defends against fewer stressor classes. Its
+disagreement still counts; its agreement is close to worthless.
+
+`setup` reports whether either is present and what it affects.
 
 **Installing with an agent?** Point Claude Code at
 [INSTALL.md](INSTALL.md) — "install ReStack from

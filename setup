@@ -194,6 +194,14 @@ for candidate in python3 python; do
 done
 
 dep_note=""
+codex_note=""
+# Codex is optional. Without it the outside opinion falls back to a same-family
+# subagent, which shares blind spots - worth saying, since the fallback looks
+# identical from the outside.
+if ! command -v codex >/dev/null 2>&1; then
+  codex_note="Codex CLI not found - the outside opinion falls back to a same-family subagent (weaker; shares blind spots). Optional: npm i -g @openai/codex && codex login"
+fi
+
 if [ -z "$py" ]; then
   dep_note="Python not found — /restack-excel will not work. Everything else is unaffected."
 elif ! "$py" -c "import openpyxl" >/dev/null 2>&1; then
@@ -211,6 +219,7 @@ else
 fi
 
 [ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
+[ -n "$codex_note" ] && printf '\nNote: %s\n' "$codex_note"
 
 if [ -n "$SYMLINK_DEGRADED" ]; then
   cat <<EOF

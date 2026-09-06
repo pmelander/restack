@@ -7,6 +7,19 @@ individual skills carry their own `version:` in frontmatter.
 
 ### Added
 
+- `setup` and `setup.ps1` report whether the Codex CLI is present, and say what
+  its absence costs — the outside opinion falls back to a same-family subagent
+  that shares blind spots. README, INSTALL.md and the installation guide
+  document both optional extras.
+
+### Removed
+
+- The "formerly Residual Architecture Skill Set" note from the README. The
+  rename is recorded in the changelog and the git history; the front page does
+  not need it.
+
+### Added
+
 - **An outside opinion**, in the three places it earns its cost: stressor
   generation (asking a different model for the *complement* of your list —
   the strongest use, and a direct attack on the comfortable-stressors failure),
