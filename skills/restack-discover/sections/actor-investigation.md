@@ -31,6 +31,33 @@ Side effects are where the surprises are. An actor that "returns a credit
 score" and also writes an audit record and pings a fraud queue has three
 outputs, and two of them are invisible to the team that owns the caller.
 
+#### 3b. Trace where each value comes from, not just that it exists
+
+A field that *looks* like an attestation may be an input you supply.
+
+Manifests, headers and metadata carry fields that appear to record what the
+upstream actor did — a spec version, a producer id, a generated-at timestamp.
+Before relying on one as evidence of the actor's behaviour, find where the value
+originates. If your own side supplies it, it records **what you asked for**, not
+**what they did** — and it cannot detect their drift, because it changes only
+when you change.
+
+Observed: a snapshot manifest carried `extract_spec_version`, which read exactly
+like the control that would catch an upstream team silently redefining a metric.
+Tracing it showed the value came from the consumer's own orchestrator config and
+was used only as an idempotency key. A redefinition upstream would have left the
+manifest identical in every field anything checked.
+
+The distinction is worth stating precisely, because the fix differs:
+
+| | |
+|---|---|
+| **Attestation** | the actor asserts something about its own behaviour; you can validate it and refuse |
+| **Input echo** | you supplied it and it came back; it proves nothing about the actor |
+
+An input echo is not useless — it is usually half a control, and completing it
+is cheaper than building one. Say which you have.
+
 #### 4. State
 
 Does it hold state, and does that state change its behaviour on the next call?

@@ -3,6 +3,18 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.2.2] — 2026-09-06
+
+### Added
+
+- **Attestation vs input echo** in the actor-investigation protocol. A manifest
+  field that looks like an upstream attestation may be a value you supplied and
+  got back — in which case it records what you asked for, not what they did, and
+  cannot detect their drift. Found by running `/restack-discover actor` against
+  a real external boundary, where a `extract_spec_version` field read exactly
+  like the control for a semantic-drift stressor and turned out to be an
+  idempotency key sourced from the consumer's own config.
+
 ## [2.2.1] — 2026-09-06
 
 ### Added
