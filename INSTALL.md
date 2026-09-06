@@ -126,11 +126,21 @@ the version they end up with should be the one they asked for.
 | Method | Command | When |
 |---|---|---|
 | **Copy** (default) | `./setup` | normal use — the install is independent of the checkout |
-| **Symlink** | `./setup --symlink` | developing ReStack; edits in the repo are live |
+| **Symlink** | `./setup --symlink` | developing ReStack; edits in the repo are live. Needs symlink support — see below |
 | **Custom target** | `./setup --target DIR` | non-standard skills directory |
 | **Dry run** | `./setup --dry-run` | see what would change |
 
 `CLAUDE_SKILLS_DIR` overrides the default location for all of them.
+
+**Symlinks on Windows.** Git Bash silently *copies* when `ln -s` is used without
+symlink support enabled — the command succeeds and you get a directory. setup
+probes for this and, if it cannot create symlinks, says so and installs by copy
+rather than claiming edits are live. To get working symlinks: enable Developer
+Mode (Settings › For developers), run in an elevated shell, or
+
+```bash
+MSYS=winsymlinks:nativestrict ./setup --symlink
+```
 
 ## What setup does that a plain copy does not
 

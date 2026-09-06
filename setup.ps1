@@ -78,15 +78,40 @@ foreach ($s in $Sources) {
     }
 }
 
-Say "ReStack v$Version"
-Say "  from: $RepoDir"
-Say "  into: $SkillsDir  ($Method)"
-if ($DryRun) { Say "  DRY RUN - nothing will be written" }
-Say ""
-
 if (-not $DryRun -and -not (Test-Path $SkillsDir)) {
     New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 }
+
+# --- can this shell actually create symlinks? --------------------------------
+# Without Developer Mode or elevation, New-Item -ItemType SymbolicLink throws.
+# Probe once so the failure is a clear message rather than an abort halfway
+# through the install, and so we never claim "edits are live" when they are not.
+
+$SymlinkDegraded = $false
+$SymlinkUnverified = $false
+if ($Method -eq 'symlink') {
+    if ($DryRun) {
+        $SymlinkUnverified = $true
+    } else {
+        $probe = Join-Path $SkillsDir '.restack-symlink-probe'
+        if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Recurse -Force }
+        try {
+            New-Item -ItemType SymbolicLink -Path $probe -Target $RepoDir -ErrorAction Stop | Out-Null
+            Remove-Item -LiteralPath $probe -Force
+        } catch {
+            if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Recurse -Force }
+            $Method = 'copy'
+            $SymlinkDegraded = $true
+        }
+    }
+}
+
+Say "ReStack v$Version"
+Say "  from: $RepoDir"
+Say "  into: $SkillsDir  ($Method)"
+if ($SymlinkDegraded) { Say "        (-Symlink requested; this shell cannot create symlinks)" }
+if ($DryRun) { Say "  DRY RUN - nothing will be written" }
+Say ""
 
 # --- install -----------------------------------------------------------------
 
@@ -180,9 +205,21 @@ if (($nNew + $nUpd + $nDel) -eq 0) {
 
 if ($depNote) { Write-Host ""; Write-Host "Note: $depNote" }
 
+if ($SymlinkDegraded) {
+    Write-Host ""
+    Write-Host "Warning: -Symlink was requested but this shell cannot create symlinks, so"
+    Write-Host "the skills were INSTALLED BY COPY. Edits in the repository are NOT live -"
+    Write-Host "re-run setup.ps1 after each change, or enable Developer Mode"
+    Write-Host "(Settings > For developers) or run in an elevated shell, then retry."
+}
+
 if ($DryRun) {
     Write-Host ""; Write-Host "(dry run - nothing was written)"
+    if ($SymlinkUnverified) { Write-Host "Symlink support not probed in a dry run; a real run verifies it." }
 } else {
     Write-Host ""; Write-Host "Type /restack in Claude Code to see the skills."
-    if ($Method -eq 'symlink') { Write-Host "Symlinked: edits in $RepoDir are live." }
+    if ($Method -eq 'symlink') {
+        Write-Host "Symlinked: edits in $RepoDir are live after a regenerate."
+        Write-Host "Claude Code re-reads skills when they change; a fresh session is the sure way."
+    }
 }

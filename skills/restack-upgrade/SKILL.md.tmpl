@@ -1,6 +1,6 @@
 ---
 name: restack-upgrade
-version: 1.0.0
+version: 1.1.0
 preamble-tier: 1
 model: sonnet
 description: |
@@ -158,6 +158,7 @@ v{version}" and stop.
 | A command exists but the skill is stale | repo pulled, setup not re-run | run `./setup` |
 | `/restack-excel` fails to find its helper | pre-v2 install | upgrade; the helper now ships inside the skill |
 | Edits to the repo have no effect | installed by copy, not symlink | `./setup --symlink` |
+| `--symlink` was used and edits still have no effect | the shell could not create symlinks and setup fell back to copy — it warns when this happens | enable Developer Mode, or `MSYS=winsymlinks:nativestrict ./setup --symlink`; check with `ls -la ~/.claude/skills/` |
 
 Before any repair, show what `./setup --dry-run` would do. It writes nothing
 and its output is usually enough to identify the problem.

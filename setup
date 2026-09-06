@@ -31,7 +31,10 @@ Usage: ./setup [options]
 
 Options:
   --symlink     Symlink instead of copying, so repository edits are live.
-                Use while developing ReStack itself.
+                Use while developing ReStack itself. Needs a shell that can
+                create symlinks; on Git Bash/Windows that means Developer Mode,
+                an elevated shell, or MSYS=winsymlinks:nativestrict. If it
+                cannot, setup says so and installs by copy instead.
   --copy        Copy the skills (default).
   --dry-run     Show what would change; write nothing.
   --target DIR  Install into DIR instead of \$HOME/.claude/skills.
@@ -81,13 +84,39 @@ for src in "$REPO_DIR"/skills/restack-*/; do
   }
 done
 
+[ -n "$DRY_RUN" ] || mkdir -p "$SKILLS_DIR"
+
+# --- can this shell actually create symlinks? --------------------------------
+# MSYS/Git Bash on Windows silently COPIES when `ln -s` is used without
+# winsymlinks enabled: the command succeeds, the exit status is 0, and you get a
+# directory. Reporting "symlinked, edits are live" after that is a false promise
+# and worse than failing, because the user then edits the repository and watches
+# nothing happen. Probe once, up front, and degrade honestly.
+
+SYMLINK_DEGRADED=""
+if [ "$METHOD" = "symlink" ]; then
+  if [ -n "$DRY_RUN" ]; then
+    SYMLINK_UNVERIFIED="yes"
+  else
+    _probe="$SKILLS_DIR/.restack-symlink-probe"
+    rm -rf "$_probe"
+    if ln -s "$REPO_DIR" "$_probe" 2>/dev/null && [ -L "$_probe" ]; then
+      rm -f "$_probe"
+    else
+      rm -rf "$_probe"
+      METHOD="copy"
+      SYMLINK_DEGRADED="yes"
+      _degraded_note="yes"
+    fi
+  fi
+fi
+
 say "ReStack v$VERSION"
 say "  from: $REPO_DIR"
 say "  into: $SKILLS_DIR  ($METHOD)"
+[ -n "${_degraded_note:-}" ] && say "        (--symlink requested; this shell cannot create symlinks)"
 [ -n "$DRY_RUN" ] && say "  DRY RUN — nothing will be written"
 say ""
-
-[ -n "$DRY_RUN" ] || mkdir -p "$SKILLS_DIR"
 
 # --- install -----------------------------------------------------------------
 
@@ -114,7 +143,14 @@ for src in "$REPO_DIR"/skills/restack-*/; do
 
   rm -rf "$dest"
   if [ "$METHOD" = "symlink" ]; then
+    # The probe above proved symlinks work here, but verify each one anyway —
+    # a silently-degraded link is the whole bug this guards against.
     ln -s "${src%/}" "$dest"
+    [ -L "$dest" ] || {
+      echo "Error: symlink for $name did not take (got a $(test -d "$dest" && echo directory || echo file))." >&2
+      echo "Re-run with --copy." >&2
+      exit 1
+    }
   else
     cp -R "${src%/}" "$dest"
   fi
@@ -176,9 +212,26 @@ fi
 
 [ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
 
+if [ -n "$SYMLINK_DEGRADED" ]; then
+  cat <<EOF
+
+Warning: --symlink was requested but this shell cannot create symlinks, so the
+skills were INSTALLED BY COPY. Edits in the repository are NOT live — re-run
+./setup after each change, or fix symlink support:
+
+  Windows : enable Developer Mode (Settings > For developers), or run in an
+            elevated shell, or:  export MSYS=winsymlinks:nativestrict
+  Then    : ./setup --symlink
+EOF
+fi
+
 if [ -n "$DRY_RUN" ]; then
   printf '\n(dry run — nothing was written)\n'
+  [ -n "${SYMLINK_UNVERIFIED:-}" ] && printf 'Symlink support not probed in a dry run; a real run verifies it.\n'
 else
   printf '\nType /restack in Claude Code to see the skills.\n'
-  [ "$METHOD" = "symlink" ] && printf 'Symlinked: edits in %s are live.\n' "$REPO_DIR"
+  if [ "$METHOD" = "symlink" ]; then
+    printf 'Symlinked: edits in %s are live after a regenerate.\n' "$REPO_DIR"
+    printf 'Claude Code re-reads skills when they change; a fresh session is the sure way.\n'
+  fi
 fi

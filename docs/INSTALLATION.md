@@ -88,7 +88,14 @@ done
 
 ### Method 2: Symlink Installation (For Developers)
 
-This method creates symbolic links, so updates to the repository automatically reflect in Claude Code.
+This method creates symbolic links, so updates to the repository automatically
+reflect in Claude Code.
+
+**It needs a shell that can actually create symlinks.** Git Bash on Windows
+silently *copies* otherwise — `ln -s` returns 0 and you get a directory. setup
+probes for this and installs by copy with a warning rather than claiming edits
+are live. Enable Developer Mode (Settings › For developers), use an elevated
+shell, or prefix the command with `MSYS=winsymlinks:nativestrict`.
 
 ```bash
 # Clone the repository

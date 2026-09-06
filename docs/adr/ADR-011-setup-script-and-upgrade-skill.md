@@ -8,7 +8,7 @@
 
 **Technical Story:** Installation and upgrade were manual and lossy
 
-**Implementation Status:** implemented
+**Implementation Status:** implemented (symlink degradation fixed in 2.1.1 — see Notes)
 
 **Implemented Date:** 2026-09-05
 
@@ -135,6 +135,26 @@ one small JSON file.
   skills. It just does not clean up, report, or record anything.
 
 ## Notes
+
+**2.1.1 — the symlink promise was false on Windows.** `--symlink` used `ln -s`
+and trusted its exit status. MSYS/Git Bash without symlink support *silently
+copies*: the command succeeds, returns 0, and produces a directory. setup then
+printed "Symlinked: edits in the repo are live", which was untrue, and the user
+edited the repository and watched nothing happen. Found by using the toolkit —
+a skill invocation served content from before an edit, and the install turned
+out to be a copy wearing a symlink's name.
+
+Both scripts now probe symlink capability once before installing, degrade to
+copy with an explicit warning naming the fix, and verify each link as it is
+created. The header reports the method actually used. `setup.ps1` had the same
+defect in a different form: `New-Item -ItemType SymbolicLink` throws without
+Developer Mode, which under `$ErrorActionPreference = 'Stop'` would have
+aborted the install partway through.
+
+The general lesson, which applies beyond this script: **a tool that reports
+success for an operation it did not perform is worse than one that fails.**
+Failure is visible; a false claim is discovered days later, by which point it
+has been trusted.
 
 `/restack-upgrade` is tier 1 rather than tier 2, deliberately. Tier 2 supplies
 decision briefs whose format is architecture-shaped — an `Aspiration:` line and

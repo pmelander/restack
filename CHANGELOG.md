@@ -3,6 +3,20 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.1.1] — 2026-09-06
+
+### Fixed
+
+- **`setup --symlink` silently installed by copy on Windows and claimed
+  otherwise.** Git Bash without symlink support copies when `ln -s` is used —
+  exit status 0, and you get a directory. setup then printed "edits in the repo
+  are live", which was false. Both scripts now probe symlink capability up
+  front, degrade to copy with a warning naming the fix, verify each link, and
+  report the method actually used. `setup.ps1` had the same defect in a
+  different form: `New-Item -ItemType SymbolicLink` throws without Developer
+  Mode, which would have aborted the install partway through.
+- `/restack-upgrade`'s repair table now covers the degraded-symlink case.
+
 ## [2.1.0] — 2026-09-06
 
 First changes driven by field evidence rather than by reasoning about the
