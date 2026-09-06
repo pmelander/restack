@@ -104,9 +104,29 @@ Timeout at five minutes. Read stderr afterwards, then remove both files.
 **If Codex is unavailable or errored**, dispatch a subagent with the same
 prompt and no conversation context.
 
-**Errors are non-blocking, every one of them.** Auth failure, timeout, empty
-response — note it in one line and continue. Never retry more than once, and
-never let this stall the analysis.
+#### Detecting failure — exit status, not stderr
+
+**Gate on the exit status. Classify from stderr. Never treat "stderr is
+non-empty" as failure.**
+
+`codex exec` writes its banner — workdir, model, sandbox, token count — *and a
+copy of the answer* to stderr on a completely successful run. A check like
+`[ -s "$ERR_FILE" ] && fail` therefore fails every single time, including when
+everything worked. Read the answer from **stdout**.
+
+Verified against codex-cli 0.153.4:
+
+| | |
+|---|---|
+| Success | exit `0`, answer on stdout, banner + answer + token count on stderr |
+| Not authenticated | exit `1`, stderr carries `401 Unauthorized` and `Missing bearer or basic authentication` |
+| Unauthenticated failure takes | roughly 10 seconds — it retries five times over WebSocket, then five more over HTTPS |
+
+So: exit non-zero means it failed; match `auth`, `401`, `unauthorized`,
+`timeout` in stderr only to say *which* failure it was.
+
+**Errors are non-blocking, every one of them.** Note it in one line and
+continue. Never retry more than once, and never let this stall the analysis.
 
 ---
 
@@ -127,6 +147,19 @@ stressor list*, then:
 
 Asking for the *complement* is what makes this worth doing. Asking for "some
 stressors" returns overlap.
+
+**Say why you want the weighting**, not just that you want it — "the existing
+list is visibly heavy on infrastructure" gets a sharper answer than "prioritise
+organisational scenarios". Observed: naming the imbalance produced ten
+organisational, regulatory and commercial scenarios with almost no
+infrastructure repetition.
+
+**The absurd stressor does not survive this prompt.** Appending "include at
+least one scenario that sounds absurd" to a terse, structured, no-preamble ask
+gets quietly ignored — the model optimises for the format instructions. If you
+want absurd, ask for it in **its own call** with no terseness constraint.
+Generating them yourself remains the reliable route; that part of the method
+does not need an outside model.
 
 **Residual identification.** Give it the cluster and the actor, and withhold
 your own diagnosis:
@@ -158,6 +191,12 @@ SECOND OPINION (Codex) — cold read, no session context
 <output, unedited>
 ────────────────────────────────────────────────────────
 ```
+
+**Check every "nothing covers this" claim before repeating it.** The outside
+model cannot see your ADRs, so its judgement about what is already covered is a
+guess. Grep the decision record for each one. Expect roughly a third to be
+adjacent to an existing decision rather than new — and the ones that survive
+that check are worth considerably more for having survived it.
 
 **Then weigh it, and weigh it correctly.** This is the part that matters:
 

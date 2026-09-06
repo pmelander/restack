@@ -3,7 +3,7 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [2.2.0] — 2026-09-06
+## [2.2.1] — 2026-09-06
 
 ### Added
 
@@ -23,6 +23,25 @@ individual skills carry their own `version:` in frontmatter.
   `scripts/shared/`, so method used by several skills lives once and is still
   read on demand.
 - Stressors from an outside model are tagged `external`.
+
+### Corrected after the first live run
+
+Tested against codex-cli 0.153.4 on a real engagement, which corrected three
+things the guidance had wrong or missing:
+
+- **Failure detection.** `codex exec` writes its banner *and a copy of the
+  answer* to stderr on success, so "stderr is non-empty" is a broken failure
+  test that would fail every successful run. Gate on exit status; use stderr
+  only to classify which failure occurred. Real unauthenticated text is
+  `401 Unauthorized` / `Missing bearer or basic authentication`, and it takes
+  ~10s to surface because the client retries 5× over WebSocket then 5× over
+  HTTPS.
+- **The absurd-stressor instruction does not survive a terse structured prompt**
+  — the model optimises for the format directive and drops it. Ask separately,
+  or keep generating those yourself.
+- **Verify every "nothing covers this" claim.** The outside model cannot see
+  your ADRs. On the first run, 6 of 10 claims survived checking; the rest were
+  adjacent to existing decisions.
 
 ### Changed
 

@@ -115,6 +115,17 @@ it reversible?*
 engagement survives weeks, breaks, and handoffs — with an audit trail of what
 was decided and why.
 
+**They ask someone else.** A single model generates from its own distribution,
+which is a problem when the whole method depends on reaching outside one. At
+stressor generation and residual identification you can pull in a second model —
+Codex if it is installed, a fresh subagent otherwise — and the ask is what makes
+it work: not "what do you think?" but *"give me ten stressors that are NOT on
+this list, and that its authors would most likely have missed."*
+
+Before anything is sent it asks what may leave. Anonymised is the default, and
+it costs nothing: the method works on mechanism, so "Payment Gateway" carries
+every bit of the analytical weight a real vendor name does.
+
 **They compound.** Residuals that recur across engagements become patterns.
 Decisions carry predictions, which makes them falsifiable, which is what lets
 the next analysis be better than the last.
@@ -259,9 +270,16 @@ ReStack is at **v2.1.0**. All fifteen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 
-**These skills are the deliverable; they have not yet been run end to end on a
-live engagement in this form.** If you use them in anger, the most useful thing
-you could report back is which gate you wanted to skip, and why.
+**Partly proven.** The consistency review and the outside opinion have been run
+against a real engagement — a fourteen-day architecture built with an earlier
+version, 42 ADRs deep. They found things: a decision recorded everywhere except
+in the ADR that owns it, a design whose residuals appear in no design document,
+and four stressor classes uncovered by any of those 42 decisions, the sharpest
+being a data contract that validates on shape while its meaning moves underneath.
+
+The full journey — terrain classification through iterate gate — has not been
+run end to end in this form. If you use it in anger, the most useful thing you
+could report is which gate you wanted to skip, and why.
 
 See the [Roadmap](ROADMAP.md) for what is next, and the
 [ADRs](docs/adr/) for the decisions behind the design — including the ones
