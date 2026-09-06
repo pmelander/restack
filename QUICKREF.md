@@ -129,14 +129,17 @@ worked example.
 /restack-design-review api               # contract, evolution, error semantics
 /restack-design-review security          # threat model first, not a control list
 /restack-design-review performance       # shape, not speed
-/restack-design-review complete          # all five, in dependency order
+/restack-design-review consistency       # do the documents still agree with each other?
+/restack-design-review complete          # all five, then consistency
 /restack-design-review self-check        # you review; it only pushes on assumptions
 ```
 
-Every design review cross-checks findings against the matrix and classifies
-each: **A** matrix caught it, residual missing · **B** residual present but not
-working · **C** matrix should have caught it · **D** genuinely new.
-A review that is mostly **C** is a discovery problem wearing a review's clothes.
+Every design review triages findings first — *system* findings classify against
+the matrix as **A** matrix caught it, residual missing · **B** residual present
+but not working · **C** matrix should have caught it · **D** genuinely new;
+*artifact* findings (documents disagreeing with each other) are reported
+separately. Mostly **C** is a discovery problem wearing a review's clothes;
+mostly artifact means the analysis is sound and the docs are not keeping up.
 
 ## Build it
 

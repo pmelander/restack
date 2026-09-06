@@ -1,6 +1,6 @@
 ---
 name: restack-solution-doc
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 2
 model: opus
 description: |
@@ -373,6 +373,12 @@ questions, and treat each unanswered one as a gap.
 Check specifically for the three failures: residuals documented without their
 purpose, happy paths documented without error paths, and confident statements
 about existing-system behaviour that were never verified.
+
+**For consistency against the rest of the documentation** — whether this
+document still agrees with the ADRs, whether it carries the actors a later
+iteration added — use `/restack-design-review consistency`, which owns that
+check across the whole document set. Reviewing one document against itself
+cannot find drift; drift is a property of the set.
 
 ---
 

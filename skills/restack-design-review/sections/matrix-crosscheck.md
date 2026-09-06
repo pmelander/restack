@@ -8,9 +8,37 @@ that asks **why the analysis did not already catch each defect** tells you about
 your analysis — and that compounds, because the analysis gets used again on the
 next system.
 
-#### Classify every finding
+#### First, triage: is this finding about the system, or about the record?
 
-For each finding, read `docs/stressor-analysis/` and
+Do this before classifying anything. A design review over a mature engagement
+produces two kinds of finding, and only one of them has anything to do with the
+matrix:
+
+- **System findings** — about how the architecture behaves under stress. A
+  missing timeout, an unowned data write, a dependency with no degraded path.
+  These classify A/B/C/D below.
+- **Artifact findings** — about the documents disagreeing with each other or
+  with the design. A deployment guide describing a topology a later ADR
+  replaced; an HLD missing actors an iteration added; an invariant left stale by
+  a superseding decision.
+
+**Artifact findings do not classify against the matrix**, and forcing them to
+produces nonsense — the matrix has nothing to say about two documents
+contradicting each other. Send them to
+`skills/restack-design-review/sections/artifact-consistency.md`, which handles
+them properly, and report them in their own section.
+
+This split is not a technicality. On a real engagement with 42 ADRs and 9 LLDs,
+roughly half the review findings were artifact drift, and it was the *critical*
+finding twice. A cross-check that assumes every finding is about vulnerability
+will mis-handle most of what a review on a mature design actually finds.
+
+Expect the mix to shift over time: early on, almost everything is a system
+finding; as the document count grows, drift takes over.
+
+#### Then classify the system findings
+
+For each, read `docs/stressor-analysis/` and
 `docs/journey/stressor-iteration-history.md`, then place it in one of four
 classes. State the class next to the finding in the report.
 
@@ -51,6 +79,11 @@ The mix matters more than any single finding.
 | **B** | Residuals are being chosen without diagnosing the mechanism — pattern-matching to a familiar fix. |
 | **C** | The path map is incomplete. Go back to `/restack-discover`, not forward to fixes. |
 | **D** | The matrix is simply stale. Re-run the loop. |
+
+If most findings never reached this table at all because triage sent them to
+artifact consistency, that is its own diagnosis: the analysis is probably sound
+and the documents describing it are not keeping up. The fix is a step in the
+iteration loop, not a harder review.
 
 **A review that is mostly class C is a discovery finding wearing a design
 review's clothes.** Say so plainly. Fixing the individual findings leaves the

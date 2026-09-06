@@ -1,16 +1,18 @@
 ---
 name: restack-design-review
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 2
 model: opus
 description: |
   Review an architecture design across structure, data, API, security and
-  performance - and cross-check every finding against the stressor matrix, so
-  the review says something about the analysis as well as the design.
+  performance, plus a consistency pass over the documents describing it - and
+  cross-check every system finding against the stressor matrix, so the review
+  says something about the analysis as well as the design.
   Use when asked to "review this design", "is this architecture sound", "check
   this before we build", or "review the API".
-  Proactively invoke before a design is committed to, and after a significant
-  change to a system that has been through stressor analysis.
+  Proactively invoke before a design is committed to, after a significant
+  change to a system that has been through stressor analysis, and when a design
+  has accumulated enough ADRs and design docs for them to have drifted apart.
 allowed-tools:
   - Read
   - Write
@@ -267,6 +269,7 @@ from memory of what it probably says.
 | Read this | When |
 |---|---|
 | `skills/restack-design-review/sections/matrix-crosscheck.md` | any review run on a system that has had a stressor analysis - classifying each finding by whether the matrix should have caught it |
+| `skills/restack-design-review/sections/artifact-consistency.md` | any review of a design with more than a handful of ADRs, and whenever triage sends a finding here rather than to the matrix |
 | `skills/restack-design-review/sections/dimension-architecture.md` | running /restack-design-review architecture or data, or the architecture and data passes of a complete review |
 | `skills/restack-design-review/sections/dimension-api-security.md` | running /restack-design-review api or security, or the API and security passes of a complete review |
 | `skills/restack-design-review/sections/dimension-performance.md` | running /restack-design-review performance, or the performance pass of a complete review |
@@ -290,10 +293,14 @@ Whatever the scope, the sequence is the same:
    finding — it is a decision, and re-raising it as a defect wastes everyone's
    time and damages the review's credibility.
 4. **Run the dimension passes** for the scope requested (below).
-5. **Cross-check every finding against the matrix.** **Read**
-   `skills/restack-design-review/sections/matrix-crosscheck.md` and classify
-   each one A/B/C/D. Do this before writing up — the distribution often changes
-   what the findings mean.
+5. **Triage, then cross-check.** **Read**
+   `skills/restack-design-review/sections/matrix-crosscheck.md`. First split
+   findings into **system** findings and **artifact** findings — documents
+   disagreeing with each other do not classify against the matrix, and forcing
+   them to produces nonsense. Classify the system findings A/B/C/D; send the
+   artifact findings to
+   `skills/restack-design-review/sections/artifact-consistency.md`. Do this
+   before writing up — the distribution often changes what the findings mean.
 6. **Write the report.** **Read**
    `skills/restack-design-review/sections/findings-and-report.md` for severity
    definitions, the evidence standard, and the report format.
@@ -312,14 +319,15 @@ Whatever the scope, the sequence is the same:
 | `/restack-design-review api` | `sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
 | `/restack-design-review security` | `sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
 | `/restack-design-review performance` | `sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
+| `/restack-design-review consistency` | `sections/artifact-consistency.md` | ADRs against each other and against the design docs, actors, residuals, placeholders, operational docs |
 
 Each is the full sequence above, narrowed. A scoped review still does the
 matrix cross-check and still produces a verdict.
 
 ## `/restack-design-review complete`
 
-All five dimensions, in this order: **architecture → data → API → security →
-performance.**
+All five system dimensions, in this order: **architecture → data → API →
+security → performance** — then the **consistency** pass.
 
 The order is not arbitrary. Structure determines what the data problems can be;
 data ownership determines what the API can promise; the API surface determines
@@ -330,7 +338,35 @@ Between passes, carry findings forward — a coupling problem found in the
 architecture pass usually reappears as a consistency problem in the data pass,
 and they are one finding, not two.
 
-Then cross-check, then one consolidated report with a single verdict.
+Run **consistency last**, because the earlier passes tell you what the design
+currently is, and drift is measured against that. On a design with many ADRs
+and LLDs, expect it to produce as many findings as the system dimensions
+combined — that is normal, not a sign of sloppiness.
+
+Then triage, cross-check, and write one consolidated report with a single
+verdict.
+
+## `/restack-design-review consistency`
+
+**Read** `skills/restack-design-review/sections/artifact-consistency.md` and run
+the six checks: ADR against ADR, ADR against design docs, actors against the
+HLD, residuals against their records, placeholders and empty evidence, and
+operational documents against the current design.
+
+Worth running on its own, more often than a full review — it is cheap, and drift
+compounds. Any design past a handful of ADRs is a candidate.
+
+Two things decide whether the output is useful:
+
+**Say which document is wrong**, not just that two disagree. ADRs are
+authoritative; design and operational documents describe. The exception matters:
+where a design document is right and the ADR is stale, a decision was made
+without being recorded, and that routes to `/restack-adr`, not to a
+documentation fix.
+
+**Rate by who acts on it.** A deployment guide is executed by someone under time
+pressure and earns critical readily; a stale background section almost never
+does.
 
 ## `/restack-design-review self-check`
 
@@ -355,7 +391,7 @@ they are applying, which is the thing worth fixing.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `artifact-consistency.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

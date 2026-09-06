@@ -3,6 +3,43 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.1.0] — 2026-09-06
+
+First changes driven by field evidence rather than by reasoning about the
+toolkit. A real engagement built with v1 — 42 ADRs, 9 LLDs, 2 stressor
+iterations, 5 design reviews — was used to test v2's mechanisms against
+something they had never seen. See
+[ADR-012](docs/adr/ADR-012-artifact-consistency-as-a-review-dimension.md).
+
+### Added
+
+- **Artifact consistency as a review dimension** —
+  `/restack-design-review consistency`, plus a section covering six checks: ADR
+  against ADR, ADR against design docs, actors against the HLD, residuals
+  against their records, placeholders and empty evidence, and operational
+  documents against the current design. `complete` runs it last.
+
+### Changed
+
+- **The matrix cross-check now triages before it classifies.** Findings split
+  into *system* findings, which classify A/B/C/D, and *artifact* findings,
+  which do not and are reported separately. The reference engagement had 32
+  review findings and 4 citations of any stressor or residual id; its
+  *critical* finding was a deployment guide contradicting an ADR — which the
+  four-class scheme could not express.
+- Review reports separate system findings from artifact findings, and note the
+  ratio: mostly-artifact means the analysis is sound and the documents are not
+  keeping up.
+- `/restack-solution-doc review` hands drift checking to
+  `/restack-design-review consistency` — a document reviewed against itself
+  cannot reveal drift, because drift is a property of the set.
+- `/restack-design-review` and `/restack-solution-doc` to v2.1.0.
+
+### Validated
+
+- The residual-traceability fields v2 added to `/restack-adr` were worth it: of
+  42 v1 ADRs, 5 mention a residual id and none record reversibility.
+
 ## [2.0.0] — 2026-09-05
 
 The rewrite. Every skill regenerated from templates with shared behaviour, and

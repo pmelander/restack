@@ -61,7 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-011
+    ├── adr/                            # ADR-001 .. ADR-012
     └── ...                             # Generated documentation location
 ```
 
@@ -144,15 +144,19 @@ Skills are **capability transfer tools**, not dependency-creating tools. Every s
 ### Testing Skills
 
 ```bash
-# View skill content
+# View a generated skill
 cat skills/restack-adr/SKILL.md
 
-# Symlink for development (changes reflected immediately)
-ln -s "$(pwd)/skills/restack-adr" ~/.claude/skills/restack-adr
+# Install for development — repository edits are live after a regenerate
+./setup --symlink
 
-# Copy all for stable use
-cp -R skills/* ~/.claude/skills/
+# See what an install would change, without writing
+./setup --dry-run
 ```
+
+Do not hand-roll the install with `cp -R` or `ln -s`: `setup` also removes
+skills deleted upstream, refuses a broken tree, and records where it installed
+from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-and-upgrade-skill.md)).
 
 ### Adding New Skills
 
@@ -307,6 +311,7 @@ Update later with `/restack-upgrade`.
 | Cloud Architect | `/restack-cloud` | Specialised |
 | Capacity Planner | `/restack-capacity` | Specialised |
 | Excel Reader | `/restack-excel` | Utility |
+| Upgrade | `/restack-upgrade` | Utility |
 
 ## Contributing
 

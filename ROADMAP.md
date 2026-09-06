@@ -29,7 +29,7 @@ Claude to use actually resolves** — the check that would have caught the
 | Sections (on-demand depth) | 42 across 13 skills |
 | Preamble tiers | 3 at tier 3 (residuality core), 10 at tier 2, 2 at tier 1 |
 | Compliance packs | 1 (GDPR) |
-| ADRs | 11 |
+| ADRs | 12 |
 
 The decisions behind this shape:
 [ADR-001](docs/adr/ADR-001-incorporate-residuality-theory.md) (Residuality

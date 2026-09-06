@@ -10,6 +10,12 @@
       "trigger": "any review run on a system that has had a stressor analysis - classifying each finding by whether the matrix should have caught it"
     },
     {
+      "id": "artifact-consistency",
+      "file": "artifact-consistency.md",
+      "title": "Artifact consistency - documents drifting from each other",
+      "trigger": "any review of a design with more than a handful of ADRs, and whenever triage sends a finding here rather than to the matrix"
+    },
+    {
       "id": "dimension-architecture",
       "file": "dimension-architecture.md",
       "title": "Architecture and data dimensions",

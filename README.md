@@ -184,7 +184,7 @@ are called — plus `/restack-upgrade`.
 | [`/restack-adr`](skills/restack-adr/SKILL.md) | decisions with reversibility and the residual they implement |
 | [`/restack-tech-stack`](skills/restack-tech-stack/SKILL.md) | technology against seven dimensions, including which residuals it must express |
 | [`/restack-solution-doc`](skills/restack-solution-doc/SKILL.md) | HLD, LLD, deployment, runbook — in actors, intentions and paths |
-| [`/restack-design-review`](skills/restack-design-review/SKILL.md) | review that also asks why the matrix did not catch each finding |
+| [`/restack-design-review`](skills/restack-design-review/SKILL.md) | review that also asks why the matrix did not catch each finding, and whether the documents still agree |
 
 **Build it**
 
@@ -255,8 +255,8 @@ symlink method, upgrading from an unprefixed install, and troubleshooting.
 
 ## Status
 
-All fourteen architecture skills are at **v2.0.0**, generated from templates
-with a shared behavioural preamble. CI checks on every push that no generated file has
+ReStack is at **v2.1.0**. All fifteen skills are generated from templates with
+a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 
 **These skills are the deliverable; they have not yet been run end to end on a

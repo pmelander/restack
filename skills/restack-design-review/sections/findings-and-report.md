@@ -57,15 +57,23 @@ Write to `docs/reviews/design-review-<scope>-<date>.md`.
 [Ready to build / Ready with conditions / Not ready — one line, then the reason]
 
 ## Matrix cross-check
-[Finding distribution across classes A/B/C/D and what that distribution means.
-See matrix-crosscheck.md. This section comes before the findings because it
-often changes what the findings mean.]
+[System findings only: distribution across classes A/B/C/D and what that
+distribution means. See matrix-crosscheck.md. This section comes before the
+findings because it often changes what they mean. Note here how many findings
+were artifact drift rather than system findings — that ratio is its own
+diagnosis.]
 
-## Findings
+## System findings
 ### Critical
 ### Major
 ### Minor
 ### Questions
+
+## Artifact findings
+[Documents disagreeing with each other or with the design. Each names the
+authoritative source, the stale one, and the wrong action someone would take.
+See artifact-consistency.md. Reported separately because they do not classify
+against the matrix and mixing them obscures both.]
 
 ## What this design gets right
 
