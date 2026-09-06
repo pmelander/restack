@@ -29,7 +29,7 @@ Claude to use actually resolves** — the check that would have caught the
 | Sections (on-demand depth) | 42 across 13 skills |
 | Preamble tiers | 3 at tier 3 (residuality core), 10 at tier 2, 2 at tier 1 |
 | Compliance packs | 1 (GDPR) |
-| ADRs | 12 |
+| ADRs | 13 |
 
 The decisions behind this shape:
 [ADR-001](docs/adr/ADR-001-incorporate-residuality-theory.md) (Residuality
@@ -109,11 +109,16 @@ auto-resolved. Terrain classification and the confidence gate probably qualify:
 both are judgements about what you do not know, and a model auto-answering them
 is precisely the false confidence this toolkit exists to avoid.
 
-### 6. Cross-model second opinion
+### 6. ~~Cross-model second opinion~~ — done
 
-Stressor generation and residual identification are both places where a second
-model would plausibly find what the first missed — different training, different
-blind spots. Worth an experiment before committing to it.
+Shipped in 2.2.0 as an outside opinion in three places, behind a data gate that
+defaults to anonymised. See
+[ADR-013](docs/adr/ADR-013-outside-opinion.md).
+
+What is still unknown: how often Codex is actually present. Most runs will get
+the same-family fallback, whose agreement is weak evidence. If it turns out
+nobody has Codex installed, the honest question is whether the fallback alone
+justifies the step.
 
 ---
 

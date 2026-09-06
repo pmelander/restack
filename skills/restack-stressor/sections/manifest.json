@@ -32,6 +32,13 @@
       "file": "workshop-facilitation.md",
       "title": "Workshop facilitation",
       "trigger": "running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect"
+    },
+    {
+      "id": "second-opinion",
+      "file": "second-opinion.md",
+      "shared": true,
+      "title": "Outside opinion - cross-model second read",
+      "trigger": "running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning"
     }
   ]
 }

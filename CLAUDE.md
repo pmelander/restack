@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── scripts/
 │   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
 │   ├── check_skills.py                 # validates frontmatter, banners, sections
+│   ├── shared/                         # method shared by several skills, read on demand
 │   └── preamble/                       # shared behaviour, composed by tier
 │       ├── manifest.json               # tier -> fragment composition
 │       ├── voice.md                    # tier 1
@@ -61,7 +62,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-012
+    ├── adr/                            # ADR-001 .. ADR-013
     └── ...                             # Generated documentation location
 ```
 
@@ -112,6 +113,14 @@ Content that applies to some runs and not others goes in
 human-readable `trigger`. The manifest is a passive registry — the skeleton's
 prose decides when a section is read. This is what lets a skill carry deep
 method without paying for it on every invocation.
+
+**Shared sections.** Method used by several skills lives once in
+`scripts/shared/` and is registered with `"shared": true` in each consuming
+manifest. The section index renders the real path and it is still read on
+demand. First use: `scripts/shared/second-opinion.md`
+([ADR-013](docs/adr/ADR-013-outside-opinion.md)). Prefer a shared section over
+duplicating method into two skills; prefer an owned section when only one skill
+needs it.
 
 ### Build commands
 

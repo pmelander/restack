@@ -1,6 +1,6 @@
 ---
 name: restack-design-review
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 2
 model: opus
 description: |
@@ -101,6 +101,10 @@ Whatever the scope, the sequence is the same:
 7. **Gate:** where a finding implies a materially different design and the
    alternatives are close, issue a decision brief rather than asserting the fix.
    **STOP.**
+   Where the design is a **one-way door**, an adversarial outside read is worth
+   its cost first — **read** `scripts/shared/second-opinion.md`. Not on a routine
+   review: review findings are checkable against the design and the matrix, so
+   the marginal value is low and the data leaving is not.
 8. Log the review as an artifact in the journey state, and register every
    Question as an assumption to close.
 

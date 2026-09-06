@@ -38,6 +38,13 @@
       "file": "findings-and-report.md",
       "title": "Writing findings and the review report",
       "trigger": "writing up any review - severity, evidence standards, and the report format"
+    },
+    {
+      "id": "second-opinion",
+      "file": "second-opinion.md",
+      "shared": true,
+      "title": "Outside opinion - cross-model second read",
+      "trigger": "the design under review is a one-way door and an adversarial outside read is worth the cost"
     }
   ]
 }

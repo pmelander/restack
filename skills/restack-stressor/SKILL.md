@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.0.0
+version: 2.2.0
 preamble-tier: 3
 model: opus
 description: |
@@ -391,6 +391,7 @@ from memory of what it probably says.
 | `skills/restack-stressor/sections/matrix-construction.md` | running /restack-stressor analyze or /restack-stressor vulnerabilities - building the matrix, scoring it, or interpreting what it shows |
 | `skills/restack-stressor/sections/residual-identification.md` | running /restack-stressor residues - proposing residuals and ranking them by leverage |
 | `skills/restack-stressor/sections/workshop-facilitation.md` | running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect |
+| `scripts/shared/second-opinion.md` | running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning |
 
 ---
 
@@ -435,6 +436,13 @@ for at least one genuinely absurd stressor all live there.
 
 Default 20-30. Organisational stressors are mandatory, not optional — a matrix
 with no organisational rows describes a system that will be built in a vacuum.
+
+**Offer an outside opinion here.** This is the strongest use of one in the whole
+toolkit: a different model asked for the *complement* of your list attacks the
+comfortable-stressors failure directly. **Read** `scripts/shared/second-opinion.md`
+— including the step that decides what may leave, which for a real system
+defaults to sending an anonymised path map rather than the real one. Tag
+anything it returns `external`.
 
 **Output:** the stressor set, each tagged with its source
 (`generated` / `compliance:<pack>` / `organisational` / `incident:<date>`),
@@ -502,6 +510,11 @@ introduces are walkable, stressable, and go into the next iteration.
 
 Mark every residual `proposed` or `implemented`. Never report a total that
 mixes them without saying so.
+
+**An outside opinion is worth it on a cluster you are unsure of.** Send the
+cluster and the actor, withhold your own diagnosis, and compare what comes back.
+**Read** `scripts/shared/second-opinion.md`. Sending your diagnosis gets you
+agreement, which is the one thing that teaches you nothing.
 
 **Gate:** when two or more residuals address the same cluster with materially
 different tradeoffs — especially when one is a one-way door — that is an
@@ -594,7 +607,7 @@ remaining columns actors, binary values, header row of actor names.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `workshop-facilitation.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `workshop-facilitation.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

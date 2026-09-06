@@ -135,6 +135,7 @@ def check_skill(skill_dir: Path) -> dict:
     # Sections: manifest and directory must agree in both directions.
     sections_dir = skill_dir / "sections"
     registered: set[str] = set()
+    shared_count = 0
     if sections_dir.is_dir():
         manifest_path = sections_dir / "manifest.json"
         if not manifest_path.exists():
@@ -155,9 +156,18 @@ def check_skill(skill_dir: Path) -> dict:
                     errors.append(f"{rel}/sections/manifest.json: duplicate id '{sid}'")
                 seen_ids.add(sid)
                 if sfile:
-                    registered.add(sfile)
-                    if not (sections_dir / sfile).exists():
-                        errors.append(f"{rel}/sections/manifest.json: '{sfile}' is registered but missing on disk")
+                    if entry.get("shared"):
+                        shared_count += 1
+                        shared = ROOT / "scripts" / "shared" / sfile
+                        if not shared.exists():
+                            errors.append(
+                                f"{rel}/sections/manifest.json: shared section '{sfile}' "
+                                f"is registered but missing from scripts/shared/"
+                            )
+                    else:
+                        registered.add(sfile)
+                        if not (sections_dir / sfile).exists():
+                            errors.append(f"{rel}/sections/manifest.json: '{sfile}' is registered but missing on disk")
 
         on_disk = {p.name for p in sections_dir.glob("*.md")}
         for orphan in sorted(on_disk - registered):
@@ -171,7 +181,9 @@ def check_skill(skill_dir: Path) -> dict:
     return {
         "name": name,
         "generated": generated,
-        "sections": len(registered),
+        # Owned sections plus shared ones: the report should describe what the
+        # skill actually reads, not only what it owns.
+        "sections": len(registered) + shared_count,
         "paths": paths,
     }
 

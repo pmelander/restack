@@ -99,6 +99,13 @@ what you want is breadth of exposure, not depth of any one failure.
 `/restack-stressor compliance list` shows available packs. GDPR ships as a
 worked example.
 
+**Outside opinion.** `generate` and `residues` offer a cross-model second read —
+Codex if installed, otherwise a fresh subagent. It asks first, and asks *what
+may leave*: anonymised is the default, because the method works on mechanism and
+needs no real names. Stressors it returns are tagged `external`. Offered on a
+one-way-door design review too; never at a gate, where an outside model knows
+less about your system than you do.
+
 ## Decide and record
 
 ```bash

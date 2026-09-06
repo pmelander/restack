@@ -1,6 +1,6 @@
 ---
 name: restack-design-review
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 2
 model: opus
 description: |
@@ -274,6 +274,7 @@ from memory of what it probably says.
 | `skills/restack-design-review/sections/dimension-api-security.md` | running /restack-design-review api or security, or the API and security passes of a complete review |
 | `skills/restack-design-review/sections/dimension-performance.md` | running /restack-design-review performance, or the performance pass of a complete review |
 | `skills/restack-design-review/sections/findings-and-report.md` | writing up any review - severity, evidence standards, and the report format |
+| `scripts/shared/second-opinion.md` | the design under review is a one-way door and an adversarial outside read is worth the cost |
 
 ---
 
@@ -307,6 +308,10 @@ Whatever the scope, the sequence is the same:
 7. **Gate:** where a finding implies a materially different design and the
    alternatives are close, issue a decision brief rather than asserting the fix.
    **STOP.**
+   Where the design is a **one-way door**, an adversarial outside read is worth
+   its cost first — **read** `scripts/shared/second-opinion.md`. Not on a routine
+   review: review findings are checkable against the design and the matrix, so
+   the marginal value is low and the data leaving is not.
 8. Log the review as an artifact in the journey state, and register every
    Question as an assumption to close.
 
@@ -391,7 +396,7 @@ they are applying, which is the thing worth fixing.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `artifact-consistency.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `artifact-consistency.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

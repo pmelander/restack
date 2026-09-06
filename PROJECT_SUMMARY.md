@@ -15,7 +15,7 @@ walking paths, stress-testing them against scenarios including deliberately
 absurd ones, and identifying the discrete architectural changes (residuals)
 that reduce whole classes of exposure at once.
 
-**Status:** v2.1.0, September 2026. All fifteen skills generated from
+**Status:** v2.2.0, September 2026. All fifteen skills generated from
 templates with a shared behavioural preamble. CI enforces that generated files
 match their source. Not yet run end to end on a live engagement in this form.
 
@@ -73,7 +73,7 @@ for it on every invocation.
 
 ## Decisions on record
 
-Twelve ADRs. Four matter most to anyone evaluating the approach:
+Thirteen ADRs. Four matter most to anyone evaluating the approach:
 
 | ADR | Decision |
 |---|---|
@@ -105,7 +105,7 @@ skills/restack-*/          15 skills: SKILL.md.tmpl (source) + SKILL.md + sectio
 setup, setup.ps1           installer; /restack-upgrade re-runs it
 scripts/                   generator, validator, preamble fragments
 templates/                 canonical document formats
-docs/adr/                  12 ADRs
+docs/adr/                  13 ADRs
 docs/                      installation, usage
 examples/                  example outputs
 ```

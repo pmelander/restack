@@ -90,6 +90,22 @@ def build_preamble(tier: int) -> str:
     return "\n\n---\n\n".join(parts)
 
 
+SHARED_SECTIONS = ROOT / "scripts" / "shared"
+
+
+def section_path(skill_dir: Path, entry: dict) -> Path:
+    """Where a section's content lives.
+
+    A section is normally owned by one skill and sits in its sections/ dir.
+    An entry marked "shared": true lives in scripts/shared/ instead, because
+    several skills need the same method and duplicating it would reintroduce
+    the two-sources-of-truth problem the templates exist to remove.
+    """
+    if entry.get("shared"):
+        return SHARED_SECTIONS / entry["file"]
+    return skill_dir / "sections" / entry["file"]
+
+
 def load_sections(skill_dir: Path) -> list[dict]:
     manifest_path = skill_dir / "sections" / "manifest.json"
     if not manifest_path.exists():
@@ -112,7 +128,10 @@ def render_section_index(skill_dir: Path, sections: list[dict]) -> str:
         "|---|---|",
     ]
     for section in sections:
-        path = f"`skills/{rel}/sections/{section['file']}`"
+        if section.get("shared"):
+            path = f"`scripts/shared/{section['file']}`"
+        else:
+            path = f"`skills/{rel}/sections/{section['file']}`"
         lines.append(f"| {path} | {section['trigger']} |")
     return "\n".join(lines)
 
@@ -148,7 +167,7 @@ def resolve(text: str, skill_dir: Path, tier: int, origin: Path) -> str:
                 raise BuildError(
                     f"{origin}: section '{arg}' is not in sections/manifest.json (have: {known})"
                 )
-            return (skill_dir / "sections" / by_id[arg]["file"]).read_text(encoding="utf-8").strip()
+            return section_path(skill_dir, by_id[arg]).read_text(encoding="utf-8").strip()
         raise BuildError(f"{origin}: unknown macro '{name}'")
 
     for _ in range(MAX_DEPTH):

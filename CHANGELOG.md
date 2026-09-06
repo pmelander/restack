@@ -3,6 +3,36 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.2.0] — 2026-09-06
+
+### Added
+
+- **An outside opinion**, in the three places it earns its cost: stressor
+  generation (asking a different model for the *complement* of your list —
+  the strongest use, and a direct attack on the comfortable-stressors failure),
+  residual identification (two independent diagnoses of a cluster, ours
+  withheld), and design review on a one-way door. Probes for Codex, falls back
+  to a fresh subagent, every error non-blocking.
+  [ADR-013](docs/adr/ADR-013-outside-opinion.md).
+- **A data gate before anything is sent.** What ReStack would send is a path map
+  of a real system and a ranked account of where it is weakest — categorically
+  more sensitive than a design summary. Anonymised is the recommended default,
+  because the method works on mechanism and needs no identity, so the safer
+  option costs no accuracy.
+- **Shared sections** — `"shared": true` in a manifest resolves content from
+  `scripts/shared/`, so method used by several skills lives once and is still
+  read on demand.
+- Stressors from an outside model are tagged `external`.
+
+### Changed
+
+- Refused at terrain classification, the confidence gate and the iterate gate:
+  those are judgements about what you do not know about your own system, where
+  an outside model knows strictly less than you do.
+- `/restack-stressor` and `/restack-design-review` to v2.2.0.
+- `check_skills.py` validates shared sections and counts them in the per-skill
+  section totals.
+
 ## [2.1.1] — 2026-09-06
 
 ### Fixed
