@@ -263,6 +263,21 @@ are called — plus `/restack-upgrade`.
 | [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
 | [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install |
 
+### Where this sits
+
+ReStack stops where implementation starts. It produces a design, the decisions
+behind it, and the residuals that make it survivable — then hands over. It does
+not review diffs, run tests, or ship anything.
+
+That makes it the layer upstream of a delivery toolkit like
+[gstack](https://github.com/garrytan/gstack), which picks up at the point
+ReStack puts down: planning the work, reviewing the code, shipping it. The two
+compose, and they were built to different purposes by different people.
+
+**ReStack is not affiliated with or endorsed by Garry Tan or gstack.** It
+borrowed some skill-authoring mechanics, with thanks — see
+[Acknowledgements](#acknowledgements).
+
 ### Two things deliberately absent
 
 There is no risk assessor and no compliance checker, and that is a position
@@ -340,10 +355,16 @@ See [Contributing](CONTRIBUTING.md).
 
 The skill-authoring mechanics — generated skills, the tiered preamble,
 on-demand sections, and structured decision briefs — were adapted from
-[Garry Tan's gstack](https://github.com/garrytan/gstack). The residuality
+[gstack](https://github.com/garrytan/gstack) by Garry Tan. The residuality
 method, and everything the skills actually do, is our own.
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md) records
 what was taken, what was changed, and what was deliberately left behind.
+
+**This project is not affiliated with, endorsed by, or connected to Garry Tan
+or gstack in any way.** The borrowing is one-directional and unsolicited: we
+read a public repository, took some good ideas about how to structure a skill,
+and credited them. Any faults here are ours, and gstack should not be judged
+by them.
 
 Residuality Theory is the work of **Barry O'Reilly**. See
 [RESIDUALITY.md](RESIDUALITY.md).
