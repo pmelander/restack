@@ -98,12 +98,12 @@ git clone https://github.com/pmelander/restack.git ~/restack
 cd ~/restack && ./setup          # Windows: .\setup.ps1
 ```
 
-Either way: type `/restack` in Claude Code to see the fifteen skills, and
+Either way: type `/restack` in Claude Code to see the sixteen skills, and
 `/restack-upgrade` when you want to update.
 
 ### Optional extras
 
-Neither is required — fourteen of the fifteen skills work without either, and
+Neither is required — fifteen of the sixteen skills work without either, and
 `setup` tells you which are present.
 
 ```bash
@@ -230,6 +230,7 @@ are called — plus `/restack-upgrade`.
 | | |
 |---|---|
 | [`/restack-stressor`](skills/restack-stressor/SKILL.md) | walk paths, generate stressors, build the matrix, identify residuals by mechanism |
+| [`/restack-events`](skills/restack-events/SKILL.md) | batches of event statements as stressors, distribution fixed by a seeded sampler rather than by the model |
 
 **Decide and record**
 
@@ -296,7 +297,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.1.0**. All fifteen skills are generated from templates with
+ReStack is at **v2.3.0**. All sixteen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

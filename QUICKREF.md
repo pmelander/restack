@@ -92,6 +92,23 @@ registered assumption; in a **minefield an unknown on a critical path blocks**.
 /restack-stressor import <file> [sheet]      # import an existing matrix
 ```
 
+## Event statements as stressors
+
+```bash
+/restack-events batch [n]                    # sample, render, validate - default 30
+/restack-events specs [n]                    # draw specs only, no renders
+/restack-events validate <statements> <specs>
+/restack-events tune                         # retune taxonomy weights
+```
+
+Randomness lives in the sampler, not the model. `grounding` decides how much
+of the system each renderer sees: `aimed` stressors find cracks in known
+structure, `uncoupled` ones - drawn blind of the system entirely - find the
+cracks nobody was looking for. A batch carries both by construction.
+
+Expect uncoupled rows to score zero against every actor. That is a finding
+about the system's coupling to the world, not waste - do not drop them.
+
 Scoring is **binary** — 1 if the stressor reaches the actor, 0 if not. Not a
 simplification: severity scales let uncomfortable stressors get argued down, and
 what you want is breadth of exposure, not depth of any one failure.
@@ -254,6 +271,7 @@ docs/learning/         outcome analyses, retrospectives
 | Pick up someone else's engagement | `/restack-journey where` |
 | Understand a system before changing it | `/restack-discover paths` → `actor` → `confidence` |
 | Find out what will break it | `/restack-stressor walk` → `generate` → `analyze` |
+| Get stressors nobody would have thought of | `/restack-events batch` |
 | Decide whether to keep iterating | `/restack-journey iterate` |
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |

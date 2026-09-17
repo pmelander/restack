@@ -44,6 +44,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── SKILL.md
 │   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
 │   │   └── compliance-packs/                   #   regulatory stressor packs
+│   ├── restack-events/                         # generated, tier 2
+│   │   ├── SKILL.md.tmpl
+│   │   ├── SKILL.md
+│   │   ├── scripts/                            #   sampler + validator, ship with the skill
+│   │   ├── reference/                          #   taxonomy weights, register guidance
+│   │   └── sections/                           #   grounding, render protocol, handoff
 │   ├── restack-adr/                            # generated, tier 2
 │   ├── restack-solution-doc/                   # generated, tier 2
 │   ├── restack-tech-stack/                     # generated, tier 2
@@ -73,9 +79,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-**All fifteen skills are generated.** Tiers: `/restack-journey`,
+**All sixteen skills are generated.** Tiers: `/restack-journey`,
 `/restack-discover` and `/restack-stressor` at 3 (the residuality core);
-`/restack-excel` and `/restack-upgrade` at 1 (utilities); the other ten at 2.
+`/restack-excel` and `/restack-upgrade` at 1 (utilities); the other eleven at 2.
 `scripts/check_skills.py` reports the current state.
 
 Each skill template follows this structure:
@@ -179,6 +185,21 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
    and the generated `SKILL.md`
 7. Document any significant design decisions as an ADR in `docs/adr/`
 8. Update `README.md`, `QUICKREF.md`, `GETTING_STARTED.md`, and `CLAUDE.md`
+
+### Skills that ship executable scripts
+
+`/restack-excel` and `/restack-events` ship Python alongside their SKILL.md.
+Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
+
+1. **Standard library only.** A skill runs from whatever project the architect
+   is in, not from this checkout, and a script that needs its own install is a
+   script people skip. `/restack-excel` needs openpyxl for `.xlsx` and says so
+   when it is missing; nothing else may add a dependency.
+2. **Reference scripts by their installed path.** Resolve once per session to
+   `$HOME/.claude/skills/<name>/...` with the repo path as fallback, as both
+   skills do. `check_skills.py` verifies these resolve — a bare relative path
+   only works when the working directory happens to be this repository, which
+   is the bug that ADR exists to stop.
 
 ### Adding Compliance Packs
 
