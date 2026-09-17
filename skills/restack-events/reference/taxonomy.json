@@ -1,0 +1,128 @@
+{
+  "note": "Weighted dimensions for the spec sampler. Data, not code - retune weights here rather than in sample.py. Weights are relative integers, normalised at load. Order matters: a dimension with 'conditional_on' must appear after the dimension it depends on.",
+  "version": 1,
+  "dimensions": {
+    "grounding": {
+      "weights": {
+        "uncoupled": 2,
+        "adjacent": 1,
+        "aimed": 2
+      }
+    },
+    "plausibility": {
+      "weights": {
+        "mundane": 3,
+        "stretched": 2,
+        "absurd": 1
+      }
+    },
+    "scope": {
+      "weights": {
+        "local": 2,
+        "subnational": 2,
+        "national": 3,
+        "supranational": 2,
+        "global": 1
+      }
+    },
+    "domain": {
+      "conditional_on": "grounding",
+      "by": {
+        "uncoupled": {
+          "political": 3,
+          "religious": 2,
+          "social": 3,
+          "environmental": 3,
+          "military": 2,
+          "economic": 3,
+          "public health": 2,
+          "infrastructure": 3
+        },
+        "adjacent": {
+          "political": 2,
+          "religious": 1,
+          "social": 3,
+          "environmental": 2,
+          "military": 1,
+          "economic": 4,
+          "public health": 2,
+          "infrastructure": 4
+        },
+        "aimed": {
+          "technical": 4,
+          "business": 3,
+          "social/human": 3,
+          "organisational": 4,
+          "regulatory": 3,
+          "natural/physical": 2
+        }
+      }
+    },
+    "actor_type": {
+      "weights": {
+        "government body": 3,
+        "regional authority": 2,
+        "corporation": 3,
+        "NGO": 2,
+        "religious institution": 1,
+        "union": 2,
+        "militia": 1,
+        "research body": 2,
+        "unaffiliated group": 2
+      }
+    },
+    "action": {
+      "weights": {
+        "announces": 2,
+        "imposes": 2,
+        "withdraws from": 2,
+        "disputes": 2,
+        "escalates": 2,
+        "confirms": 1,
+        "denies": 1,
+        "postpones": 2,
+        "collapses": 1,
+        "expands": 2
+      }
+    },
+    "magnitude": {
+      "weights": {
+        "negligible": 1,
+        "minor": 2,
+        "moderate": 3,
+        "major": 3,
+        "severe": 2
+      }
+    },
+    "onset": {
+      "weights": {
+        "instant": 3,
+        "gradual": 3,
+        "intermittent": 2,
+        "already happened undetected": 2
+      }
+    },
+    "reversibility": {
+      "weights": {
+        "reversible": 3,
+        "costly to reverse": 3,
+        "permanent": 2
+      }
+    },
+    "correlation": {
+      "weights": {
+        "isolated": 4,
+        "coupled": 1
+      }
+    },
+    "register": {
+      "weights": {
+        "wire copy": 3,
+        "official statement": 2,
+        "social post": 2,
+        "overheard claim": 2,
+        "analyst note": 2
+      }
+    }
+  }
+}

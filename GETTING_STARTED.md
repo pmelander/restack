@@ -22,7 +22,7 @@ cd $HOME\restack
 `setup` tells you exactly what it installed. Python and `openpyxl` are optional
 and needed only by `/restack-excel` — it will say so if they are missing.
 
-**Verify:** type `/restack` in Claude Code. You should see fifteen skills —
+**Verify:** type `/restack` in Claude Code. You should see sixteen skills —
 fourteen for the work, plus `/restack-upgrade`.
 
 Want an agent to install it for you? Point Claude Code at
@@ -215,7 +215,7 @@ a three-week gap, a handoff, or an audit.
 
 ## Checklist
 
-- [ ] Installed; `/restack` shows fifteen skills
+- [ ] Installed; `/restack` shows sixteen skills
 - [ ] Read [Residuality Theory](RESIDUALITY.md) — the vocabulary is load-bearing
 - [ ] `/restack-journey start` and confirmed the terrain
 - [ ] Walked one path, including its error path

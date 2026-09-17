@@ -1,0 +1,25 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-events",
+  "version": 1,
+  "sections": [
+    {
+      "id": "grounding",
+      "file": "grounding.md",
+      "title": "Grounding, not absurdity",
+      "trigger": "before the first batch of an engagement, and whenever someone proposes giving the uncoupled track system context or dropping rows that look irrelevant"
+    },
+    {
+      "id": "render-protocol",
+      "file": "render-protocol.md",
+      "title": "Render briefs and subagent protocol",
+      "trigger": "rendering any batch - the three briefs by grounding, the no-tools rule, and what the subagents may and may not see"
+    },
+    {
+      "id": "handoff",
+      "file": "handoff.md",
+      "title": "Handing a batch to the stressor analysis",
+      "trigger": "passing a finished batch to /restack-stressor, or generating for a second or later iteration"
+    }
+  ]
+}

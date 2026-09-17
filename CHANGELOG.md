@@ -3,6 +3,31 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.3.0] — 2026-09-17
+
+### Added
+
+- **`/restack-events`** — batches of event statements for use as stressors, with
+  the distribution fixed by a seeded combinatorial sampler instead of by the
+  model. Asked directly for "random events" an LLM collapses onto a narrow mode
+  — the same few regions, the same institutional actors, the same register — and
+  no amount of instruction fixes it, because the instruction is processed by the
+  thing with the prior. `sample.py` draws the spec, one isolated subagent renders
+  each one, `validate.py` checks the result. Standard library only; no API key,
+  no network.
+- **`grounding` as a first-class dimension** (`uncoupled`, `adjacent`, `aimed`),
+  stratified with `plausibility` so every batch carries both blind draws and
+  aimed ones by construction. This is what `/restack-stressor`'s `absurd`
+  category was reaching for and kept missing: the active ingredient is
+  unrelatedness to the system, not silliness. Fire-breathing lizards get waved
+  away in the room; a mundane, entirely unrelated real-world event cannot be.
+- **A leakage check on the blind tracks.** An `uncoupled` statement naming the
+  system's sector or components means context reached a prompt that should not
+  have had it — the batch's most valuable rows quietly converted into ordinary
+  ones, with nothing else downstream to reveal it. Blocking, not advisory.
+  Uncoupled renders run with no Read, Grep or Glob for the same reason: a
+  subagent that can reach the filesystem may go and find the design docs itself.
+
 ## [2.2.2] — 2026-09-06
 
 ### Added
