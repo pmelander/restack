@@ -50,6 +50,55 @@ RUNTIME_STATE_PREFIXES = (".restack/", "~/.restack/", "$HOME/.restack/")
 # The installed location of the skills tree maps back onto skills/ here.
 INSTALLED_PREFIXES = ("~/.claude/skills/", "$HOME/.claude/skills/")
 
+# Method used by several skills lives here, registered with "shared": true.
+SHARED_SECTIONS = ROOT / "scripts" / "shared"
+
+
+def scan_paths(f: Path, label: str, skill_dir: Path | None) -> int:
+    """Check every path-looking token in one file. Returns how many were checked.
+
+    `skill_dir` owns the file, or is None for a shared section. A shared section
+    is read by several skills, so a bare `sections/...` token there has no single
+    owner — skipped rather than guessed at, per the conservative rule below.
+    """
+    checked = 0
+
+    for raw in PATH_TOKEN.findall(f.read_text(encoding="utf-8")):
+        token = raw.strip("`\"'()[],")
+
+        if "/" not in token:
+            continue                                    # bare filename, not a path
+        if any(c in token for c in "<>*") or "NNN" in token:
+            continue                                    # placeholder
+        if token.startswith(USER_OUTPUT_PREFIXES):
+            continue                                    # written into the user's project
+        if token.startswith(RUNTIME_STATE_PREFIXES):
+            continue                                    # created at install time
+
+        if token.startswith(".."):
+            target = (f.parent / token).resolve()       # relative to the file
+        else:
+            mapped = token
+            for prefix in INSTALLED_PREFIXES:
+                if mapped.startswith(prefix):
+                    mapped = "skills/" + mapped[len(prefix):]
+                    break
+            if mapped.startswith("sections/"):
+                if skill_dir is None:
+                    continue                            # ambiguous in a shared section
+                target = skill_dir / mapped             # relative to this skill
+            else:
+                target = ROOT / mapped                  # repo-relative
+
+        checked += 1
+        if not target.exists():
+            errors.append(
+                f"{label}: references '{token}' which does not exist "
+                f"(looked for {target.relative_to(ROOT) if ROOT in target.parents else target}) "
+                f"- it would tell Claude to use a path that is not installed"
+            )
+    return checked
+
 
 def check_referenced_paths(skill_dir: Path) -> int:
     """Verify every install path a skill tells Claude to use actually resolves.
@@ -69,38 +118,25 @@ def check_referenced_paths(skill_dir: Path) -> int:
     for f in files:
         if not f.exists():
             continue
-        for raw in PATH_TOKEN.findall(f.read_text(encoding="utf-8")):
-            token = raw.strip("`\"'()[],")
+        checked += scan_paths(f, f"skills/{name}/{f.name}", skill_dir)
+    return checked
 
-            if "/" not in token:
-                continue                                    # bare filename, not a path
-            if any(c in token for c in "<>*") or "NNN" in token:
-                continue                                    # placeholder
-            if token.startswith(USER_OUTPUT_PREFIXES):
-                continue                                    # written into the user's project
-            if token.startswith(RUNTIME_STATE_PREFIXES):
-                continue                                    # created at install time
 
-            if token.startswith(".."):
-                target = (f.parent / token).resolve()       # relative to the file
-            else:
-                mapped = token
-                for prefix in INSTALLED_PREFIXES:
-                    if mapped.startswith(prefix):
-                        mapped = "skills/" + mapped[len(prefix):]
-                        break
-                if mapped.startswith("sections/"):
-                    target = skill_dir / mapped             # relative to this skill
-                else:
-                    target = ROOT / mapped                  # repo-relative
+def check_shared_paths() -> int:
+    """Same check for shared sections, which no skill owns.
 
-            checked += 1
-            if not target.exists():
-                errors.append(
-                    f"skills/{name}/{f.name}: references '{token}' which does not exist "
-                    f"(looked for {target.relative_to(ROOT) if ROOT in target.parents else target}) "
-                    f"- the skill would tell Claude to use a path that is not installed"
-                )
+    `scripts/shared/*.md` is read on demand by every skill whose manifest registers
+    it ([ADR-013](docs/adr/ADR-013-outside-opinion.md)), so its paths reach Claude
+    exactly as a skill's own do. The manifest check only proves a shared file
+    exists; nothing verified the paths inside it. Scanned once here rather than per
+    consuming skill, so a broken reference is reported once instead of N times.
+    """
+    if not SHARED_SECTIONS.is_dir():
+        return 0
+
+    checked = 0
+    for f in sorted(SHARED_SECTIONS.glob("*.md")):
+        checked += scan_paths(f, f"scripts/shared/{f.name}", None)
     return checked
 
 
@@ -196,6 +232,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     results = [check_skill(d) for d in sorted(SKILLS.iterdir()) if d.is_dir()]
+    shared_paths = check_shared_paths()
 
     if not quiet:
         converted = [r for r in results if r["generated"]]
@@ -205,7 +242,9 @@ def main(argv: list[str]) -> int:
             print(f"  generated  /{r['name']:<28} {r['sections']} section(s), {r['paths']} path(s)")
         for r in legacy:
             print(f"  legacy     /{r['name']}")
-        print(f"\n{sum(r['paths'] for r in results)} install paths verified")
+        shared_count = len(list(SHARED_SECTIONS.glob("*.md"))) if SHARED_SECTIONS.is_dir() else 0
+        print(f"\n  shared     scripts/shared/            {shared_count} section(s), {shared_paths} path(s)")
+        print(f"\n{sum(r['paths'] for r in results) + shared_paths} install paths verified")
 
     for w in warnings:
         print(f"warning: {w}")
