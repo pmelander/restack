@@ -1,6 +1,6 @@
 # ADR-014: A Decision Model for Matrix Cells, With a Validation That Can Withdraw It
 
-**Status:** Accepted
+**Status:** Accepted, then failed its own validation — withdrawal recommended, awaiting decision
 
 **Date:** 2026-09-19
 
@@ -14,7 +14,7 @@
 
 **Implemented By:** ReStack maintainers
 
-**Review Date:** 2027-03-19
+**Review Date:** 2027-03-19 (brought forward — see Validation result, 2026-09-19)
 
 ## Context
 
@@ -148,6 +148,65 @@ raw probabilities are written to `docs/stressor-analysis/matrix-<date>.jev.json`
 beside each matrix, and the matrix carries a per-row scoring source. Both
 numbers are recoverable from artifacts that already exist, which is the point of
 writing them down.
+
+## Validation result (2026-09-19)
+
+Run the day it shipped, against the corpus this ADR named, with the baseline
+written before any request left the machine. The `checkout` baseline is the
+matrix published in README.md, hand-scored before this feature existed; the
+GDPR baseline was scored against the same path map and committed to first.
+
+126 cells. 21 requests, 21 successes, no fallbacks — **the transport and the
+pinned wire format work.** That part is not in question.
+
+| | measured | target | |
+|---|---|---|---|
+| Agreement, confident band | **94.6%** (35/37) | >= 90% | pass |
+| Cells in escalation band | **70.6%** (89/126) | <= 20% | **fail** |
+
+Only two confident-band disagreements in the whole run, both defensible: Jev put
+Payment Gateway at 0.13 for an insider bulk-export where the baseline said 1,
+and API Gateway at 0.80 for indefinite retention where the baseline said 0.
+
+**The failure is not accuracy. It is that Jev is rarely confident here.** The
+returned probabilities pile up in the middle — median 0.52, mean 0.618 where the
+baseline says 1 against 0.316 where it says 0. Real separation, far too little of
+it to threshold.
+
+**Tightening cannot rescue it, and this is the finding that decides the ADR.**
+The two criteria move against each other, and no band satisfies both:
+
+| band | agreement | escalated |
+|---|---|---|
+| 0.20 / 0.80 | 94.6% | 70.6% |
+| 0.35 / 0.65 | 90.5% | 41.3% |
+| 0.40 / 0.60 | 82.8% | 21.4% |
+| 0.45 / 0.55 | 78.9% | 13.5% |
+
+By the time escalation approaches 20%, agreement has fallen through the floor —
+which is the same statement as "the probabilities are not separating the cells",
+said twice.
+
+One diagnostic was run afterwards, and failed. TypeSafe list *hiding several
+judgments inside one question* as a known failure mode, and the "affects"
+instruction hides four — fails, degrades, loses correctness, propagates. Split
+into four atomic nouls per cell and combined with `max()` in code, as their docs
+prescribe, separation got **worse**: the gap fell from 0.302 to 0.249 and
+escalation rose to 78.6%. The compound question was not the problem.
+
+**What this does not settle.** The corpus is a README example path map with
+one-line actor roles. A real walked path map carries timeouts, retry
+configuration, data flows and state ownership, and a model answering 0.5 about
+an actor it has been told almost nothing about may be answering correctly. That
+is a genuine possibility and it is also exactly the unfalsifiable escape this
+ADR's prediction existed to close off. The corpus was named in advance; moving
+the goalposts after seeing the number would make every future prediction in this
+repository worth less.
+
+**So the rule stands as written: withdraw.** Keeping it requires a new
+prediction against a real walked path map, registered before the run rather than
+after, and a `?`-free way of saying what escalation rate is acceptable when the
+architect is scoring the middle band by hand anyway.
 
 ## Consequences
 
