@@ -3,6 +3,29 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+### Added
+
+- [ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md) — scoring impact-matrix
+  cells with a decision model, **built and withdrawn the same day**. Nothing in
+  the skills changed; the ADR is the deliverable.
+
+  The idea was sound enough to build: the matrix is the one genuinely mechanical
+  judgement in the method, and it is made by the same model that generates the
+  stressors and reads the result. A calibrated probability per cell, with an
+  uncertain middle band handed back to the architect, addresses that directly.
+
+  It failed the prediction written into the ADR before the run. Agreement in the
+  confident band passed at 94.6%, but 70.6% of cells landed in the escalation
+  band against a 20% target — and the two criteria move against each other, so
+  no threshold pair satisfies both. Splitting the compound question, which the
+  vendor's own documentation prescribes, made separation worse.
+
+  Kept as a record because the reasoning survives the result, and because a
+  prediction that is allowed to end a feature is only worth writing if it is
+  honoured when it does.
+
 ## [2.3.0] — 2026-09-17
 
 ### Added

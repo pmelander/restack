@@ -1,0 +1,313 @@
+# ADR-014: A Decision Model for Matrix Cells, With a Validation That Can Withdraw It
+
+**Status:** Rejected — built, validated, withdrawn the same day
+
+**Date:** 2026-09-19
+
+**Deciders:** ReStack maintainers
+
+**Technical Story:** Jev cell scoring for `/restack-stressor`
+
+**Implementation Status:** withdrawn
+
+**Implemented Date:** 2026-09-19 (reverted 2026-09-19)
+
+**Implemented By:** ReStack maintainers
+
+**Review Date:** none — the decision is closed, not pending
+
+## Context
+
+> **This decision was implemented, measured against the prediction below, and
+> withdrawn.** The code is not in the tree; it is reachable at commit `c89613f`
+> on `feature/jev-cell-scoring` if anyone wants to pick the thread up. Everything
+> from here to "Validation result" is written in the present tense because it
+> describes what was actually built and what it was built to do — the reasoning
+> is the part worth keeping, and rewriting it in the past tense to match the
+> outcome would quietly hide how confident it was beforehand. That confidence is
+> the useful part of the record.
+
+## Context
+
+The impact matrix is the instrument the whole method reads from, and it is built
+by one model making the same narrow judgement a few hundred times. Twelve actors
+against thirty stressors is 360 cells. Each one is binary, each one is the same
+shape, and none of them is interesting on its own.
+
+That work is mechanical in a way almost nothing else in this toolkit is. Terrain
+classification, the confidence gate, naming the mechanism behind a cluster —
+those are judgements that need the architect's knowledge of their own system.
+Scoring a cell needs the path map and the stressor and nothing else.
+
+**The problem is not that the model scores cells badly. It is that the same
+model generates the stressors, scores them, and reads the result.** Three roles,
+one judgement, and the middle one is the least defensible. A model that
+generated "region-wide AZ failure" has an account of what that means already
+loaded when it scores the Order Service cell, and no amount of instruction
+separates the two.
+
+TypeSafe's Jev is a System One model: it takes a state and typed questions and
+returns calibrated probabilities. A `noul` — their yes/no primitive — returns
+the probability the answer is yes. That is a better-shaped instrument for a
+binary cell than a language model producing the character `1`, for one reason
+that matters more than calibration: **it reports when it is unsure**, and a
+number near 0.5 is information the current method throws away.
+
+It is also cheap in the way this matrix needs. Jev ingests the state once and
+evaluates every question against it in parallel, so a stressor row is one
+request carrying one question per actor — thirty requests for a 30×12 matrix,
+not 360.
+
+## Decision
+
+**Cells can be scored by Jev. Nothing else can.**
+
+Available at `/restack-stressor analyze` (building the matrix) and at
+`/restack-stressor residues` (re-scoring each proposed residual against the full
+stressor set, which is the largest scoring job in the method and the one most
+often skipped). The protocol is `scripts/shared/jev-scoring.md`; the transport
+is `skills/restack-stressor/scripts/jev_score.py`, standard library only, shipped
+and installed with the skill per
+[ADR-010](ADR-010-skills-are-self-contained.md).
+
+Refused everywhere else, on the same reasoning as
+[ADR-013](ADR-013-outside-opinion.md) and more firmly. Jev returns a number and
+cannot explain itself. That is the right output for a cell and the wrong output
+for a gate, a terrain classification, or a cluster diagnosis — and a gate
+answered by a probability is precisely the false confidence this toolkit exists
+to avoid.
+
+**Optional, informational, never a gate.** No key, no `python3`, no scoring —
+and the run says nothing about it. An optional enhancement that announces its
+own absence is a nag, and an architect who has never heard of Jev should not be
+able to tell from the output that any of this exists.
+
+### Three bands, and the middle one comes back
+
+| Probability | Cell |
+|---|---|
+| `p >= 0.8` | `1` |
+| `p <= 0.2` | `0` |
+| between | the model scores it, as it always has |
+
+The bands are the whole design. A decision model's value here is not that it is
+right more often; it is that **it says which cells it is not sure about**, and
+those are exactly the cells worth a human-shaped judgement. The confident band
+is where the mechanical work lives, and handing it over is what buys attention
+for the rest.
+
+**Jev never produces a `?` and never clears one.** A `?` means *this
+architecture is not understood well enough to answer* — a claim about the state
+of the analysis, carrying a discovery step that would settle it. A probability
+near 0.5 is a different statement: the model is confident the answer is
+genuinely balanced. Collapsing the two would convert an architect's registered
+ignorance into a model's calibrated hedge, and the assumptions register — which
+is how `/restack-discover` knows what to go and look at — would quietly stop
+filling up.
+
+### The version is pinned, because the thresholds are tuned
+
+`jev-1.13.0`, not the `jev-latest` alias. TypeSafe's own guidance is to pin once
+thresholds are tuned against a version, and the 0.8/0.2 bands are tuned
+thresholds. An alias moves when a release ships; scoring would change with
+nothing in this repository changing, and the validation below would stop
+describing the model actually in use.
+
+Their published jaggedness notes for `jev-1.13` argue the same thing from the
+other end: a threshold tuned on a `noul` does not transfer to their other
+primitives, and separate questions are not held to arithmetic identities — the
+same question and its negation, asked as two nouls, were observed summing to
+1.19. Nothing here may be built on the assumption that these probabilities
+compose.
+
+### The data gate is ADR-013's, with one thing made stricter
+
+`scripts/shared/second-opinion.md`'s "Before anything is sent" step applies
+unchanged: anonymised by default, as-is only where the classification permits
+it, skip whenever the answer is unclear, and an architect who cannot answer has
+answered skip. What leaves is the same document, and it does not become less
+sensitive for going to a scoring model rather than a chat model.
+
+One delta. Under option A, anonymisation is **mandatory rather than merely
+recommended**, because the actor set travels three times in every request: in
+the state, across the question map as ids, and inside each question's
+instruction text. That third one is not optional — TypeSafe do not use the
+question id in inference, so an actor that is not named in its own instructions
+produces a question identical to every other question in the request. A request
+with an anonymised path map and real actor ids is not anonymised.
+
+The audit trail records the request count and the egress choice. Nothing else.
+
+### Validation, with a number that can end this
+
+On the README `checkout` example and the GDPR compliance pack, scored both ways:
+
+- **Jev's confident band agrees with model scoring on at least 90% of cells.**
+- **At most 20% of cells land in the escalation band.**
+
+Miss the first and the thresholds are wrong or the instrument is; miss the
+second and it is not saving anything, because a matrix where a quarter of the
+cells come back for hand-scoring costs a round trip and buys a smaller share of
+the work than it appears to.
+
+Either miss: tighten the thresholds and re-run, or withdraw the feature. It is
+optional by construction, so withdrawing it costs one section, one script, and
+nothing else.
+
+`/restack-arch-learning` can run this check without re-scoring anything — the
+raw probabilities are written to `docs/stressor-analysis/matrix-<date>.jev.json`
+beside each matrix, and the matrix carries a per-row scoring source. Both
+numbers are recoverable from artifacts that already exist, which is the point of
+writing them down.
+
+## Validation result (2026-09-19)
+
+Run the day it shipped, against the corpus this ADR named, with the baseline
+written before any request left the machine. The `checkout` baseline is the
+matrix published in README.md, hand-scored before this feature existed; the
+GDPR baseline was scored against the same path map and committed to first.
+
+126 cells. 21 requests, 21 successes, no fallbacks — **the transport and the
+pinned wire format work.** That part is not in question.
+
+| | measured | target | |
+|---|---|---|---|
+| Agreement, confident band | **94.6%** (35/37) | >= 90% | pass |
+| Cells in escalation band | **70.6%** (89/126) | <= 20% | **fail** |
+
+Only two confident-band disagreements in the whole run, both defensible: Jev put
+Payment Gateway at 0.13 for an insider bulk-export where the baseline said 1,
+and API Gateway at 0.80 for indefinite retention where the baseline said 0.
+
+**The failure is not accuracy. It is that Jev is rarely confident here.** The
+returned probabilities pile up in the middle — median 0.52, mean 0.618 where the
+baseline says 1 against 0.316 where it says 0. Real separation, far too little of
+it to threshold.
+
+**Tightening cannot rescue it, and this is the finding that decides the ADR.**
+The two criteria move against each other, and no band satisfies both:
+
+| band | agreement | escalated |
+|---|---|---|
+| 0.20 / 0.80 | 94.6% | 70.6% |
+| 0.35 / 0.65 | 90.5% | 41.3% |
+| 0.40 / 0.60 | 82.8% | 21.4% |
+| 0.45 / 0.55 | 78.9% | 13.5% |
+
+By the time escalation approaches 20%, agreement has fallen through the floor —
+which is the same statement as "the probabilities are not separating the cells",
+said twice.
+
+One diagnostic was run afterwards, and failed. TypeSafe list *hiding several
+judgments inside one question* as a known failure mode, and the "affects"
+instruction hides four — fails, degrades, loses correctness, propagates. Split
+into four atomic nouls per cell and combined with `max()` in code, as their docs
+prescribe, separation got **worse**: the gap fell from 0.302 to 0.249 and
+escalation rose to 78.6%. The compound question was not the problem.
+
+**What this does not settle.** The corpus is a README example path map with
+one-line actor roles. A real walked path map carries timeouts, retry
+configuration, data flows and state ownership, and a model answering 0.5 about
+an actor it has been told almost nothing about may be answering correctly. That
+is a genuine possibility and it is also exactly the unfalsifiable escape this
+ADR's prediction existed to close off. The corpus was named in advance; moving
+the goalposts after seeing the number would make every future prediction in this
+repository worth less.
+
+**So the rule stands as written: withdraw.** Keeping it requires a new
+prediction against a real walked path map, registered before the run rather than
+after, and a `?`-free way of saying what escalation rate is acceptable when the
+architect is scoring the middle band by hand anyway.
+
+## Consequences
+
+**Positive**
+
+- The one mechanical judgement in the method is separated from the model that
+  generates and interprets it.
+- Uncertainty becomes visible where it previously was not: a cell the scorer
+  was unsure about is now routed rather than silently resolved.
+- The `residues` re-score against the full stressor set — the step that exposes
+  the compound effect, and the one most often cut short — gets materially
+  cheaper, which is the best argument for doing it properly.
+- The prediction is falsifiable from artifacts the toolkit already writes, so
+  this decision can be checked rather than believed.
+
+**Negative**
+
+- A third party now sees path maps and failure modes in the ordinary course of
+  building a matrix, rather than only when an architect opts into an outside
+  opinion. The data gate is the same, but it is reached far more often, and a
+  gate reached often is a gate answered carelessly. Worth watching at review.
+- Two scoring paths means two ways a matrix can be wrong, and the provenance
+  column exists because otherwise nobody could tell which.
+- The budget check is an estimate — there is no tokenizer in the standard
+  library — so it refuses slightly early rather than slightly late. A very large
+  path map will be refused when it might have fit.
+- Cost is real and per-token, where every other part of this toolkit is free.
+
+**Neutral**
+
+- Nothing waits on it and nothing fails without it. Every error falls back to
+  model scoring for that row and is recorded as having done so.
+- TypeSafe ship an agent skill for Claude Code. It was not used: ADR-010 wants
+  the executable shipped and installed with the skill that calls it, and a
+  second skill in the tree is a second thing to keep current.
+
+## Withdrawal
+
+Withdrawn on the day it was built, by the rule this ADR set for itself before
+the number was known. Worth being precise about what was and was not
+established, because "it failed" is too coarse to learn from:
+
+**Established.** The escalation band sat at 70.6% against a 20% target, and no
+threshold pair anywhere on the sweep satisfied both criteria at once. The
+obvious remedy — splitting the compound question, which TypeSafe's own
+documentation prescribes — made separation worse rather than better. On this
+corpus, with this instrument, the design does not work.
+
+**Not established.** That Jev cannot score matrix cells. The corpus was a
+README example with one-line actor roles, and a model answering 0.5 about an
+actor it has been told almost nothing about may be answering correctly. Nobody
+knows, because nobody ran it against a real walked path map.
+
+The reason it was withdrawn on the first rather than retried on the second: the
+corpus was named in this ADR in advance, precisely so that a disappointing
+result could not be talked out of. Taking the "better data would fix it" exit
+after seeing the number would cost more than the feature is worth — it would
+make every prediction written in this repository afterwards weaker, because the
+precedent would be that a failed one gets relitigated rather than honoured.
+
+**What survives.** The `?` reasoning — that a probability near 0.5 and an
+architect's registered ignorance are different claims and must not be collapsed
+— is sound independently of Jev and is worth reaching for the next time
+something offers to automate a judgement in this toolkit. So is the shape of the
+validation: a number stated in advance, against a named corpus, that is allowed
+to end the thing.
+
+**If it is picked up again**, it needs a new prediction registered before the
+run, against a real walked path map, and an honest answer to the question this
+attempt never had to face: what escalation rate is actually acceptable, given
+that the architect is hand-scoring the middle band anyway.
+
+## Notes
+
+The shape is ADR-013's, applied to a different failure. There, the problem was
+that a single model generates from its own distribution, and the answer was an
+outside voice at the points where reaching outside a distribution is the whole
+job. Here the problem is that the same model occupies three roles around one
+instrument, and the answer is a different kind of model at the one role that is
+mechanical enough to hand over.
+
+The move worth recording is the band in the middle. The obvious design is a
+threshold at 0.5 and a scored matrix with no human in it, which is faster and
+would have been wrong — it would have produced a matrix with no `?` cells, an
+empty assumptions register, and a confident account of a system nobody had
+looked at closely. **The escalation band is what keeps the architect in the
+loop, and the ≤ 20% target is what stops it being a fig leaf in either
+direction.** A band nobody lands in is not a safety mechanism; a band everyone
+lands in is not a saving.
+
+Second time a validation in this repository has been written with a number that
+can withdraw the feature rather than a number that confirms it. Worth keeping
+up.

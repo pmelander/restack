@@ -68,7 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-013
+    ├── adr/                            # ADR-001 .. ADR-014
     └── ...                             # Generated documentation location
 ```
 
@@ -127,6 +127,12 @@ demand. First use: `scripts/shared/second-opinion.md`
 ([ADR-013](docs/adr/ADR-013-outside-opinion.md)). Prefer a shared section over
 duplicating method into two skills; prefer an owned section when only one skill
 needs it.
+
+**A shared section is prose, read by Claude. Executable code never goes in
+`scripts/shared/`** — `setup` installs `skills/restack-*/` and nothing else, so
+a script there would run only from a checkout and never from an install. Shared
+*method* belongs in `scripts/shared/`; the script that method calls belongs in
+the skill, per [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md).
 
 ### Build commands
 
