@@ -95,8 +95,18 @@ codex login
 `codex login` is interactive and opens a browser. Do not attempt it on the
 user's behalf, and never ask for or handle an API key.
 
-**Do not install either without asking.** It is their machine, and a global npm
-install in particular is not implied by "install ReStack".
+**A TypeSafe API key** lets `/restack-stressor` score impact-matrix cells with a
+decision model rather than by hand. It is read only from `TYPESAFE_API_KEY` in
+the user's own environment, and its absence changes nothing: no key, no scoring,
+no mention of it. See
+[ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md).
+
+The same rule as above applies, and applies harder: **never ask for the key,
+never read it back, never write it into a file.** Setting it is the user's job
+on their own machine, and nothing in ReStack needs to see its value.
+
+**Do not install any of these without asking.** It is their machine, and a
+global npm install in particular is not implied by "install ReStack".
 
 ### Step 5 — verify and hand over
 

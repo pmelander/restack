@@ -39,6 +39,13 @@
       "shared": true,
       "title": "Outside opinion - cross-model second read",
       "trigger": "running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning"
+    },
+    {
+      "id": "jev-scoring",
+      "file": "jev-scoring.md",
+      "shared": true,
+      "title": "Scoring matrix cells with Jev",
+      "trigger": "running /restack-stressor analyze or residues with TYPESAFE_API_KEY set - scoring impact-matrix cells with a decision model instead of by hand, and deciding what may leave before it does"
     }
   ]
 }

@@ -50,6 +50,36 @@ When you genuinely cannot tell whether a stressor reaches an actor, score 1 and
 mark the cell `?`. Unknown exposure is exposure. Then register the uncertainty
 as an assumption with the discovery step that would settle it.
 
+#### Scoring source
+
+Cells are scored by you, reading the path map. That is the default and it is
+always sufficient.
+
+Where `TYPESAFE_API_KEY` is set, the cells can instead be scored by a decision
+model — one calibrated yes/no per cell, with the middle band handed back to you.
+**Read `scripts/shared/jev-scoring.md`** before using it, including the step
+that decides what may leave. It is optional, it is never a gate, and a run
+without it is not a worse analysis; it is the same analysis with one fewer
+instrument.
+
+Two things do not change, whichever scored the cells. **The four checks in
+"Reading the matrix" below are yours** — scoring a cell and interpreting a
+column are different jobs, and only the second one produces residuals. And **a
+`?` is yours alone**: it records that the architecture is not understood well
+enough to answer, which is a claim about the analysis rather than about the
+system, and no probability can make it or clear it.
+
+Record the source per row, so the matrix says where its numbers came from:
+
+- `jev` — every cell in the row scored from a returned probability
+- `model` — you scored the row, which includes every row where the request failed
+- `mixed` — the confident cells came back scored, the middle band came to you
+
+Raw probabilities go to `docs/stressor-analysis/matrix-<date>.jev.json`, beside
+the matrix. Keep it: it is what lets the thresholds be re-examined later against
+cells that are already scored, and it is the evidence
+`/restack-arch-learning` needs to check whether this was worth doing.
+
 #### The two totals
 
 - **Stressor impact** (row sum) — how many actors this stressor reaches. High
@@ -69,20 +99,24 @@ is quietly falsified.
 #### Output format
 
 ```
-                       | API GW | Auth | Order | Inventory | Payment | Notify |
------------------------|--------|------|-------|-----------|---------|--------|
-Payment provider down  |   0    |  0   |   1   |     0     |    1    |   1    |  = 3
-Region-wide AZ failure |   1    |  1   |   1   |     1     |    1    |   1    |  = 6
-Auth token clock skew  |   1    |  1   |   1   |     0     |    0    |   0    |  = 3
-Black Friday 40x spike |   1    |  0   |   1   |     1     |    1    |   1    |  = 5
-Regulator audit mid-outage | 0  |  0   |   1   |     0     |    1    |   0    |  = 2
-Fire-breathing lizards |   0    |  0   |   0   |     1     |    0    |   0    |  = 1
------------------------|--------|------|-------|-----------|---------|--------|
+                       | API GW | Auth | Order | Inventory | Payment | Notify |      | Src
+-----------------------|--------|------|-------|-----------|---------|--------|------|-------
+Payment provider down  |   0    |  0   |   1   |     0     |    1    |   1    |  = 3 | jev
+Region-wide AZ failure |   1    |  1   |   1   |     1     |    1    |   1    |  = 6 | jev
+Auth token clock skew  |   1    |  1   |   1   |     0     |    0    |   0    |  = 3 | mixed
+Black Friday 40x spike |   1    |  0   |   1   |     1     |    1    |   1    |  = 5 | jev
+Regulator audit mid-outage | 0  |  0   |   1   |     0     |    1    |   0    |  = 2 | model
+Fire-breathing lizards |   0    |  0   |   0   |     1     |    0    |   0    |  = 1 | model
+-----------------------|--------|------|-------|-----------|---------|--------|------|-------
 Vulnerability          |   3    |  2   |   5   |     3     |    4    |   3    |  Total: 20
 ```
 
 Always show the totals row and column. The matrix without its margins is a
 table; with them it is a diagnosis.
+
+The `Src` column is only interesting when more than one thing scored the matrix.
+Drop it when you scored every row yourself — a column of identical values is
+noise, and the absence of the column already says what it would have said.
 
 ### Reading the matrix
 

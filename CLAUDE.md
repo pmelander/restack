@@ -42,6 +42,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-stressor/                       # generated, tier 3
 │   │   ├── SKILL.md.tmpl
 │   │   ├── SKILL.md
+│   │   ├── scripts/                            #   Jev cell scoring, ships with the skill
 │   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
 │   │   └── compliance-packs/                   #   regulatory stressor packs
 │   ├── restack-events/                         # generated, tier 2
@@ -68,7 +69,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-013
+    ├── adr/                            # ADR-001 .. ADR-014
     └── ...                             # Generated documentation location
 ```
 
@@ -124,9 +125,16 @@ method without paying for it on every invocation.
 `scripts/shared/` and is registered with `"shared": true` in each consuming
 manifest. The section index renders the real path and it is still read on
 demand. First use: `scripts/shared/second-opinion.md`
-([ADR-013](docs/adr/ADR-013-outside-opinion.md)). Prefer a shared section over
-duplicating method into two skills; prefer an owned section when only one skill
-needs it.
+([ADR-013](docs/adr/ADR-013-outside-opinion.md)); also
+`scripts/shared/jev-scoring.md`
+([ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md)). Prefer a shared section
+over duplicating method into two skills; prefer an owned section when only one
+skill needs it.
+
+A shared section is prose, read by Claude. **Executable code never goes in
+`scripts/shared/`** — `setup` installs `skills/restack-*/` and nothing else, so
+a script there would only ever run from a checkout. `jev-scoring.md` is shared;
+the script it calls lives in `skills/restack-stressor/scripts/`.
 
 ### Build commands
 
@@ -188,16 +196,17 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 
 ### Skills that ship executable scripts
 
-`/restack-excel` and `/restack-events` ship Python alongside their SKILL.md.
-Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
+`/restack-excel`, `/restack-events` and `/restack-stressor` ship Python
+alongside their SKILL.md. Two rules follow from
+[ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
    is in, not from this checkout, and a script that needs its own install is a
    script people skip. `/restack-excel` needs openpyxl for `.xlsx` and says so
    when it is missing; nothing else may add a dependency.
 2. **Reference scripts by their installed path.** Resolve once per session to
-   `$HOME/.claude/skills/<name>/...` with the repo path as fallback, as both
-   skills do. `check_skills.py` verifies these resolve — a bare relative path
+   `$HOME/.claude/skills/<name>/...` with the repo path as fallback, as all
+   three skills do. `check_skills.py` verifies these resolve — a bare relative path
    only works when the working directory happens to be this repository, which
    is the bug that ADR exists to stop.
 
