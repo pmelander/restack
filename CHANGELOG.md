@@ -3,75 +3,28 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [2.4.0] — 2026-09-19
+## [Unreleased]
 
 ### Added
 
-- **Optional cell scoring with Jev**, TypeSafe's decision model, in
-  `/restack-stressor analyze` and `/restack-stressor residues`. The matrix is
-  the one genuinely mechanical judgement in the method — a few hundred narrow,
-  identical, binary calls — and it is currently made by the same model that
-  generated the stressors and will read the result. Three roles, one instrument,
-  and the middle one is the least defensible. One request per stressor carrying
-  one yes/no question per actor; a 30×12 matrix is 30 requests, not 360.
-  [ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md).
-- **A band in the middle, which is the point.** `p >= 0.8` scores 1, `p <= 0.2`
-  scores 0, and everything between comes back to the model to score as it always
-  has. A decision model's value here is not that it is right more often, it is
-  that it reports which cells it is unsure about — and those are exactly the
-  cells that deserve a human-shaped judgement. The obvious design, a threshold
-  at 0.5 and nobody in the loop, would have produced a matrix with no `?` cells
-  and an empty assumptions register.
-- **Jev never produces a `?` and never clears one.** A `?` records that the
-  architecture is not understood well enough to answer, and carries the
-  discovery step that would settle it. A probability near 0.5 is a different
-  claim entirely. Collapsing the two would convert registered ignorance into a
-  calibrated hedge, and `/restack-discover` would stop being told what to go and
-  look at.
-- `skills/restack-stressor/scripts/jev_score.py` — standard library only, key
-  read from `TYPESAFE_API_KEY` and nowhere else, never printed. It refuses a
-  request over the model's context budget instead of truncating it: a truncated
-  path map scores cells against a system missing its last three actors and says
-  nothing about it. Both of Jev's limits are checked — 64k for state plus all
-  questions, 32k for state plus the longest single question — because a wide
-  actor set trips the first long before any question approaches the second.
-- **A per-row provenance line in the matrix** (`jev` / `model` / `mixed`), and
-  the raw probabilities beside it in
-  `docs/stressor-analysis/matrix-<date>.jev.json`. Two scoring paths means two
-  ways a matrix can be wrong, and without the column nobody could tell which.
-  It is also what lets `/restack-arch-learning` check ADR-014's prediction
-  without re-scoring anything.
+- [ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md) — scoring impact-matrix
+  cells with a decision model, **built and withdrawn the same day**. Nothing in
+  the skills changed; the ADR is the deliverable.
 
-### Changed
+  The idea was sound enough to build: the matrix is the one genuinely mechanical
+  judgement in the method, and it is made by the same model that generates the
+  stressors and reads the result. A calibrated probability per cell, with an
+  uncertain middle band handed back to the architect, addresses that directly.
 
-- The model version is **pinned to `jev-1.13.0`** rather than the `jev-latest`
-  alias, because the 0.8/0.2 bands are thresholds tuned against that version's
-  calibration. An alias moves when a release ships; scoring would change with
-  nothing in this repository changing, and the ADR's validation would quietly
-  stop describing the model in use.
-- Anonymisation is **mandatory** rather than recommended when sending under
-  option A of the existing data gate. The actor set travels three times in every
-  request — in the state, across the question map as ids, and inside each
-  question's instruction text, because TypeSafe do not use the question id in
-  inference. A request with an anonymised path map and real actor ids is not
-  anonymised.
+  It failed the prediction written into the ADR before the run. Agreement in the
+  confident band passed at 94.6%, but 70.6% of cells landed in the escalation
+  band against a 20% target — and the two criteria move against each other, so
+  no threshold pair satisfies both. Splitting the compound question, which the
+  vendor's own documentation prescribes, made separation worse.
 
-### Notes
-
-- Optional, informational, never a gate, and **silent when absent**. No
-  `TYPESAFE_API_KEY`, no scoring, and no mention of it — an architect who has
-  never heard of Jev cannot tell from the output that any of this exists. Every
-  HTTP error and every malformed row falls back to model scoring for that row
-  and is recorded as having done so.
-- The four "reading the matrix" checks stay with the model unconditionally.
-  Scoring a cell and interpreting a column are different jobs, and only the
-  second produces residuals. Suspicious zeros get a second look regardless of
-  source — a confident zero from a model that has never seen the system is
-  exactly the zero worth doubting.
-- Executable code does not go in `scripts/shared/`. `setup` installs
-  `skills/restack-*/` and nothing else, so a script there would only ever run
-  from a checkout. The protocol is shared; the script it calls ships with the
-  skill, per [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md).
+  Kept as a record because the reasoning survives the result, and because a
+  prediction that is allowed to end a feature is only worth writing if it is
+  honoured when it does.
 
 ## [2.3.0] — 2026-09-17
 

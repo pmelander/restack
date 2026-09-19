@@ -103,7 +103,7 @@ Either way: type `/restack` in Claude Code to see the sixteen skills, and
 
 ### Optional extras
 
-None of them is required — fifteen of the sixteen skills work without any, and
+Neither is required — fifteen of the sixteen skills work without either, and
 `setup` tells you which are present.
 
 ```bash
@@ -117,14 +117,6 @@ opinion still runs, using a fresh subagent — which removes conversation bias b
 shares training, and therefore shares blind spots. In this toolkit's own terms
 it is a weaker residual: it defends against fewer stressor classes. Its
 disagreement still counts; its agreement is close to worthless.
-
-**`TYPESAFE_API_KEY`, if you set it in your own environment, lets
-`/restack-stressor` score impact-matrix cells with a decision model** instead of
-by hand — confident cells scored, uncertain ones handed back to you, `?` cells
-untouched. Optional, never a gate, and silent when the key is absent: without it
-the matrix is built exactly as it always was.
-[ADR-014](docs/adr/ADR-014-jev-for-cell-scoring.md) has the reasoning and the
-number that would withdraw it.
 
 Every skill is prefixed so ReStack coexists with other suites — an unprefixed
 `design-review` or `patterns` silently overwrites whatever was installed there

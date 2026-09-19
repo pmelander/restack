@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.3.0
+version: 2.2.0
 preamble-tier: 3
 model: opus
 description: |
@@ -392,7 +392,6 @@ from memory of what it probably says.
 | `skills/restack-stressor/sections/residual-identification.md` | running /restack-stressor residues - proposing residuals and ranking them by leverage |
 | `skills/restack-stressor/sections/workshop-facilitation.md` | running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect |
 | `scripts/shared/second-opinion.md` | running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning |
-| `scripts/shared/jev-scoring.md` | running /restack-stressor analyze or residues with TYPESAFE_API_KEY set - scoring impact-matrix cells with a decision model instead of by hand, and deciding what may leave before it does |
 
 ---
 
@@ -462,17 +461,12 @@ scale, and do not skip the margins.
 1. Confirm the actor set from the walked paths. Any actor not on a walked path
    needs a walk before it can be a column.
 2. Confirm the stressor set.
-3. Score every cell, marking genuine unknowns as `1` with a `?`. Probe for
-   `JEV_AVAILABLE` first; if it is available, **read**
-   `scripts/shared/jev-scoring.md` and score from it — one request per stressor,
-   the uncertain band handed back to you, the `?` cells yours alone. If it is
-   not available, score every cell yourself and say nothing about it.
+3. Score every cell, marking genuine unknowns as `1` with a `?`.
 4. Compute row totals (stressor impact), column totals (actor vulnerability),
    and total system impact.
 5. Report which stressor set the total is measured against — if the set changed
    since the last iteration, report both totals.
-6. Write to `docs/stressor-analysis/matrix-<date>.md` — with the per-row
-   scoring source, if more than one thing scored it — and append to
+6. Write to `docs/stressor-analysis/matrix-<date>.md` and append to
    `docs/journey/stressor-iteration-history.md`.
 7. Register every `?` cell as an assumption with the discovery step that would
    settle it.
@@ -507,14 +501,6 @@ five-step method. Work from the most-vulnerable actor, address the *mechanism*
 behind its cluster rather than the individual stressors, and re-score each
 proposed residual against the **full** stressor set to expose the compound
 effect.
-
-That re-score is the largest scoring job in the method — every proposed residual
-against every stressor, which is where the compound effect hides and where it is
-most tempting to skip rows. Where `JEV_AVAILABLE`, **read**
-`scripts/shared/jev-scoring.md` and run it here too, with the residual's new
-actors on the path map. The rule that makes this safe is the same one as in
-`analyze`: a cell it is not confident about comes back to you, and naming the
-mechanism is never delegated.
 
 Every residual must be drawable on the path map — a new actor, a new intention,
 or a new path. "Add monitoring" is not a residual.
@@ -621,7 +607,7 @@ remaining columns actors, binary values, header row of actor names.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `workshop-facilitation.md`, `second-opinion.md`, `jev-scoring.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `workshop-facilitation.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

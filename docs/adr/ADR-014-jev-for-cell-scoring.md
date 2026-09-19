@@ -1,6 +1,6 @@
 # ADR-014: A Decision Model for Matrix Cells, With a Validation That Can Withdraw It
 
-**Status:** Accepted, then failed its own validation — withdrawal recommended, awaiting decision
+**Status:** Rejected — built, validated, withdrawn the same day
 
 **Date:** 2026-09-19
 
@@ -8,13 +8,24 @@
 
 **Technical Story:** Jev cell scoring for `/restack-stressor`
 
-**Implementation Status:** implemented
+**Implementation Status:** withdrawn
 
-**Implemented Date:** 2026-09-19
+**Implemented Date:** 2026-09-19 (reverted 2026-09-19)
 
 **Implemented By:** ReStack maintainers
 
-**Review Date:** 2027-03-19 (brought forward — see Validation result, 2026-09-19)
+**Review Date:** none — the decision is closed, not pending
+
+## Context
+
+> **This decision was implemented, measured against the prediction below, and
+> withdrawn.** The code is not in the tree; it is reachable at commit `c89613f`
+> on `feature/jev-cell-scoring` if anyone wants to pick the thread up. Everything
+> from here to "Validation result" is written in the present tense because it
+> describes what was actually built and what it was built to do — the reasoning
+> is the part worth keeping, and rewriting it in the past tense to match the
+> outcome would quietly hide how confident it was beforehand. That confidence is
+> the useful part of the record.
 
 ## Context
 
@@ -242,6 +253,42 @@ architect is scoring the middle band by hand anyway.
 - TypeSafe ship an agent skill for Claude Code. It was not used: ADR-010 wants
   the executable shipped and installed with the skill that calls it, and a
   second skill in the tree is a second thing to keep current.
+
+## Withdrawal
+
+Withdrawn on the day it was built, by the rule this ADR set for itself before
+the number was known. Worth being precise about what was and was not
+established, because "it failed" is too coarse to learn from:
+
+**Established.** The escalation band sat at 70.6% against a 20% target, and no
+threshold pair anywhere on the sweep satisfied both criteria at once. The
+obvious remedy — splitting the compound question, which TypeSafe's own
+documentation prescribes — made separation worse rather than better. On this
+corpus, with this instrument, the design does not work.
+
+**Not established.** That Jev cannot score matrix cells. The corpus was a
+README example with one-line actor roles, and a model answering 0.5 about an
+actor it has been told almost nothing about may be answering correctly. Nobody
+knows, because nobody ran it against a real walked path map.
+
+The reason it was withdrawn on the first rather than retried on the second: the
+corpus was named in this ADR in advance, precisely so that a disappointing
+result could not be talked out of. Taking the "better data would fix it" exit
+after seeing the number would cost more than the feature is worth — it would
+make every prediction written in this repository afterwards weaker, because the
+precedent would be that a failed one gets relitigated rather than honoured.
+
+**What survives.** The `?` reasoning — that a probability near 0.5 and an
+architect's registered ignorance are different claims and must not be collapsed
+— is sound independently of Jev and is worth reaching for the next time
+something offers to automate a judgement in this toolkit. So is the shape of the
+validation: a number stated in advance, against a named corpus, that is allowed
+to end the thing.
+
+**If it is picked up again**, it needs a new prediction registered before the
+run, against a real walked path map, and an honest answer to the question this
+attempt never had to face: what escalation rate is actually acceptable, given
+that the architect is hand-scoring the middle band anyway.
 
 ## Notes
 
