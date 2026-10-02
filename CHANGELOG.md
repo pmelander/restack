@@ -3,6 +3,27 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.6.0] — 2026-10-02
+
+### Added
+
+- **The next command in a copyable block**
+  ([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)). A tier-1
+  preamble fragment, `next-command.md`, composed into all sixteen skills. A
+  command that leads somewhere names it after the status line: `Next:` with one
+  line on why, then the command alone in a fenced block tagged `text`, which the
+  desktop app gives a Copy button. An `Alternative:` line follows when the
+  skill weighed one. There is no block while a decision brief is unanswered,
+  and never an answer to a brief inside it.
+- The block carries the full command, arguments included. ADR-017 kept
+  arguments off its button because `sendPrompt` spoke for the architect. A
+  copied block is pasted and sent by the architect, so that reasoning does not
+  apply. It is tagged `text` because a shell tag gets a Run button, and a slash
+  command does not belong in a shell.
+
+This brings back the `Next:` line that 2.5.2 withdrew with the button, without
+the button. ADR-017 carries an amendment banner pointing here.
+
 ## [2.5.3] — 2026-10-02
 
 ### Fixed

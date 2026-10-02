@@ -27,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── voice.md                    # tier 1
 │       ├── paths-and-shell.md          # tier 1
 │       ├── completion-status.md        # tier 1
+│       ├── next-command.md             # tier 1
 │       ├── decision-brief.md           # tier 2
 │       ├── evidence.md                 # tier 2
 │       ├── completeness.md             # tier 2
@@ -73,7 +74,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-017
+    ├── adr/                            # ADR-001 .. ADR-018
     └── ...                             # Generated documentation location
 ```
 
@@ -111,15 +112,20 @@ Fragments live in `scripts/preamble/`, composed per `manifest.json`.
 
 | Tier | For | Adds |
 |---|---|---|
-| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, paths and shell, completion status |
+| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, paths and shell, completion status, next command |
 | 2 | skills that shape architectural decisions | decision briefs, evidence rules, completeness, confusion protocol |
 | 3 | the residuality core (`/restack-journey`, `/restack-stressor`, `/restack-discover`) | vocabulary, stop gates, journey state contract |
 
 Change a cross-cutting behaviour once, in the fragment, then regenerate.
 
-Rendering the next move as a `show_widget` button was built and withdrawn in
-2.5.2 because clicks were unreliable. Read
-[ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) before trying it again.
+`next-command.md` is how a command hands off: a `Next:` line, then the command
+alone in a fenced block tagged `text` (never a shell tag, which gets a Run
+button), so the host's Copy button copies exactly the command
+([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)). A skill that
+names its next move should use it rather than invent its own format. Rendering
+the move as a `show_widget` button was built and withdrawn in 2.5.2 because
+clicks were unreliable. Read
+[ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) before trying that again.
 
 ### Sections (on-demand depth)
 

@@ -141,6 +141,11 @@ when the command runs. See
 [ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) for what was established,
 what was not, and what would justify trying again.
 
+What came back in 2.6.0 is smaller: the `Next:` line, with the command in a
+fenced `text` block the host gives a Copy button. Arguments are included,
+because a copied command is pasted and sent by the architect, not on their
+behalf ([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)).
+
 ### 8. ~~Cross-model second opinion~~ — done
 
 Shipped in 2.2.0 as an outside opinion in three places, behind a data gate that
