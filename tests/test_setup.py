@@ -69,7 +69,8 @@ class RecordCases:
         env["HOME"] = self.home.as_posix()
         env["USERPROFILE"] = str(self.home)
         if skills_env is not None:
-            env["CLAUDE_SKILLS_DIR"] = skills_env.as_posix()
+            # A str is passed as spelled, backslashes and all.
+            env["CLAUDE_SKILLS_DIR"] = skills_env if isinstance(skills_env, str) else skills_env.as_posix()
         # The point of the whole file: never the real profile.
         for key in ("HOME", "USERPROFILE", "CLAUDE_SKILLS_DIR"):
             if key in env:
@@ -135,6 +136,20 @@ class RecordCases:
         self.assertTrue((custom / "restack-demo" / "SKILL.md").is_file())
         self.assertTrue(self.native(self.recorded()["skills_dir"]).samefile(custom))
         self.assertNotIn(NOTE, out)
+
+    def test_claude_skills_dir_with_backslashes_is_valid_json(self):
+        # setup wrote values raw into the JSON, so C:\Users\... recorded an
+        # invalid \U escape, and the update check (ADR-016) read the record as
+        # unreadable and stayed silent. Windows cannot name a directory with a
+        # double quote, so the quote is covered where the name allows it.
+        if os.name == "nt":
+            custom = str(self.tmp / "custom-skills")
+        else:
+            custom = str(self.tmp / 'back\\slash "quoted" skills')
+        self.run_setup(skills_env=custom)
+        recorded = self.recorded()["skills_dir"]
+        self.assertEqual(recorded, custom)
+        self.assertTrue(self.native(recorded).samefile(custom))
 
     def test_target_is_measured_against_claude_skills_dir(self):
         # A bare setup installs into CLAUDE_SKILLS_DIR, so ~/.claude/skills is
