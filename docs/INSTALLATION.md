@@ -46,10 +46,11 @@ Useful flags:
 |---|---|
 | `--dry-run` | show what would change; write nothing |
 | `--symlink` | symlink instead of copy, so repository edits are live |
-| `--target DIR` | install somewhere other than `~/.claude/skills` |
+| `--target DIR` | install into DIR once, without recording it (scratch and test installs) |
 | `--quiet` | summary only |
 
-`CLAUDE_SKILLS_DIR` overrides the target for all of them.
+`CLAUDE_SKILLS_DIR` overrides the target for all of them, and unlike
+`--target` it is recorded.
 
 **Result:** fifteen directories in `~/.claude/skills/`, each named `restack-*`
 and each containing a `SKILL.md`. Verify with:
@@ -66,7 +67,8 @@ ls -d ~/.claude/skills/restack-*/ | wc -l    # expect 15
 - Refuses to install a skill directory with no `SKILL.md` — Claude Code would
   ignore it and the command would simply never appear.
 - Records the install in `~/.restack/install.json`, which is how
-  `/restack-upgrade` finds your checkout later.
+  `/restack-upgrade` finds your checkout later. Only an install into the
+  default skills directory is recorded; a `--target` run leaves it alone.
 - Only ever touches directories named `restack-*`, so it cannot damage another
   skill suite.
 
@@ -276,12 +278,19 @@ If symlinks don't work on Windows:
 
 ### Custom Skill Directory
 
-If you use a different skills directory, adjust the paths accordingly:
+If you use a different skills directory, point `CLAUDE_SKILLS_DIR` at it and
+export it from your shell profile:
 
 ```bash
 # If your skills are in ~/my-skills/
-./setup --target ~/my-skills
+export CLAUDE_SKILLS_DIR=~/my-skills
+./setup
 ```
+
+Exported, it also reaches the `./setup` that `/restack-upgrade` runs, so
+upgrades land in the same place. `--target ~/my-skills` would install there
+once and leave `~/.restack/install.json` as it was. That is deliberate:
+`--target` is for scratch and test installs.
 
 ### Selective installation
 

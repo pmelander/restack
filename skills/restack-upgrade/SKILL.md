@@ -1,6 +1,6 @@
 ---
 name: restack-upgrade
-version: 1.3.0
+version: 1.3.1
 preamble-tier: 1
 model: sonnet
 description: |
@@ -388,6 +388,7 @@ v{version}" and stop.
 | A step silently does not run (e.g. the outside opinion) | a section the skill names is not installed | `/restack-upgrade check`, then `./setup` |
 | Edits to the repo have no effect | installed by copy, not symlink | `./setup --symlink` |
 | `--symlink` was used and edits still have no effect | the shell could not create symlinks and setup fell back to copy — it warns when this happens | enable Developer Mode, or `MSYS=winsymlinks:nativestrict ./setup --symlink`; check with `ls -la ~/.claude/skills/` |
+| `install.json`'s `skills_dir` is a scratch directory, step 4b checks the wrong tree, or `check` says the record "describes … not this install" | a `setup --target` run before 2.5.1 overwrote the record | re-run setup the way it was installed, without `--target`: `./setup` for a copy install. For a symlinked one, ask the architect to run `./setup --symlink` from a shell that can create symlinks |
 
 Before any repair, show what `./setup --dry-run` would do. It writes nothing
 and its output is usually enough to identify the problem.

@@ -6,6 +6,8 @@
   Copies (or symlinks) every skills\restack-* directory into the Claude Code
   skills directory, removes ReStack skills that no longer exist upstream, and
   records where the install came from so /restack-upgrade can find it later.
+  Only an install into the default skills directory is recorded; a -Target
+  run leaves the record alone (ADR-011, Notes).
 
   Windows-native equivalent of ./setup. Safe to re-run.
 
@@ -21,7 +23,10 @@
   Show what would change; write nothing.
 
 .PARAMETER Target
-  Install into this directory instead of $HOME\.claude\skills.
+  Install into this directory instead of $HOME\.claude\skills, once. Not
+  recorded in ~\.restack\install.json, so /restack-upgrade keeps tracking the
+  default install. For a permanent install elsewhere, set $env:CLAUDE_SKILLS_DIR
+  instead; an install there is recorded.
 
 .PARAMETER Quiet
   Only print the summary.
@@ -47,13 +52,12 @@ $RepoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $VersionFile = Join-Path $RepoDir 'VERSION'
 if (Test-Path $VersionFile) { $Version = (Get-Content $VersionFile -Raw).Trim() } else { $Version = 'unknown' }
 
-if ($Target) {
-    $SkillsDir = $Target
-} elseif ($env:CLAUDE_SKILLS_DIR) {
-    $SkillsDir = $env:CLAUDE_SKILLS_DIR
+if ($env:CLAUDE_SKILLS_DIR) {
+    $DefaultSkillsDir = $env:CLAUDE_SKILLS_DIR
 } else {
-    $SkillsDir = Join-Path $env:USERPROFILE '.claude\skills'
+    $DefaultSkillsDir = Join-Path $env:USERPROFILE '.claude\skills'
 }
+if ($Target) { $SkillsDir = $Target } else { $SkillsDir = $DefaultSkillsDir }
 
 if ($Symlink) { $Method = 'symlink' } else { $Method = 'copy' }
 $StateDir = Join-Path $env:USERPROFILE '.restack'
@@ -78,6 +82,16 @@ function Test-SameTree([string]$A, [string]$B) {
     return $true
 }
 
+# One directory however it is spelled: relative, trailing separator, / or \,
+# different case. -eq on strings is case-insensitive, as NTFS is.
+function Test-SameDir([string]$A, [string]$B) {
+    $full = foreach ($p in $A, $B) {
+        $abs = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($p)
+        [System.IO.Path]::GetFullPath($abs).TrimEnd('\', '/')
+    }
+    return $full[0] -eq $full[1]
+}
+
 # --- sanity ------------------------------------------------------------------
 
 $SourceRoot = Join-Path $RepoDir 'skills'
@@ -99,6 +113,14 @@ foreach ($s in $Sources) {
 if (-not $DryRun -and -not (Test-Path $SkillsDir)) {
     New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 }
+
+# --- is this the install the record describes? -------------------------------
+# install.json describes one install: the one a bare setup.ps1 maintains,
+# because that is what /restack-upgrade re-runs. A -Target run into a scratch
+# directory used to overwrite it, and /restack-upgrade then verified the
+# scratch tree.
+
+$Record = Test-SameDir $SkillsDir $DefaultSkillsDir
 
 # --- can this shell actually create symlinks? --------------------------------
 # Without Developer Mode or elevation, New-Item -ItemType SymbolicLink throws.
@@ -207,13 +229,18 @@ if ($missing -gt 0) {
 }
 
 # --- record the install ------------------------------------------------------
+# Recorded under the default's own spelling, so the file reads the same however
+# -Target named it.
 
-if (-not $DryRun) {
+$recordNote = ''
+if (-not $Record) {
+    $recordNote = "$(Join-Path $StateDir 'install.json') left unchanged - $SkillsDir is not the default skills directory ($DefaultSkillsDir), and the record tracks only that one, because it is what /restack-upgrade re-installs. For a permanent install elsewhere, set `$env:CLAUDE_SKILLS_DIR = '$SkillsDir' instead of -Target."
+} elseif (-not $DryRun) {
     if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
     $state = [ordered]@{
         version      = $Version
         repo         = $RepoDir
-        skills_dir   = $SkillsDir
+        skills_dir   = $DefaultSkillsDir
         method       = $Method
         installed_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     }
@@ -248,6 +275,7 @@ if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
     $codexNote = 'Codex CLI not found - the outside opinion falls back to a same-family subagent (weaker; shares blind spots). Optional: npm i -g @openai/codex && codex login'
 }
 
+if ($recordNote) { Write-Host ""; Write-Host "Note: $recordNote" }
 if ($depNote) { Write-Host ""; Write-Host "Note: $depNote" }
 if ($codexNote) { Write-Host ""; Write-Host "Note: $codexNote" }
 

@@ -210,7 +210,8 @@ class UpdateCheck(unittest.TestCase):
         self.assertEqual(self.saved(), {})
 
     def test_install_json_for_another_install_is_silent(self):
-        # setup --target <scratch> rewrites install.json for the scratch target.
+        # setup --target <scratch> rewrote install.json for the scratch target
+        # until 2.5.1, and a record from then is still on disk somewhere.
         other = self.tmp / "scratch-skills"
         (other / "restack-upgrade").mkdir(parents=True)
         self.install("2.4.0", skills_dir=other)

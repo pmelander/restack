@@ -190,10 +190,11 @@ def snoozed(state: dict, remote: str, now: float) -> bool:
 def runs_from_recorded_install(install: dict) -> bool:
     """Is install.json describing the install this script is running from?
 
-    `setup --target <scratch>` rewrites install.json for the scratch target. If
-    the check believed it, it would report on an install nobody is using.
-    Staying silent is better than being wrong. samefile follows links, so a
-    symlinked install matches its checkout.
+    Until 2.5.1, `setup --target <scratch>` rewrote install.json for the scratch
+    target. setup no longer does, but a record written then, or edited by hand,
+    can still describe another install. If the check believed it, it would
+    report on an install nobody is using. Staying silent is better than being
+    wrong. samefile follows links, so a symlinked install matches its checkout.
     """
     recorded = install.get("skills_dir")
     if not recorded:

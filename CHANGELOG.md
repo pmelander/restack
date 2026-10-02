@@ -3,6 +3,43 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.5.1] — 2026-10-02
+
+### Fixed
+
+- **`setup --target` overwrote the record of the real install.** Both `setup`
+  and `setup.ps1` wrote `~/.restack/install.json` on every run, so installing
+  into a scratch directory replaced the record of the install Claude Code
+  loads. `/restack-upgrade` then read the scratch `skills_dir` and `method`,
+  and step 4b verified the scratch tree. Now only an install into the default
+  skills directory is recorded: `$CLAUDE_SKILLS_DIR`, else `~/.claude/skills`,
+  however `--target` spells it. A skipped record prints a `Note:` that names
+  `CLAUDE_SKILLS_DIR` as the way to make a non-default install permanent.
+  ADR-016's guard in the update check stays, for records written before
+  this release ([ADR-011](docs/adr/ADR-011-setup-script-and-upgrade-skill.md),
+  Notes).
+- **`./setup --dry-run` exited 1** whenever `--symlink` was not given, because
+  its last command was `[ -n "$x" ] && printf`. `setup.ps1 -DryRun` exited 0.
+- **The tests could run in WSL.** On Windows, `bash` on PATH is often the WSL
+  launcher, which ignores the scratch `HOME`, so `test_update_check.py` would
+  have run its snippet against the WSL user's real home. `tests/shells.py`
+  refuses launchers and finds Git for Windows' own `sh` and `bash`.
+
+### Added
+
+- **`tests/test_setup.py`**: the same seven cases against both installers,
+  with `HOME` and `USERPROFILE` in a scratch directory. It covers what each run
+  records, a target in another spelling, `CLAUDE_SKILLS_DIR` and dry runs.
+
+### Changed
+
+- `/restack-upgrade` 1.3.1: a repair-table row for a record overwritten by an
+  older `--target` run. A symlinked install never gets the bare `setup` run
+  that would rewrite it.
+- `docs/INSTALLATION.md` recommended `--target` for a permanent custom skills
+  directory, which `/restack-upgrade` never upgraded. It now recommends an
+  exported `CLAUDE_SKILLS_DIR`.
+
 ## [2.5.0] — 2026-10-02
 
 Two roadmap items. **Update awareness** (item 6): an install now hears that it
