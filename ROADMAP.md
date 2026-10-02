@@ -134,33 +134,22 @@ gstack's update check is the reference for the throttle and snooze. Open
 question: should a symlinked development install report "local behind remote"?
 It cannot be upgraded by copy, so the notice would need different wording.
 
-### 7. Next step as a button
+### 7. ~~Next step as a button~~ — done
 
-Most commands end by naming the next move as a command, such as
-`/restack-design-review consistency`. Where the host can render inline widgets
-(the Claude desktop app and claude.ai expose `show_widget`, with a
-`sendPrompt()` that submits text as if the architect typed it), render the next
-move as a button instead. One click, with no copying and no typos in the
-subcommand.
+Shipped as a tier-1 preamble fragment, `next-step.md`, so all sixteen skills
+end the same way. A `Next:` line names the full command, and where the host has
+a widget tool with `sendPrompt()`, a button sits below it. The skill degrades
+silently to the line alone, renders one to three buttons, and never renders one
+for a gate.
 
-The shape worth building:
+The open question is settled: **a button carries the command, never its
+arguments.** The `Next:` line keeps the arguments. A command that arrives bare
+resolves its target from the journey state at click time, so a stale button
+cannot send a stale target, and no text from a file reaches `sendPrompt()`. See
+[ADR-017](docs/adr/ADR-017-next-step-as-a-button.md).
 
-- **Where:** in the tier-1 preamble's close-out, so every skill gets it once and
-  identically. The text line stays above the button, always.
-- **Degrade silently:** if the widget tool is not in the session (terminal
-  Claude Code, other hosts), print the command as today. The skill never
-  mentions that a button could have been there.
-- **One to three buttons, never more:** the recommended next move, and at most
-  the alternative the skill rejected. A menu of every command is a
-  table of contents, not a recommendation.
-- **Never for a gate.** A decision brief is answered through `AskUserQuestion`
-  so the answer is recorded. A button that sends "proceed" bypasses the brief
-  and the decisions log. Buttons only launch the *next command*, after any gate
-  has been answered.
-
-Open question: should the button carry the arguments the skill would pass,
-such as the path name for `walk`? That is more useful, and it is also where a
-stale suggestion would do the most damage.
+What is still unknown: whether the one line a bare command spends naming its
+target is friction people notice, or the confirmation they wanted anyway.
 
 ### 8. ~~Cross-model second opinion~~ — done
 

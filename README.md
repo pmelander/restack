@@ -187,6 +187,14 @@ settle it.
 terrain), *is impact low enough to stop iterating?*, and *which approach, and is
 it reversible?*
 
+**They name the next move, and never take it for you.** A command ends with
+`Next:` and the full command to run, plus the alternative it weighed, each with
+one line of reasoning. In the Claude desktop app and on claude.ai the move is
+also a button. A button launches the command without its arguments, so the
+target is worked out from the journey state when you click, not when the button
+was drawn. It is never rendered while a decision is open, and it can never
+answer one ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)).
+
 **They remember.** Journey state lives on disk in `docs/journey/`, so an
 engagement survives weeks, breaks, and handoffs — with an audit trail of what
 was decided and why.

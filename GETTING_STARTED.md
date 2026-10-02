@@ -163,6 +163,12 @@ worth noticing — and worth telling us about.
 **They ask one question at a time.** Never a batch. The questions are where the
 thinking happens.
 
+**They tell you what to run next.** Each command ends with a `Next:` line. In
+the Claude desktop app and on claude.ai it is also a button, which sends the
+command without its arguments; the skill names the target it worked out from
+your journey state as its first line. Buttons appear only after a gate has
+been answered, never in place of one.
+
 **They say when they do not know.** `NEEDS_DISCOVERY` is a normal outcome, not
 a failure. Producing a confident-looking matrix over a path map nobody believes
 is the failure.

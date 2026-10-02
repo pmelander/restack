@@ -3,6 +3,36 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+### Added — next step as a button
+
+- **One shape for the next move.** A tier-1 preamble fragment, `next-step.md`,
+  composed into all sixteen skills. Commands that point at a next command end
+  with `Next:` and the full command, arguments included, with one line on why.
+  An `Alternative:` line follows only when the skill weighed one. There is no
+  `Next:` line while a decision brief is unanswered. The reflection prompt
+  still ends the response.
+- **The move as a button, where the host can render one** (the Claude desktop
+  app, claude.ai). The widget tool is found by capability: a name ending in
+  `show_widget`, loaded or deferred, with its `read_me` called once as silent
+  setup. Where there is no tool, the skill prints the line and says nothing
+  about buttons. There are one to three buttons, the recommended move first,
+  themed only with the host's own tokens.
+- **A button carries the command, never its arguments**
+  ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). It sends
+  `/restack-<skill> [subcommand]`, and the label is exactly what it sends. A
+  command that arrives bare resolves its argument from `docs/journey/` at click
+  time and names it in its first line, so a button clicked days later cannot
+  send a stale target. No text from files or tool output reaches
+  `sendPrompt()`.
+- **A button never answers a gate.** It never sends `proceed`, `yes` or an
+  option. Briefs are still answered through `AskUserQuestion`, so the
+  decisions log records the answer.
+
+No skill template changed, so no skill `version:` was bumped: as with
+`paths-and-shell.md` in 2.4.0, the change is in the shared preamble.
+
 ## [2.4.0] — 2026-10-02
 
 Twenty improvements from one long brownfield journey: discovery, three stressor
