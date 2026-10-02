@@ -1,6 +1,6 @@
 # ADR-017: Render the Next Step as a Button That Carries the Command, Never Its Arguments
 
-**Status:** Accepted
+**Status:** Rejected — built, shipped in 2.5.0, withdrawn in 2.5.2 the same day
 
 **Date:** 2026-10-02
 
@@ -8,15 +8,23 @@
 
 **Technical Story:** [ROADMAP](../../ROADMAP.md) item 7, "Next step as a button"
 
-**Implementation Status:** implemented
+**Implementation Status:** withdrawn
 
-**Implemented Date:** 2026-10-02
+**Implemented Date:** 2026-10-02 (withdrawn 2026-10-02)
 
 **Implemented By:** ReStack maintainers
 
-**Review Date:** 2027-04-02
+**Review Date:** none — the decision is closed, not pending
 
 ## Context
+
+> **This decision was implemented, shipped in 2.5.0, and withdrawn in 2.5.2.**
+> In use, a button often needed several clicks before its command appeared in
+> the message box. See [Withdrawal](#withdrawal) for what was and was not
+> established. The code is not in the tree. It is reachable from merge commit
+> `f1aa577` on `main`, at head `aca5ad4`. Everything up to *Withdrawal* is left
+> as written when the decision was accepted, because the reasoning is the part
+> worth keeping.
 
 Most commands end by naming the next move as a command, but in no fixed form.
 `/restack-journey start` names "the first move as a single command";
@@ -222,12 +230,58 @@ routes to "a **specific** command".
 - **Why rejected:** The cost is modest. The standard `Next:` line is worth
   having on its own, on every host.
 
+## Withdrawal
+
+Withdrawn on the day it shipped, by the architect using it, after clicking
+the button in the desktop app's Code tab.
+
+**Established.**
+
+- In the Code tab, `sendPrompt` fills the message box and does not send. A
+  button is a click and then a send, not one click.
+- Text that starts with `/` does not arrive. `Run /restack-...` does, and sent
+  unedited it loads and runs the skill.
+- Clicks were unreliable. A button often needed several clicks before its
+  command appeared in the message box.
+
+**Not established.** Why the clicks were unreliable. The press might not reach
+the widget, `sendPrompt` might throw, or the host might drop a call it received.
+A diagnostic widget that counts each of these was drawn, but the decision to
+withdraw came before it ran. How claude.ai behaves is also unknown.
+
+**Why withdraw rather than fix.** A button is only worth having if it is
+quicker and surer than typing. One that sometimes takes three clicks and a send
+is neither, and the line above it already carried the full command. Every
+remaining unknown is in the host, where ReStack can neither test nor fix it. An
+instruction in every skill's preamble that depends on undocumented host
+behaviour fails silently the day that behaviour changes.
+
+**The `Next:` line went with it.** It was introduced to give the button
+something to mirror. On its own it was a modest gain in consistency, paid for
+in every skill's preamble. Skills name their next move as they did in 2.4.0.
+
+**What survives.**
+
+- **The gate rule.** Nothing that speaks in the architect's voice may answer a
+  decision brief. That holds for any future shortcut, not only widgets.
+- **The argument rule.** If this is picked up again: carry the command, and
+  resolve the argument when it runs, from the state on disk. Staleness,
+  injection and attribution argue the same way on any host.
+- **The host findings above,** so the next attempt starts from them rather than
+  rediscovering them.
+
+**If it is picked up again**, it needs two things: a host that documents what
+`sendPrompt` does, and a click test stated before the work. The same button,
+clicked N times from a freshly rendered widget, must fill the message box N
+times.
+
 ## References
 
 - [ADR-008](ADR-008-generated-skills-with-tiered-preamble.md): the tiered
   preamble this fragment is composed into
 - [ADR-015](ADR-015-vendored-sections-and-base-relative-paths.md): the previous
   tier-1 fragment, and the same "stated once, composed everywhere" pattern
-- `scripts/preamble/next-step.md`: the rule as the skills read it
+- `scripts/preamble/next-step.md` at `aca5ad4`: the rule as the skills read
+  it, removed in 2.5.2
 - `scripts/preamble/decision-brief.md`, `scripts/preamble/stop-gates.md`: why a
   button never answers a gate
