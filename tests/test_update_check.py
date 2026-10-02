@@ -2,8 +2,12 @@
 """Tests for skills/restack-upgrade/scripts/update_check.py (ADR-016).
 
 Every case runs against a scratch ~/.restack (RESTACK_STATE_DIR), a scratch
-skills directory, and a local bare repository standing in for origin. Nothing
-touches the network or the real ~/.restack.
+skills directory, and a local bare repository standing in for the recorded
+source. Nothing touches the network or the real ~/.restack.
+
+Since 2.7.0 the check needs no checkout (ADR-019): it fetches the recorded
+source into a cache in the state directory. The checkout is used only for a
+record written before 2.7.0, which has no source.
 
     python -m unittest discover -s tests -v
 
@@ -96,15 +100,20 @@ class UpdateCheck(unittest.TestCase):
         git("commit", "-q", "-m", f"v{version}", cwd=self.seed)
         git("push", "-q", "origin", "main", cwd=self.seed)
 
-    def install(self, version="2.4.0", method="copy", repo=None, skills_dir=None, bom=False):
+    NO_SOURCE = object()
+
+    def install(self, version="2.4.0", method="copy", repo=None, skills_dir=None, bom=False, source=None):
+        """A record as setup writes it. source=NO_SOURCE writes one from before 2.7.0."""
         self.state.mkdir(exist_ok=True)
-        data = {
-            "version": version,
+        data = {"version": version}
+        if source is not self.NO_SOURCE:
+            data["source"] = str(source or self.origin)
+        data.update({
             "repo": str(repo or self.checkout),
             "skills_dir": str(skills_dir or self.skills),
             "method": method,
             "installed_at": "2026-10-02T06:43:01Z",
-        }
+        })
         text = json.dumps(data, indent=4)
         (self.state / "install.json").write_text(("\ufeff" if bom else "") + text, encoding="utf-8")
 
@@ -129,8 +138,12 @@ class UpdateCheck(unittest.TestCase):
         state["checked_at"] = int(time.time()) - seconds
         (self.state / "update-check.json").write_text(json.dumps(state), encoding="utf-8")
 
-    def origin_main(self) -> str:
-        return git("rev-parse", "origin/main", cwd=self.checkout)
+    def fetched(self) -> str | None:
+        """What the check last fetched into its cache, or None if it never fetched."""
+        cache = self.state / "upstream.git"
+        if not cache.exists():
+            return None
+        return git("rev-parse", "refs/remotes/upstream/main", cwd=cache)
 
     # --- copy installs -------------------------------------------------------
 
@@ -164,18 +177,19 @@ class UpdateCheck(unittest.TestCase):
         self.assertEqual(self.saved()["result"], "unreadable-version")
 
     def test_offline_is_silent_and_throttled(self):
-        self.install("2.4.0")
-        git("remote", "set-url", "origin", str(self.tmp / "nowhere.git"), cwd=self.checkout)
+        self.install("2.4.0", source=self.tmp / "nowhere.git")
         self.assertEqual(self.run_uc(), "")
         self.assertEqual(self.saved()["result"], "offline")
         self.assertIn("checked_at", self.saved(), "an offline attempt still counts for the day")
 
     def test_hanging_remote_is_cut_off(self):
-        # ext:: runs a command as the transport: this one never answers.
-        self.install("2.4.0")
+        # ext:: runs a command as the transport: this one never answers. git
+        # refuses ext:: by default, so the test allows it in the cache, which
+        # it creates the way the script would.
         py = sys.executable.replace("\\", "/").replace(" ", "% ")
-        git("remote", "set-url", "origin", f"ext::{py} -c import% time;time.sleep(30)", cwd=self.checkout)
-        git("config", "protocol.ext.allow", "always", cwd=self.checkout)
+        self.install("2.4.0", source=f"ext::{py} -c import% time;time.sleep(30)")
+        git("init", "-q", "--bare", str(self.state / "upstream.git"))
+        git("config", "protocol.ext.allow", "always", cwd=self.state / "upstream.git")
         start = time.time()
         self.assertEqual(self.run_uc(), "")
         elapsed = time.time() - start
@@ -201,13 +215,39 @@ class UpdateCheck(unittest.TestCase):
         self.publish("2.5.0")
         self.assertIn("v2.5.0 available", self.run_uc())
 
-    def test_not_a_git_checkout_is_silent(self):
+    def test_works_after_the_checkout_is_deleted(self):
+        # Most installers delete their clone after setup. The check must not
+        # depend on it: it fetches the recorded source into its own cache.
+        self.install("2.4.0")
+
+        def writable(func, path, _exc):         # git marks objects read-only on Windows
+            os.chmod(path, 0o700)
+            func(path)
+        shutil.rmtree(self.checkout, onerror=writable)
+        self.assertFalse(self.checkout.exists())
+        self.publish("2.5.0")
+        self.assertEqual(self.run_uc(),
+                         f"ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  {HINT}")
+        self.assertIsNotNone(self.fetched(), "fetched into the cache, not a checkout")
+
+    def test_record_from_before_2_7_uses_its_checkouts_origin(self):
+        self.install("2.4.0", source=self.NO_SOURCE)
+        self.publish("2.5.0")
+        self.assertIn("v2.5.0 available", self.run_uc())
+
+    def test_no_source_and_no_checkout_is_silent(self):
         download = self.tmp / "download"
         download.mkdir()
         (download / "VERSION").write_text("2.4.0\n", encoding="utf-8")
-        self.install("2.4.0", repo=download)
+        self.install("2.4.0", repo=download, source=self.NO_SOURCE)
         self.assertEqual(self.run_uc(), "")
         self.assertEqual(self.saved(), {})
+        self.assertIn("source unknown", self.run_uc("status"))
+
+    def test_a_source_that_looks_like_an_option_is_refused(self):
+        self.install("2.4.0", source="--upload-pack=touch pwned")
+        self.assertEqual(self.run_uc(), "")
+        self.assertIsNone(self.fetched())
 
     def test_install_json_for_another_install_is_silent(self):
         # setup --target <scratch> rewrote install.json for the scratch target
@@ -224,7 +264,7 @@ class UpdateCheck(unittest.TestCase):
         def msys(p: Path) -> str:
             drive, rest = p.drive, p.as_posix()[len(p.drive):]
             return f"/{drive[0].lower()}{rest}"
-        self.install("2.4.0", repo=msys(self.checkout), skills_dir=msys(self.skills))
+        self.install("2.4.0", repo=msys(self.checkout), skills_dir=msys(self.skills), source=self.NO_SOURCE)
         self.publish("2.5.0")
         self.assertIn("v2.5.0 available", self.run_uc())
 
@@ -234,10 +274,10 @@ class UpdateCheck(unittest.TestCase):
         self.install("2.4.0")
         self.publish("2.5.0")
         self.assertIn("v2.5.0 available", self.run_uc())
-        before = self.origin_main()
+        before = self.fetched()
         self.publish("2.6.0")
         self.assertEqual(self.run_uc(), "", "a second session open the same day says nothing")
-        self.assertEqual(self.origin_main(), before, "and fetches nothing")
+        self.assertEqual(self.fetched(), before, "and fetches nothing")
 
     def test_throttle_expires_after_a_day(self):
         self.install("2.4.0")
@@ -296,19 +336,19 @@ class UpdateCheck(unittest.TestCase):
         self.install("2.4.0")
         self.assertIn("Update check off", self.run_uc("off"))
         self.assertEqual(json.loads((self.state / "config.json").read_text()), {"update_check": False})
-        before = self.origin_main()
+        before = self.fetched()
         self.publish("2.5.0")
         self.assertEqual(self.run_uc(), "")
-        self.assertEqual(self.origin_main(), before, "opted out means no fetch at all")
+        self.assertEqual(self.fetched(), before, "opted out means no fetch at all")
         self.assertNotIn("checked_at", self.saved())
         self.assertIn("setting:    off", self.run_uc("status"))
 
     def test_opted_out_by_environment(self):
         self.install("2.4.0")
-        before = self.origin_main()
+        before = self.fetched()
         self.publish("2.5.0")
         self.assertEqual(self.run_uc(env={"RESTACK_UPDATE_CHECK": "off"}), "")
-        self.assertEqual(self.origin_main(), before)
+        self.assertEqual(self.fetched(), before)
 
     def test_environment_wins_over_config_on(self):
         self.install("2.4.0")
@@ -319,10 +359,10 @@ class UpdateCheck(unittest.TestCase):
     def test_unreadable_config_counts_as_off(self):
         self.install("2.4.0")
         (self.state / "config.json").write_text("{update_check: false", encoding="utf-8")
-        before = self.origin_main()
+        before = self.fetched()
         self.publish("2.5.0")
         self.assertEqual(self.run_uc(), "")
-        self.assertEqual(self.origin_main(), before)
+        self.assertEqual(self.fetched(), before)
         self.run_uc("on")
         self.assertEqual(self.last_returncode, 1, "on must not overwrite a file it cannot read")
         self.assertEqual((self.state / "config.json").read_text(), "{update_check: false")
@@ -341,35 +381,16 @@ class UpdateCheck(unittest.TestCase):
         self.assertEqual(json.loads((self.state / "config.json").read_text()),
                          {"other": 1, "update_check": False})
 
-    # --- symlinked development installs --------------------------------------
+    # --- symlinked installs from before 2.7.0 ---------------------------------
 
-    def test_symlink_install_on_main(self):
-        # install.json's version is stale on purpose: a symlinked install runs
-        # the checkout, so the checkout's VERSION is the installed version.
-        self.install("2.0.0", method="symlink")
+    def test_old_symlink_install_is_sent_to_the_upgrade(self):
+        # /restack-upgrade runs setup, which replaces the links with copies, so
+        # a symlinked install gets the same notice as any other (ADR-019).
+        self.install("2.4.0", method="symlink", source=self.NO_SOURCE)
         self.publish("2.5.0")
-        line = self.run_uc()
-        self.assertEqual(
-            line,
-            f'ReStack v2.5.0 on origin/main; your symlinked checkout is at v2.4.0: '
-            f'git -C "{self.checkout.as_posix()}" pull --ff-only  {HINT}')
-        self.assertNotIn("/restack-upgrade ", line.replace(HINT, ""),
-                         "a symlinked install must not be sent to the copy upgrade")
-        self.assertIn("install:    v2.4.0, symlink", self.run_uc("status"))
-
-    def test_symlink_install_on_a_branch(self):
-        self.install("2.4.0", method="symlink")
-        git("checkout", "-q", "-b", "feature/x", cwd=self.checkout)
-        self.publish("2.5.0")
-        self.assertEqual(
-            self.run_uc(),
-            f"ReStack v2.5.0 on origin/main; your symlinked checkout (branch feature/x) is at v2.4.0  {HINT}")
-
-    def test_symlink_install_ahead_is_silent(self):
-        self.install("2.4.0", method="symlink")
-        (self.checkout / "VERSION").write_text("2.6.0\n", encoding="utf-8")
-        self.publish("2.5.0")
-        self.assertEqual(self.run_uc(), "")
+        self.assertEqual(self.run_uc(),
+                         f"ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  {HINT}")
+        self.assertIn("replaces the links with copies", self.run_uc("status"))
 
     # --- failure is silent at session open, visible in status ----------------
 

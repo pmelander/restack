@@ -197,12 +197,22 @@ Skills are **capability transfer tools**, not dependency-creating tools. Every s
 # View a generated skill
 cat skills/restack-adr/SKILL.md
 
-# Install for development — repository edits are live after a regenerate
-./setup --symlink
+# Install your edits: regenerate, then copy into ~/.claude/skills
+python scripts/gen_skills.py && ./setup
 
 # See what an install would change, without writing
 ./setup --dry-run
 ```
+
+The install is always a copy in the user profile
+([ADR-019](docs/adr/ADR-019-copy-only-install.md)). There is no symlinked
+development mode: sessions load what was last installed, not the working tree,
+so another session's half-finished edits never leak into yours. Re-run
+`./setup` after every regenerate you want to try.
+
+**Agents: never run `./setup` against the real profile to test it.** The tests
+in `tests/` point `HOME` and `USERPROFILE` at a scratch directory, and so
+should anything else that exercises the installers.
 
 Do not hand-roll the install with `cp -R` or `ln -s`: `setup` also removes
 skills deleted upstream, refuses a broken tree, and records where it installed
@@ -369,13 +379,14 @@ matrices), `decisions-log.md` (every gate passed, with rationale), and
 ## Installation
 
 ```bash
-./setup                 # copy (stable use)
-./setup --symlink       # development — repository edits are live
+./setup                 # copy into ~/.claude/skills; the only install method
+./setup --dry-run       # what would change, without writing
 pip install -r requirements.txt   # optional; /restack-excel only
 ```
 
-Windows: `.\setup.ps1` with `-Symlink` / `-DryRun` / `-Target`.
-Update later with `/restack-upgrade`.
+Windows: `.\setup.ps1` with `-DryRun` / `-Quiet`.
+Update later with `/restack-upgrade`, which installs the latest release from a
+temporary clone and never touches a checkout.
 
 ## Skills
 

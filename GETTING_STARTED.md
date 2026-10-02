@@ -8,18 +8,19 @@ Install in two minutes, then walk through a first engagement end to end.
 
 **Linux / macOS**
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup
 ```
 
 **Windows**
 ```powershell
-git clone https://github.com/pmelander/restack.git $HOME\restack
-cd $HOME\restack
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install
 .\setup.ps1
 ```
 
-`setup` tells you exactly what it installed. Python and `openpyxl` are optional
+`setup` tells you exactly what it installed. The install is a copy in your user
+profile, so you can delete `restack-install` afterwards. Python and `openpyxl` are optional
 and needed only by `/restack-excel` — it will say so if they are missing.
 
 **Verify:** type `/restack` in Claude Code. You should see sixteen skills —
@@ -236,7 +237,7 @@ a three-week gap, a handoff, or an audit.
 | [RESIDUALITY.md](RESIDUALITY.md) | the theory and the vocabulary |
 | [QUICKREF.md](QUICKREF.md) | every command, and the gates |
 | [docs/USAGE.md](docs/USAGE.md) | worked examples per skill |
-| [docs/INSTALLATION.md](docs/INSTALLATION.md) | symlinks, upgrades, troubleshooting |
+| [docs/INSTALLATION.md](docs/INSTALLATION.md) | developing ReStack, upgrades, troubleshooting |
 | [INSTALL.md](INSTALL.md) | install methods, and agent-followable instructions |
 | [ROADMAP.md](ROADMAP.md) | what is next |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | compliance packs and new skills |

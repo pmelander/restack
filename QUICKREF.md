@@ -3,12 +3,13 @@
 Every command, in journey order. Type `/restack` in Claude Code to see them all.
 
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup                # Windows: .\setup.ps1
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup          # Windows: .\setup.ps1
 ```
 
-`./setup --dry-run` shows what would change · `--symlink` for development ·
-`/restack-upgrade` to update later. A one-line notice appears at most once a
+The install is a copy in `~/.claude/skills`; the clone can be deleted.
+`./setup --dry-run` shows what would change · `/restack-upgrade` to update
+later, no clone needed. A one-line notice appears at most once a
 day when a newer version is out; `/restack-upgrade off` turns it off. See
 [INSTALL.md](INSTALL.md).
 

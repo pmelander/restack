@@ -1,28 +1,29 @@
 #!/bin/sh
 # ReStack setup — install or update the skills for Claude Code.
 #
-# Copies (or symlinks) every skills/restack-*/ directory into the Claude Code
-# skills directory, removes ReStack skills that no longer exist upstream, and
-# records where the install came from so /restack-upgrade can find it later.
-# Only an install into the default skills directory is recorded; a --target run
-# leaves the record alone (ADR-011, Notes).
+# Copies every skills/restack-*/ directory into $HOME/.claude/skills, removes
+# ReStack skills that no longer exist upstream, and records the install in
+# ~/.restack/install.json so /restack-upgrade can find it later.
+#
+# The install is always a copy in the user profile (ADR-019). It does not
+# depend on this checkout: delete the checkout and the skills keep working.
+# The checkout is only where the next upgrade copies from.
 #
 # POSIX sh. No dependencies. Safe to re-run.
 #
-# SAFETY: this script only ever creates, replaces or removes directories whose
+# SAFETY: this script only ever creates, replaces or removes entries whose
 # names begin with "restack-". Nothing else in the skills directory is touched,
 # so it cannot damage another skill suite — the failure mode that ADR-009 exists
-# to prevent.
+# to prevent. A link left by an older symlinked install is removed as a link,
+# never followed: deleting through it would delete the checkout it points at.
 
 set -eu
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 VERSION=$(cat "$REPO_DIR/VERSION" 2>/dev/null || echo "unknown")
-DEFAULT_SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-SKILLS_DIR="$DEFAULT_SKILLS_DIR"
+SKILLS_DIR="$HOME/.claude/skills"
 STATE_DIR="$HOME/.restack"
 
-METHOD="copy"
 DRY_RUN=""
 QUIET=""
 
@@ -32,36 +33,33 @@ ReStack setup — install the skills for Claude Code
 
 Usage: ./setup [options]
 
+Installs a copy of every ReStack skill into \$HOME/.claude/skills. The copy
+does not depend on this checkout.
+
 Options:
-  --symlink     Symlink instead of copying, so repository edits are live.
-                Use while developing ReStack itself. Needs a shell that can
-                create symlinks; on Git Bash/Windows that means Developer Mode,
-                an elevated shell, or MSYS=winsymlinks:nativestrict. If it
-                cannot, setup says so and installs by copy instead.
-  --copy        Copy the skills (default).
   --dry-run     Show what would change; write nothing.
-  --target DIR  Install into DIR instead of \$HOME/.claude/skills, once.
-                Not recorded in ~/.restack/install.json, so /restack-upgrade
-                keeps tracking the default install. For a permanent install
-                elsewhere, use CLAUDE_SKILLS_DIR instead.
   -q, --quiet   Only print the summary.
   -h, --help    Show this help.
 
-Environment:
-  CLAUDE_SKILLS_DIR   Overrides the default skills directory. An install there
-                      is recorded, like one into \$HOME/.claude/skills.
-
-Re-running is safe: it updates what changed and reports what it did.
+Re-running is safe: it updates what changed and reports what it did. After
+editing the repository, regenerate and re-run ./setup to install the edits.
 EOF
+}
+
+removed() {
+  echo "Error: $1 was removed in ReStack 2.7.0. Skills always install as a copy" >&2
+  echo "into \$HOME/.claude/skills, independent of this checkout (ADR-019)." >&2
+  echo "Run ./setup with no options." >&2
+  exit 2
 }
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --symlink) METHOD="symlink" ;;
-    --copy)    METHOD="copy" ;;
     --dry-run) DRY_RUN="yes" ;;
     --quiet|-q) QUIET="yes" ;;
-    --target)  shift; [ $# -gt 0 ] || { echo "--target needs a directory" >&2; exit 2; }; SKILLS_DIR="$1" ;;
+    --copy) ;;                                    # the old default; harmless
+    --symlink) removed "--symlink" ;;
+    --target) removed "--target" ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -91,70 +89,48 @@ for src in "$REPO_DIR"/skills/restack-*/; do
   }
 done
 
+# CLAUDE_SKILLS_DIR used to move the install. It no longer does; say so rather
+# than install somewhere the architect did not expect.
+skills_env_note=""
+if [ -n "${CLAUDE_SKILLS_DIR:-}" ]; then
+  skills_env_note="CLAUDE_SKILLS_DIR is set ($CLAUDE_SKILLS_DIR) and was ignored: since 2.7.0 ReStack always installs into $SKILLS_DIR."
+fi
+
 [ -n "$DRY_RUN" ] || mkdir -p "$SKILLS_DIR"
-
-# --- is this the install the record describes? -------------------------------
-# install.json describes one install: the one a bare ./setup maintains, because
-# that is what /restack-upgrade re-runs. A --target run into a scratch directory
-# used to overwrite it, and /restack-upgrade then verified the scratch tree.
-# -ef matches one directory however it is spelled - relative, trailing slash,
-# or, on Windows, different case, which `pwd -P` does not normalise. It needs
-# the directory to exist, so a dry run of a fresh install falls back to the
-# string, less one trailing slash. Either way a miss errs toward leaving the
-# record alone.
-
-RECORD=""
-if [ "${SKILLS_DIR%/}" = "${DEFAULT_SKILLS_DIR%/}" ] || [ "$SKILLS_DIR" -ef "$DEFAULT_SKILLS_DIR" ]; then
-  RECORD="yes"
-fi
-
-# --- can this shell actually create symlinks? --------------------------------
-# MSYS/Git Bash on Windows silently COPIES when `ln -s` is used without
-# winsymlinks enabled: the command succeeds, the exit status is 0, and you get a
-# directory. Reporting "symlinked, edits are live" after that is a false promise
-# and worse than failing, because the user then edits the repository and watches
-# nothing happen. Probe once, up front, and degrade honestly.
-
-SYMLINK_DEGRADED=""
-if [ "$METHOD" = "symlink" ]; then
-  if [ -n "$DRY_RUN" ]; then
-    SYMLINK_UNVERIFIED="yes"
-  else
-    _probe="$SKILLS_DIR/.restack-symlink-probe"
-    rm -rf "$_probe"
-    if ln -s "$REPO_DIR" "$_probe" 2>/dev/null && [ -L "$_probe" ]; then
-      rm -f "$_probe"
-    else
-      rm -rf "$_probe"
-      METHOD="copy"
-      SYMLINK_DEGRADED="yes"
-      _degraded_note="yes"
-    fi
-  fi
-fi
 
 say "ReStack v$VERSION"
 say "  from: $REPO_DIR"
-say "  into: $SKILLS_DIR  ($METHOD)"
-[ -n "${_degraded_note:-}" ] && say "        (--symlink requested; this shell cannot create symlinks)"
+say "  into: $SKILLS_DIR  (copy)"
 [ -n "$DRY_RUN" ] && say "  DRY RUN — nothing will be written"
 say ""
 
+# Remove one installed entry. A link is unlinked with rm -f, which never
+# recurses: `rm -rf link/` would empty the directory the link points at, and
+# for an install made with the old --symlink that is the architect's checkout.
+remove_entry() {
+  if [ -L "$1" ]; then
+    rm -f "$1"
+  else
+    rm -rf "$1"
+  fi
+}
+
 # --- install -----------------------------------------------------------------
 
-n_new=0; n_upd=0; n_same=0; n_del=0
+n_new=0; n_upd=0; n_same=0; n_del=0; n_unlinked=0
 
 for src in "$REPO_DIR"/skills/restack-*/; do
   name=$(basename "$src")
   dest="$SKILLS_DIR/$name"
 
-  if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
+  if [ -L "$dest" ]; then
+    # Left by a symlinked install from before 2.7.0. Replaced with a copy.
+    action="update"; n_upd=$((n_upd + 1)); n_unlinked=$((n_unlinked + 1))
+  elif [ ! -e "$dest" ]; then
     action="install"; n_new=$((n_new + 1))
-  elif [ "$METHOD" = "symlink" ] && [ -L "$dest" ] && [ "$(readlink "$dest")" = "${src%/}" ]; then
-    action="unchanged"; n_same=$((n_same + 1))
   # The whole directory, not just SKILL.md: a section edited on its own would
-  # otherwise never reach a copy install.
-  elif [ "$METHOD" = "copy" ] && [ ! -L "$dest" ] && diff -r "${src%/}" "$dest" >/dev/null 2>&1; then
+  # otherwise never reach the install.
+  elif diff -r "${src%/}" "$dest" >/dev/null 2>&1; then
     action="unchanged"; n_same=$((n_same + 1))
   else
     action="update"; n_upd=$((n_upd + 1))
@@ -165,34 +141,25 @@ for src in "$REPO_DIR"/skills/restack-*/; do
   [ -n "$DRY_RUN" ] && continue
   [ "$action" = "unchanged" ] && continue
 
-  rm -rf "$dest"
-  if [ "$METHOD" = "symlink" ]; then
-    # The probe above proved symlinks work here, but verify each one anyway —
-    # a silently-degraded link is the whole bug this guards against.
-    ln -s "${src%/}" "$dest"
-    [ -L "$dest" ] || {
-      echo "Error: symlink for $name did not take (got a $(test -d "$dest" && echo directory || echo file))." >&2
-      echo "Re-run with --copy." >&2
-      exit 1
-    }
-  else
-    cp -R "${src%/}" "$dest"
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    remove_entry "$dest"
   fi
+  cp -R "${src%/}" "$dest"
 done
 
 # --- remove skills deleted upstream -----------------------------------------
 # The reason `cp -R skills/* ~/.claude/skills/` is not good enough: a skill
 # removed or renamed upstream stays installed forever, and the user keeps
-# invoking a command that no longer exists in the project.
+# invoking a command that no longer exists in the project. No trailing slash
+# on the glob, so a link is seen as a link and removed as one.
 
-for dest in "$SKILLS_DIR"/restack-*/; do
-  [ -d "$dest" ] || continue
+for dest in "$SKILLS_DIR"/restack-*; do
+  [ -e "$dest" ] || [ -L "$dest" ] || continue      # unexpanded glob
   name=$(basename "$dest")
-  case "$name" in restack-\*) continue ;; esac      # unexpanded glob
   [ -d "$REPO_DIR/skills/$name" ] && continue
   say "  remove   /$name  (no longer in ReStack)"
   n_del=$((n_del + 1))
-  [ -n "$DRY_RUN" ] || rm -rf "$dest"
+  [ -n "$DRY_RUN" ] || remove_entry "$dest"
 done
 
 # --- verify every section path resolves --------------------------------------
@@ -220,10 +187,10 @@ if [ "$missing" -gt 0 ]; then
 fi
 
 # --- record the install ------------------------------------------------------
-# Recorded under the default's own spelling, so the file reads the same however
-# --target named it.
+# `repo` is the checkout this install was copied from: where /restack-upgrade
+# pulls next. The skills do not need it to exist.
 #
-# Every value goes through json_str. Written raw, CLAUDE_SKILLS_DIR=C:\Users\...
+# Every value goes through json_str. Written raw, a path such as C:\Users\...
 # recorded an invalid \U escape, and the update check (ADR-016) read the whole
 # file as unreadable and stayed silent. setup.ps1 gets this from ConvertTo-Json.
 
@@ -231,17 +198,26 @@ json_str() {
   printf '"%s"' "$(printf '%s' "$1" | sed 's/[\\"]/\\&/g')"
 }
 
-record_note=""
-if [ -z "$RECORD" ]; then
-  record_note="$STATE_DIR/install.json left unchanged - $SKILLS_DIR is not the default skills directory ($DEFAULT_SKILLS_DIR), and the record tracks only that one, because it is what /restack-upgrade re-installs. For a permanent install elsewhere, use CLAUDE_SKILLS_DIR=$SKILLS_DIR instead of --target."
-elif [ -z "$DRY_RUN" ]; then
+# `source` is where /restack-upgrade and the update check fetch releases from:
+# this checkout's origin, or the project itself for a download. Read only when
+# this directory is itself a checkout, so a ReStack copy vendored inside some
+# other repository never records that repository's origin.
+DEFAULT_SOURCE="https://github.com/pmelander/restack.git"
+SOURCE=""
+if [ -e "$REPO_DIR/.git" ]; then
+  SOURCE=$(git -C "$REPO_DIR" remote get-url origin 2>/dev/null || true)
+fi
+[ -n "$SOURCE" ] || SOURCE="$DEFAULT_SOURCE"
+
+if [ -z "$DRY_RUN" ]; then
   mkdir -p "$STATE_DIR"
   cat > "$STATE_DIR/install.json" <<EOF
 {
   "version": $(json_str "$VERSION"),
+  "source": $(json_str "$SOURCE"),
   "repo": $(json_str "$REPO_DIR"),
-  "skills_dir": $(json_str "$DEFAULT_SKILLS_DIR"),
-  "method": $(json_str "$METHOD"),
+  "skills_dir": $(json_str "$SKILLS_DIR"),
+  "method": "copy",
   "installed_at": $(json_str "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
 }
 EOF
@@ -279,34 +255,17 @@ else
     "$VERSION" "$n_new" "$n_upd" "$n_del" "$n_same"
 fi
 
-[ -n "$record_note" ] && printf '\nNote: %s\n' "$record_note"
+if [ "$n_unlinked" -gt 0 ]; then
+  printf '\nNote: %d symlink(s) from an older install %s replaced with copies. The links were\nremoved as links; the checkout they pointed at is untouched.\n' \
+    "$n_unlinked" "$([ -n "$DRY_RUN" ] && echo would be || echo were)"
+fi
+[ -n "$skills_env_note" ] && printf '\nNote: %s\n' "$skills_env_note"
 [ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
 [ -n "$codex_note" ] && printf '\nNote: %s\n' "$codex_note"
 
-if [ -n "$SYMLINK_DEGRADED" ]; then
-  cat <<EOF
-
-Warning: --symlink was requested but this shell cannot create symlinks, so the
-skills were INSTALLED BY COPY. Edits in the repository are NOT live — re-run
-./setup after each change, or fix symlink support:
-
-  Windows : enable Developer Mode (Settings > For developers), or run in an
-            elevated shell, or:  export MSYS=winsymlinks:nativestrict
-  Then    : ./setup --symlink
-EOF
-fi
-
 if [ -n "$DRY_RUN" ]; then
   printf '\n(dry run — nothing was written)\n'
-  # An if, not `[ ] && printf`: as the script's last command, a false test
-  # would become its exit status, and every dry run without --symlink exited 1.
-  if [ -n "${SYMLINK_UNVERIFIED:-}" ]; then
-    printf 'Symlink support not probed in a dry run; a real run verifies it.\n'
-  fi
 else
   printf '\nType /restack in Claude Code to see the skills.\n'
-  if [ "$METHOD" = "symlink" ]; then
-    printf 'Symlinked: edits in %s are live after a regenerate.\n' "$REPO_DIR"
-    printf 'Claude Code re-reads skills when they change; a fresh session is the sure way.\n'
-  fi
+  printf 'The install is a copy: it keeps working if %s is moved or deleted.\n' "$REPO_DIR"
 fi

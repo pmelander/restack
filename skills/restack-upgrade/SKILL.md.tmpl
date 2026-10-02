@@ -1,12 +1,13 @@
 ---
 name: restack-upgrade
-version: 1.3.1
+version: 2.0.0
 preamble-tier: 1
 model: sonnet
 description: |
-  Upgrade ReStack to the latest version. Finds the install, pulls, re-runs
-  setup, and shows what changed. Also repairs a broken or partial install, and
-  snoozes or turns off the once-a-day update notice.
+  Upgrade ReStack to the latest version. Fetches the latest release into a
+  temporary directory, installs it into the user profile with setup, shows what
+  changed, and deletes the temporary directory. Also repairs a broken or partial
+  install, and snoozes or turns off the once-a-day update notice.
   Use when asked to "upgrade restack", "update restack", "get the latest
   restack", "is restack up to date", "reinstall restack", "snooze the restack
   update", or "turn off the restack update check".
@@ -30,23 +31,28 @@ triggers:
 
 # /restack-upgrade
 
-Bring the installed skills up to date with the repository.
+Bring the installed skills up to date with the latest release.
 
-The install is a **git checkout plus a copy step**: the repository lives
-somewhere on disk, and `setup` copies each `skills/restack-*/` directory into
-`~/.claude/skills/`. Upgrading is therefore *pull, then re-run setup*.
+**The install is a copy in the user profile**, `~/.claude/skills/restack-*`
+(ADR-019 in the repository).
+It does not depend on any checkout: most people delete their clone after
+installing, and the skills keep working. So upgrading never pulls into an
+existing checkout. It **fetches the latest release into a temporary directory,
+runs that release's `setup`, which copies it into the profile, and deletes the
+temporary directory.** A maintainer's development clone is never pulled,
+stashed or switched.
 
-**`/restack-upgrade check`** runs only the verification in step 4b against the
+**`/restack-upgrade check`** runs only the verification in step 4 against the
 current install, plus `"$UC" status` from *The update notice* below, and
-reports. It pulls nothing and writes nothing.
+reports. It fetches nothing and writes nothing.
 
 ## The update notice — `snooze`, `off`, `on`
 
 `/restack-journey start`, `/restack-journey where` and `/restack-discover paths`
-run a check at most once a day. When a newer version exists on `origin/main`,
-they print one line pointing here, and nothing otherwise. The check lives in
-this skill. Resolve it once per session, using the installed path with the
-repository path as a fallback:
+run a check at most once a day. When a newer version exists, they print one
+line pointing here, and nothing otherwise. The check lives in this skill.
+Resolve it once per session, using the installed path with the repository path
+as a fallback:
 
 ```bash
 UC="$HOME/.claude/skills/restack-upgrade/scripts/update_check.py"
@@ -61,141 +67,107 @@ Windows PowerShell, use `python "$HOME/.claude/skills/restack-upgrade/scripts/up
 | `/restack-upgrade snooze [days]` | `python "$UC" snooze [days]` | hides the pending notice for 7 days, or the number given (1–90). A newer release still shows straight away |
 | `/restack-upgrade off` | `python "$UC" off` | writes `{"update_check": false}` to `~/.restack/config.json`. No skill fetches anything at session open |
 | `/restack-upgrade on` | `python "$UC" on` | turns it back on |
-| (inside `check`) | `python "$UC" status` | the setting, the last check and its result, and any snooze |
+| (inside `check`) | `python "$UC" status` | the setting, the source, the last check and its result, and any snooze |
 
 Show the script's reply verbatim and stop. These commands do not upgrade.
 
-The check is a `git fetch origin main` in the checkout that
-`~/.restack/install.json` names, capped at five seconds, with credential
-prompts disabled. Offline, no checkout, or no state file means it stays silent.
-`RESTACK_UPDATE_CHECK=off` in the environment also turns it off and wins over
-the file, which suits machines where an outbound fetch from a skill is not
-acceptable. If `config.json` exists but is not valid JSON, the check counts as
-off.
+The check is a depth-1 `git fetch` of `main` from the `source` that
+`~/.restack/install.json` records, into a small cache at
+`~/.restack/upstream.git`. It needs no checkout. It is capped at five seconds,
+with credential prompts disabled. Offline, or no recorded source, means it
+stays silent. `RESTACK_UPDATE_CHECK=off` in the environment also turns it off
+and wins over the file, which suits machines where an outbound fetch from a
+skill is not acceptable. If `config.json` exists but is not valid JSON, the
+check counts as off.
 
-## Step 1 — find the install
+## Step 1 — read the install record
 
 ```bash
 cat ~/.restack/install.json 2>/dev/null || echo "NO_STATE"
 ```
 
-That file is written by `setup` and records `repo`, `skills_dir`, `method` and
-`version`.
+`setup` writes it. It records `version` (what is installed), `source` (where
+releases come from), `repo` (the directory the install was last copied from,
+which may since have been deleted, and usually has been), `skills_dir` and
+`method`.
 
-**If `NO_STATE`**, the skills were installed by hand or the state file was
-lost. Look for a checkout before giving up:
+Establish `SOURCE`:
+
+- the record's `source`, if it has one;
+- otherwise, for a record written before 2.7.0, the origin of `repo`, if that
+  checkout still exists: `git -C "<repo>" remote get-url origin`;
+- otherwise **ask the architect**, offering `https://github.com/pmelander/restack.git`
+  as the default. Never guess a source. A fork or an internal mirror is a
+  legitimate answer.
+
+**If `NO_STATE`**, the skills were installed by hand or the record was lost.
+Treat the installed version as unknown, ask for the source as above, and say
+that this run will reinstall every skill.
+
+**If `method` is `symlink`**, the install predates 2.7.0 and each skill is a
+link into a checkout. Say that this upgrade replaces the links with copies:
+setup removes each link as a link, so the checkout it points at is untouched.
+
+## Step 2 — fetch the latest release into a temporary directory
 
 ```bash
-for d in ~/restack ~/src/restack ~/code/restack ~/projects/restack ./restack .; do
-  [ -f "$d/VERSION" ] && [ -d "$d/skills" ] && echo "FOUND: $d"
-done
+D="$(mktemp -d "${TMPDIR:-/tmp}/restack-upgrade.XXXXXX")" && echo "UPGRADE_DIR=$D"
+git clone --quiet --depth 1 --branch main "<SOURCE>" "$D/restack"
+echo "latest: $(cat "$D/restack/VERSION")"
 ```
 
-If nothing is found, ask the architect where the repository is, or offer to
-clone it fresh:
+On Windows PowerShell:
 
-```bash
-git clone https://github.com/pmelander/restack.git ~/restack && cd ~/restack && ./setup
+```powershell
+$d = Join-Path $env:TEMP ("restack-upgrade." + [guid]::NewGuid().ToString("N")); "UPGRADE_DIR=$d"
+git clone --quiet --depth 1 --branch main "<SOURCE>" "$d\restack"
+Get-Content "$d\restack\VERSION"
 ```
 
-Never guess a location and clone into it without asking.
+**Carry the printed `UPGRADE_DIR` path literally into every later step.** Shell
+variables do not survive between commands. In particular, never use `$TMP` or
+`$TEMP` for this: on Windows those name the whole temp folder, so a step that
+lost its variable and fell back to them would delete it. Every later block
+starts by setting `D` to the exact path printed here.
 
-## Step 2 — establish the versions
+**If the clone fails** (offline, credentials, a wrong source), run step 6,
+report `BLOCKED` with git's message, and stop. Do not retry against another URL
+on your own.
 
-```bash
-REPO="<repo path from step 1>"
-cd "$REPO"
-echo "installed: $(cat ~/.restack/install.json 2>/dev/null | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p')"
-echo "local:     $(cat VERSION)"
-git fetch origin --quiet 2>/dev/null && echo "remote:    $(git show origin/main:VERSION 2>/dev/null || echo unknown)"
-```
-
-Three numbers, and the gap between them tells you what to do:
+Compare the two versions:
 
 | | Meaning | Action |
 |---|---|---|
-| all three equal | up to date | say so, stop |
-| installed < local | repo pulled but never re-installed | skip to step 4 — just run setup |
-| local < remote | a real upgrade is available | step 3 |
-| no remote | offline, or not a git checkout | step 3's vendored path |
+| equal | up to date | say "already on v{version}", then step 6 |
+| installed < latest | an upgrade is available | step 3 |
+| installed > latest | the install came from an unreleased checkout, such as a maintainer's branch | **STOP and ask** before replacing it with the older release. Never downgrade on your own judgement |
+| installed unknown | `NO_STATE`, or an unreadable record | step 3, after the architect confirmed in step 1 |
 
-## Step 3 — pull
-
-First check whether pulling is safe:
+## Step 3 — install it into the profile
 
 ```bash
-cd "$REPO"
-git rev-parse --abbrev-ref HEAD
-git status --porcelain
-git rev-list origin/main..HEAD --oneline 2>/dev/null
+D="<UPGRADE_DIR from step 2>"
+"$D/restack/setup"
 ```
 
-**If the checkout is not on `main`**, STOP and say so. That is a development
-checkout on a branch, and pulling `main` into it is a merge the developer
-decides on. It is not an upgrade.
+On Windows PowerShell: `& "<UPGRADE_DIR from step 2>\restack\setup.ps1"`.
 
-**If both are empty**, the pull is clean:
-
-```bash
-git pull --ff-only origin main
-```
-
-**If there are local changes or unpushed commits**, STOP and ask before doing
-anything. List them exactly — each modified file, each unpushed commit by hash
-and subject — and offer:
-
-- **A)** Stash the local changes, upgrade, and tell them how to restore
-  (`git stash pop`)
-- **B)** Abort so they can commit or push first (recommended when unpushed
-  commits exist)
-
-Never `git reset --hard`, and never discard work on your own judgement. An
-unpushed commit is somebody's afternoon.
-
-**If `$REPO` is not a git checkout** (no `.git`), it was installed from a
-download. Offer to replace it with a clone, and say plainly that any local edits
-to the copy will be lost. Do not delete anything until they answer.
-
-## Step 4 — re-run setup
-
-**If `install.json` says `"method": "symlink"`, do not run plain `./setup`.**
-It would replace every link with a copy. A shell that cannot create symlinks
-does the same thing to `./setup --symlink`: Git Bash without Developer Mode
-does, and so may the shell you are running in. Setup warns when that happens,
-but by then the development install has already been replaced. For a symlinked
-install the pull in step 3 *is* the upgrade, because the installed skills are
-the checkout. Run `./setup --symlink --dry-run` (`.\setup.ps1 -Symlink -DryRun`
-on Windows). If it reports nothing to install or remove, you are done. If it
-reports something, a skill was added or removed upstream: ask the architect to
-run `./setup --symlink` themselves, from a shell that can create symlinks.
-
-For a copy install:
-
-```bash
-cd "$REPO"
-./setup
-```
-
-On Windows without a POSIX shell, use `.\setup.ps1` instead.
-
-`setup` is idempotent and reports what it did: installed, updated, removed,
-unchanged. It also removes ReStack skills that no longer exist upstream, which
-is the thing a plain copy never does.
+`setup` copies every skill into `~/.claude/skills`, replaces what changed,
+removes ReStack skills that no longer exist upstream, and records the install.
+It only touches entries named `restack-*`.
 
 Show its summary line to the architect verbatim. If it reports removals, name
-them — a command they were using may have gone.
+them, because a command they were using may have gone.
 
-## Step 4b — verify every indexed file is installed
+## Step 4 — verify every indexed file is installed
 
 `setup` already fails when a section is missing. Check again here anyway, against
 the directory Claude Code actually loads from. A skill whose section is missing
 does not error: it skips the step that section carries, and nobody notices.
 
 ```bash
-SKILLS_DIR="$(sed -n 's/.*"skills_dir": *"\([^"]*\)".*/\1/p' ~/.restack/install.json 2>/dev/null)"
-SKILLS_DIR="${SKILLS_DIR:-$HOME/.claude/skills}"
 missing=0
-for skill in "$SKILLS_DIR"/restack-*/; do
+for skill in "$HOME/.claude/skills"/restack-*/; do
   for rel in $(grep -o '<base>/sections/[A-Za-z0-9_.-]*\.md' "$skill/SKILL.md" | sort -u); do
     [ -f "$skill${rel#<base>/}" ] || { echo "MISSING: $(basename "$skill") -> $rel"; missing=$((missing + 1)); }
   done
@@ -204,17 +176,18 @@ echo "missing indexed files: $missing"
 ```
 
 Report the count. **Zero is the only passing result.** For anything above zero,
-name each missing file and run `./setup` again. If a file is still missing
-after that, the repository itself is broken: say so, and do not report the
-upgrade as done.
+name each missing file and run step 3 again. If a file is still missing after
+that, the release itself is broken: say so, and do not report the upgrade as
+done.
 
 ## Step 5 — say what changed
 
-Read `CHANGELOG.md` and summarise the entries **between the installed version
-and the new one**, as five to seven bullets. Group by theme, lead with what
-changes how the skills behave, and skip internal refactors.
+Read `<UPGRADE_DIR>/restack/CHANGELOG.md` (before step 6 deletes it) and summarise the
+entries **between the installed version and the new one**, as five to seven
+bullets. Group by theme, lead with what changes how the skills behave, and skip
+internal refactors.
 
-If a skill's commands changed or a skill was removed, say so explicitly — that
+If a skill's commands changed or a skill was removed, say so explicitly. That
 is the part that affects them tomorrow morning.
 
 ```
@@ -226,8 +199,41 @@ ReStack v{new} — upgraded from v{old}
 {n} skills updated, {n} removed.
 ```
 
-If the versions were already equal, do not print a changelog. Say "already on
-v{version}" and stop.
+## Step 6 — delete the temporary directory
+
+Always, including after a failure or a STOP in any step above:
+
+```bash
+D="<UPGRADE_DIR from step 2>"
+case "$(basename "$D")" in
+  restack-upgrade.*) rm -rf "$D" && echo "deleted $D" ;;
+  *) echo "refusing to delete '$D': not a restack-upgrade.* directory" ;;
+esac
+```
+
+On Windows PowerShell:
+
+```powershell
+$d = "<UPGRADE_DIR from step 2>"
+if ((Split-Path -Leaf $d) -like "restack-upgrade.*") { Remove-Item -LiteralPath $d -Recurse -Force; "deleted $d" } else { "refusing to delete '$d'" }
+```
+
+Delete only the directory step 2 printed. The name check is the backstop: an
+empty or wrong path is refused rather than deleted.
+
+## For the maintainer: developing ReStack
+
+A development clone is the maintainer's, and this skill never touches it. To
+install edits from a clone, regenerate and copy them in:
+
+```bash
+python scripts/gen_skills.py && ./setup
+```
+
+`./setup` records that clone's origin as the source, so the update notice and
+this skill keep fetching releases from there. After installing from a branch
+whose version is ahead of `main`, step 2 stops and asks before replacing it
+with the release.
 
 ## Repairing an install
 
@@ -235,25 +241,26 @@ v{version}" and stop.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `/restack-*` commands missing | never installed, or wrong skills dir | run `./setup` |
-| Some skills missing | interrupted copy | run `./setup` — it reinstalls what is absent |
-| A command exists but the skill is stale | repo pulled, setup not re-run | run `./setup` |
+| `/restack-*` commands missing | never installed, or the skills were removed | run this skill from any clone, or clone anywhere and run `./setup` |
+| All `/restack-*` commands vanished after a checkout was deleted | a symlinked install from before 2.7.0: the links pointed into that checkout | clone anywhere and run `./setup`. The install is a copy from then on |
+| Some skills missing | interrupted copy | run steps 2–6. `setup` reinstalls what is absent |
+| A step silently does not run (e.g. the outside opinion) | a section the skill names is not installed | `/restack-upgrade check`, then steps 2–6 |
 | `/restack-excel` fails to find its helper | pre-v2 install | upgrade; the helper now ships inside the skill |
-| A step silently does not run (e.g. the outside opinion) | a section the skill names is not installed | `/restack-upgrade check`, then `./setup` |
-| Edits to the repo have no effect | installed by copy, not symlink | `./setup --symlink` |
-| `--symlink` was used and edits still have no effect | the shell could not create symlinks and setup fell back to copy — it warns when this happens | enable Developer Mode, or `MSYS=winsymlinks:nativestrict ./setup --symlink`; check with `ls -la ~/.claude/skills/` |
-| `install.json`'s `skills_dir` is a scratch directory, step 4b checks the wrong tree, or `check` says the record "describes … not this install" | a `setup --target` run before 2.5.1 overwrote the record | re-run setup the way it was installed, without `--target`: `./setup` for a copy install. For a symlinked one, ask the architect to run `./setup --symlink` from a shell that can create symlinks |
+| The update notice never appears | no `source` in the record, or the check is off | `/restack-upgrade check` names which |
 
-Before any repair, show what `./setup --dry-run` would do. It writes nothing
-and its output is usually enough to identify the problem.
+Before any repair, show what `"<UPGRADE_DIR>/restack/setup" --dry-run` would
+do, after step 2. It writes nothing, and its output is usually enough to
+identify the problem.
 
 ## What this skill will not do
 
+- **Touch a checkout.** It works in a temporary clone and deletes it. A
+  development clone is never pulled, stashed or switched.
 - **Install ReStack from nothing.** A skill cannot run before it is installed;
   see `INSTALL.md` in the repository for a first install.
 - **Touch anything that is not `restack-*`.** `setup` is scoped to that prefix
   precisely so it cannot damage another skill suite.
-- **Discard work.** Uncommitted changes and unpushed commits stop the upgrade
-  and require an explicit answer.
+- **Downgrade silently.** An install that is ahead of the latest release stops
+  the upgrade and requires an explicit answer.
 - **Upgrade on its own.** The update notice only points here. An upgrade
   happens when the architect runs this skill, never in the middle of a journey.

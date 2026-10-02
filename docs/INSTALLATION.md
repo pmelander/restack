@@ -1,12 +1,14 @@
 # Installation Guide
 
 This guide will help you install the ReStack skills for Claude Code.
+[INSTALL.md](../INSTALL.md) has the short version and the steps an agent
+follows when installing on someone's behalf.
 
 ## Prerequisites
 
 - Claude Code installed and configured
-- Git (optional, for cloning the repository)
-- Text editor (for viewing/editing skills)
+- Git, to clone the repository and for `/restack-upgrade`
+- Python, for the update check and the optional extras
 
 ### Optional extras
 
@@ -17,46 +19,44 @@ Neither is required; `setup` reports whether each is present.
 | **openpyxl** | `pip install -r requirements.txt` | `/restack-excel` reading `.xlsx`. CSV works without it. |
 | **Codex CLI** | `npm i -g @openai/codex` then `codex login` | The outside opinion in `/restack-stressor` and `/restack-design-review`. Without it they fall back to a fresh subagent — same model family, so it shares blind spots; its disagreement still counts, its agreement is weak evidence. |
 
-## Installation Methods
+## Installing
 
-### Method 1: setup script (recommended)
+The install is always a **copy in your user profile**, `~/.claude/skills/restack-*`.
+It does not depend on the clone it came from, so the clone can be deleted
+afterwards ([ADR-019](adr/ADR-019-copy-only-install.md)).
 
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup
+cd .. && rm -rf restack-install          # optional
 ```
 
 Windows, without a POSIX shell:
 
 ```powershell
-git clone https://github.com/pmelander/restack.git $HOME
-estack
-cd $HOME
-estack
-.\setup.ps1
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install; .\setup.ps1
+cd ..; Remove-Item -Recurse -Force restack-install      # optional
 ```
 
 `setup` prints what it installed, updated, removed and left unchanged, and ends
 with a summary line. Re-running it is safe — that is also how you repair a
-partial install.
+partial install. `setup` and `setup.ps1` behave identically; Git Bash users can
+run either.
 
-Useful flags:
-
-| Flag | Effect |
+| Option | Effect |
 |---|---|
-| `--dry-run` | show what would change; write nothing |
-| `--symlink` | symlink instead of copy, so repository edits are live |
-| `--target DIR` | install into DIR once, without recording it (scratch and test installs) |
-| `--quiet` | summary only |
+| `--dry-run` / `-DryRun` | show what would change; write nothing |
+| `--quiet` / `-Quiet` | summary only |
 
-`CLAUDE_SKILLS_DIR` overrides the target for all of them, and unlike
-`--target` it is recorded.
+`--symlink` and `--target` were removed in 2.7.0 and are refused with a
+message. `CLAUDE_SKILLS_DIR` is ignored, with a note.
 
-**Result:** fifteen directories in `~/.claude/skills/`, each named `restack-*`
+**Result:** sixteen directories in `~/.claude/skills/`, each named `restack-*`
 and each containing a `SKILL.md`. Verify with:
 
 ```bash
-ls -d ~/.claude/skills/restack-*/ | wc -l    # expect 15
+ls -d ~/.claude/skills/restack-* | wc -l    # expect 16
 ```
 
 ### What setup does that a plain copy does not
@@ -66,11 +66,13 @@ ls -d ~/.claude/skills/restack-*/ | wc -l    # expect 15
 - Reports what changed instead of overwriting silently.
 - Refuses to install a skill directory with no `SKILL.md` — Claude Code would
   ignore it and the command would simply never appear.
-- Records the install in `~/.restack/install.json`, which is how
-  `/restack-upgrade` finds your checkout later. Only an install into the
-  default skills directory is recorded; a `--target` run leaves it alone.
-- Only ever touches directories named `restack-*`, so it cannot damage another
+- Verifies that every section a skill names was installed.
+- Records the install in `~/.restack/install.json`, including the repository
+  it came from, which is where `/restack-upgrade` fetches releases.
+- Only ever touches entries named `restack-*`, so it cannot damage another
   skill suite.
+- Replaces a link left by a symlinked install from before 2.7.0 with a copy,
+  removing the link as a link. The directory it pointed at is not touched.
 
 ### Why every skill is prefixed
 
@@ -82,8 +84,8 @@ skill without being told.
 
 The `restack-` prefix makes ReStack coexist with anything else you have
 installed. The folder name and the command are always the same string, so there
-is no install-time renaming to remember and the symlink method below works
-unchanged. See [ADR-009](adr/ADR-009-prefix-skill-names.md).
+is no install-time renaming to remember. See
+[ADR-009](adr/ADR-009-prefix-skill-names.md).
 
 **Upgrading from an unprefixed install?** Versions before the rename installed
 as `~/.claude/skills/adr/`, `~/.claude/skills/stressor/` and so on. `setup`
@@ -92,67 +94,30 @@ unprefixed `design-review` may belong to a suite you still want. Inspect them
 before deleting anything:
 
 ```bash
-for s in adr arch-learning capability-assessor capacity cloud design-review          discover evolve excel journey patterns solution-doc stressor tech-stack; do
+for s in adr arch-learning capability-assessor capacity cloud design-review discover evolve excel journey patterns solution-doc stressor tech-stack; do
   [ -d ~/.claude/skills/$s ] && { head -3 ~/.claude/skills/$s/SKILL.md; echo "  ^ ~/.claude/skills/$s"; }
 done
 ```
 
-### Method 2: Symlink Installation (For Developers)
+## Developing ReStack
 
-This method creates symbolic links, so updates to the repository automatically
-reflect in Claude Code.
-
-**It needs a shell that can actually create symlinks.** Git Bash on Windows
-silently *copies* otherwise — `ln -s` returns 0 and you get a directory. setup
-probes for this and installs by copy with a warning rather than claiming edits
-are live. Enable Developer Mode (Settings › For developers), use an elevated
-shell, or prefix the command with `MSYS=winsymlinks:nativestrict`.
+Keep a clone, edit the templates and sections, regenerate, and install:
 
 ```bash
-# Clone the repository
-git clone git@github.com:pmelander/restack.git restack
-cd restack
-
-# Symlink every skill — stays correct as skills are added or renamed
-for d in skills/restack-*/; do
-  ln -sfn "$(pwd)/${d%/}" ~/.claude/skills/"$(basename "$d")"
-done
-
-# Verify — expect 14
-ls -d ~/.claude/skills/restack-*/ | wc -l
+python scripts/gen_skills.py && ./setup
 ```
 
-**Advantage:** Edit skills in the repository and changes are immediately available in Claude Code.
-
-### Method 3: Windows
-
-`setup.ps1` is the Windows-native equivalent and takes the same options.
-
-```powershell
-git clone https://github.com/pmelander/restack.git $HOME
-estack
-cd $HOME
-estack
-.\setup.ps1                 # -DryRun, -Symlink, -Target, -Quiet
-```
-
-`-Symlink` needs Developer Mode or an elevated shell; without either, use the
-default copy. Git Bash users can run `./setup` instead — the two are
-behaviourally identical.
+There is no symlinked development mode any more. Your sessions load what you
+last installed, never what another session is half-way through editing.
+`/restack-upgrade` never touches your clone. If what you installed is ahead of
+the latest release, it asks before replacing it.
 
 ## Verification
 
 1. **Open Claude Code**
 2. **Type `/` in the chat**
-3. **Look for these skills:**
-   - `/restack-adr` - Architecture Decision Records
-   - `/restack-solution-doc` - Solution Documentation Generator
-   - `/restack-tech-stack` - Technology Stack Advisor
-   - `/restack-design-review` - Design Review
-
-If you see these skills, installation was successful!
-
-## Testing Your Installation
+3. **Look for the `/restack-*` skills**, for example `/restack-journey`,
+   `/restack-stressor`, `/restack-adr` and `/restack-design-review`.
 
 Try creating your first ADR:
 
@@ -170,15 +135,16 @@ Claude should start asking you questions to fill in the ADR template.
   restack-discover/     SKILL.md + sections/
   restack-stressor/     SKILL.md + sections/ + compliance-packs/
   restack-adr/          ...
-  ... 15 in total, all prefixed restack-
+  ... 16 in total, all prefixed restack-
   restack-excel/        SKILL.md + read_spreadsheet.py
   restack-upgrade/      SKILL.md + scripts/update_check.py
   [your other skills, untouched]
 
 ~/.restack/
-  install.json          version, repo path, method, date (written by setup)
+  install.json          version, source, directory installed from, method, date (written by setup)
   config.json           your settings: {"update_check": false} opts out (optional)
   update-check.json     last update check and any snooze (written by the check)
+  upstream.git/         a bare cache of main, for the update check
 ```
 
 ## Updating
@@ -187,114 +153,79 @@ Claude should start asking you questions to fill in the ADR template.
 /restack-upgrade
 ```
 
-It finds your checkout from `~/.restack/install.json`, compares installed,
-local and remote versions, pulls, re-runs `setup`, and summarises the changelog
-between the two. Uncommitted changes or unpushed commits stop it and require an
-explicit answer — it will not discard work.
+It clones the latest release from the repository you installed from into a
+temporary directory, runs that release's `setup`, verifies the install,
+summarises the changelog, and deletes the temporary directory. It needs no
+clone of yours and never touches one.
 
-By hand:
+By hand, the same thing:
 
 ```bash
-cd ~/restack && git pull && ./setup
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup && cd .. && rm -rf restack-install
 ```
 
-A symlink install needs `./setup --symlink` after a pull that adds or removes a
-skill, because a new skill has no symlink yet. Edits to existing skills are
-live without it. Never run plain `./setup` on a symlink install: it replaces
-the links with copies. The same happens with `--symlink` in a shell that cannot
-create symlinks.
-
 You do not have to remember to check. Once a day, `/restack-journey start` or
-`where` and `/restack-discover paths` print one line when a newer version is on
-`origin/main`. `/restack-upgrade snooze` hides it for a week, and
-`/restack-upgrade off` turns the check off. See
-[INSTALL.md](../INSTALL.md#update-check-and-opt-out).
+`where` and `/restack-discover paths` print one line when a newer version
+exists. `/restack-upgrade snooze` hides it for a week, and `/restack-upgrade off`
+turns the check off. See [INSTALL.md](../INSTALL.md#update-check-and-opt-out).
 
 `/restack-upgrade` is also the repair path — re-running `setup` fixes almost
-every partial-install symptom. Use `./setup --dry-run` first to see what it
-would change.
+every partial-install symptom.
 
 ## Uninstallation
 
-To remove the skills:
-
 ```bash
-# Remove skills
-rm -rf ~/.claude/skills/restack-adr
-rm -rf ~/.claude/skills/restack-solution-doc
-rm -rf ~/.claude/skills/restack-tech-stack
-rm -rf ~/.claude/skills/restack-design-review
+rm -rf ~/.claude/skills/restack-*
+rm -rf ~/.restack
 ```
 
-Or on Windows:
+No trailing slash. On a symlinked install from before 2.7.0, `rm -rf link/`
+would delete the contents of the checkout the link points at.
+
+On Windows PowerShell:
 
 ```powershell
-Remove-Item -Recurse "$env:USERPROFILE\.claude\skills\adr"
-Remove-Item -Recurse "$env:USERPROFILE\.claude\skills\solution-doc"
-Remove-Item -Recurse "$env:USERPROFILE\.claude\skills\tech-stack"
-Remove-Item -Recurse "$env:USERPROFILE\.claude\skills\design-review"
+Get-ChildItem "$env:USERPROFILE\.claude\skills" -Filter 'restack-*' -Force | ForEach-Object {
+  if ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) { [IO.Directory]::Delete($_.FullName, $false) }
+  else { Remove-Item -LiteralPath $_.FullName -Recurse -Force }
+}
+Remove-Item -Recurse -Force "$env:USERPROFILE\.restack"
 ```
 
 ## Troubleshooting
 
 ### Skills Don't Appear in Claude Code
 
-1. **Check the skills directory exists:**
+1. **Check they are installed:**
    ```bash
-   ls ~/.claude/skills/
+   ls -d ~/.claude/skills/restack-*
    ```
-   If it doesn't exist, create it:
-   ```bash
-   mkdir -p ~/.claude/skills/
-   ```
+   If nothing is listed, install again (see *Installing*).
 
-2. **Verify file permissions:**
-   ```bash
-   ls -la ~/.claude/skills/*.md
-   ```
-   Files should be readable (at least `r--` permissions).
-
-3. **Restart Claude Code**
-   Sometimes Claude Code needs a restart to pick up new skills.
-
-### Skill Command Not Working
-
-1. **Check the skill file has proper frontmatter:**
+2. **Check the skill file has proper frontmatter:**
    ```bash
    head -5 ~/.claude/skills/restack-adr/SKILL.md
    ```
-   Should show YAML frontmatter with `---` delimiters.
+   It should show YAML frontmatter between `---` delimiters.
 
-2. **Check for syntax errors:**
-   Open the skill file and look for any formatting issues.
+3. **Restart Claude Code.** A fresh session is the sure way to pick up new
+   skills.
 
-### Windows Symlink Issues
+### All `/restack-*` commands vanished after deleting a checkout
 
-If symlinks don't work on Windows:
-- Use Method 3 (direct copy) instead
-- Or enable Developer Mode in Windows Settings to allow symlinks
+That was a symlinked install from before 2.7.0: the links pointed into the
+checkout. Install again; from 2.7.0 the install is a copy and cannot break
+this way.
 
-## Advanced Configuration
+### The update notice never appears
 
-### Custom Skill Directory
+Run `/restack-upgrade check`. It shows whether the check is off, which source
+it fetches from, and the result of the last attempt.
 
-If you use a different skills directory, point `CLAUDE_SKILLS_DIR` at it and
-export it from your shell profile:
+## Selective installation
 
-```bash
-# If your skills are in ~/my-skills/
-export CLAUDE_SKILLS_DIR=~/my-skills
-./setup
-```
-
-Exported, it also reaches the `./setup` that `/restack-upgrade` runs, so
-upgrades land in the same place. `--target ~/my-skills` would install there
-once and leave `~/.restack/install.json` as it was. That is deliberate:
-`--target` is for scratch and test installs.
-
-### Selective installation
-
-`setup` installs all fifteen. If you want a subset, copy the directories you
+`setup` installs all sixteen. If you want a subset, copy the directories you
 want — the skills work independently, though `/restack-journey` will reference
 commands that are not installed:
 
@@ -302,24 +233,20 @@ commands that are not installed:
 cp -R skills/restack-journey skills/restack-stressor ~/.claude/skills/
 ```
 
-Note that `/restack-upgrade` and `setup` still manage the full set: re-running
-`setup` would install the rest. A subset is best kept with `--target` and a
-skills directory of your own.
+`/restack-upgrade` and `setup` manage the full set, so running either installs
+the rest again.
 
 ## Next Steps
 
 1. **Read the documentation:** Check `docs/` for usage guides
 2. **View examples:** See `examples/` for sample outputs
-3. **Customize templates:** Edit `templates/` to match your standards
-4. **Contribute:** Submit PRs for improvements or new skills!
+3. **Contribute:** Submit PRs for improvements or new skills!
 
 ## Support
 
 For issues or questions:
 - Check the [README.md](../README.md)
 - Review [CLAUDE.md](../CLAUDE.md) for development details
-- Open an issue on GitHub (if public repository)
-
-## What's Next?
+- Open an issue on GitHub
 
 See [ROADMAP.md](../ROADMAP.md) for future considerations and contributing opportunities.

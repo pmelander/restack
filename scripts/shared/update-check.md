@@ -33,7 +33,7 @@ recommend `/restack-upgrade` as the command to run next.
 
 **If it prints nothing**, say nothing, and never mention that a check ran.
 Silence covers every case where there is nothing to report: up to date, already
-checked today, snoozed, opted out, offline, no git checkout, or no Python.
+checked today, snoozed, opted out, offline, no recorded source, or no Python.
 
 **If the architect asks to snooze it or turn it off**, run the snippet again
 with ` snooze` or ` off` appended after `"$UC"`. Show its one-line reply, then

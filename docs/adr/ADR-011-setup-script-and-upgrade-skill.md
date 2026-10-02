@@ -16,6 +16,13 @@
 
 **Review Date:** 2027-03-05
 
+> **Partly superseded 2026-10-02 by [ADR-019](ADR-019-copy-only-install.md).**
+> The install is now always a copy in `~/.claude/skills`. `--symlink`,
+> `--target` and `CLAUDE_SKILLS_DIR` are removed, and `/restack-upgrade` no
+> longer pulls into a checkout: it installs from a temporary clone. ADR-019
+> accounts for every decision point below. The safety property, the record,
+> refusing a broken tree, and removing skills deleted upstream all stand.
+
 ## Context
 
 The documented install was `cp -R skills/* ~/.claude/skills/`, and there was no
@@ -60,11 +67,12 @@ directory, and beyond a copy they:
   skills directory, method, date) — *since 2.5.1, only an install into the
   default skills directory; see Notes*
 - **check the optional dependency** and say what it affects
-- support `--dry-run`, `--symlink` and `--target`
+- support `--dry-run`, ~~`--symlink` and `--target`~~ *(removed in 2.7.0, see banner)*
 
-`/restack-upgrade` reads that state file, compares installed / local / remote
-versions, pulls, re-runs `setup`, and summarises the changelog between the two
-versions. It is also the documented repair path, since re-running `setup` fixes
+~~`/restack-upgrade` reads that state file, compares installed / local / remote
+versions, pulls, re-runs `setup`,~~ *(2.7.0: it clones the latest release into a
+temporary directory and runs that clone's `setup`, see banner)* and summarises
+the changelog between the two versions. It is also the documented repair path, since re-running `setup` fixes
 almost every partial-install symptom.
 
 `VERSION` and `CHANGELOG.md` now exist, because an upgrade command that cannot

@@ -16,9 +16,8 @@ The check never upgrades anything. A skill set that changes under an in-flight
 journey breaks the journey's audit trail.
 
 It also never fails loudly. It prints nothing and exits 0 when it is opted out,
-when install.json is missing, when the repo is not a git checkout, when git is
-missing, when the machine is offline or the network is slow, and when a version
-cannot be parsed. A session-opening command must not start with an error about
+when install.json is missing or names no source, when git is missing, when the
+machine is offline or the network is slow, and when a version cannot be parsed. A session-opening command must not start with an error about
 an optional notice. Silence must not hide a broken check either, so an
 unexpected failure is recorded in the state file and `status` reports it.
 
@@ -29,10 +28,13 @@ If config.json exists but cannot be read, the check counts as off. Whoever
 wrote the file meant to set something, and in an environment that restricts
 egress the safe reading is "no outbound fetch".
 
-The only network call is `git fetch origin main` in the checkout that
-install.json names, which is the remote the architect already pulls from. It
-sends no payload, cannot prompt for credentials, and is capped at
-FETCH_TIMEOUT seconds.
+The only network call is a depth-1 `git fetch <source> main` into a small bare
+cache, ~/.restack/upstream.git. <source> is the URL install.json records, the
+`origin` of the checkout setup ran from (ADR-019). The install needs no
+checkout: most installers delete their clone after setup. A record from before
+2.7.0 has no source, so the origin of the checkout it names is used instead,
+if that checkout still exists. The fetch sends no payload, cannot prompt for
+credentials, and is capped at FETCH_TIMEOUT seconds.
 
 Testing: RESTACK_STATE_DIR points the script at a scratch ~/.restack.
 
@@ -50,7 +52,9 @@ import sys
 import time
 from pathlib import Path
 
-REMOTE, BRANCH = "origin", "main"
+BRANCH = "main"
+CACHE_DIR = "upstream.git"      # bare cache under ~/.restack; owned by this script
+CACHE_REF = f"refs/remotes/upstream/{BRANCH}"
 THROTTLE = 24 * 3600            # at most one check, and one notice, per day
 CLOCK_SKEW = 300                # a timestamp further ahead than this is ignored
 DEFAULT_SNOOZE_DAYS = 7
@@ -194,7 +198,7 @@ def runs_from_recorded_install(install: dict) -> bool:
     target. setup no longer does, but a record written then, or edited by hand,
     can still describe another install. If the check believed it, it would
     report on an install nobody is using. Staying silent is better than being
-    wrong. samefile follows links, so a symlinked install matches its checkout.
+    wrong.
     """
     recorded = install.get("skills_dir")
     if not recorded:
@@ -235,33 +239,47 @@ def git(repo: Path, *args: str, timeout: float = GIT_TIMEOUT, capture: bool = Tr
     return done.stdout.decode("utf-8", "replace").strip() if capture else ""
 
 
-def fetch_remote_version(repo: Path) -> str | None:
+def source_url(install: dict) -> str | None:
+    """Where releases come from, or None when nothing says.
+
+    setup records `source` from 2.7.0. An older record has only `repo`, the
+    checkout it was installed from, so that checkout's origin stands in while
+    it still exists. Nothing is guessed: no source means a silent check.
+    """
+    source = str(install.get("source") or "").strip()
+    if not source and install.get("repo"):
+        repo = native_path(str(install["repo"]))
+        if (repo / ".git").exists():
+            source = git(repo, "remote", "get-url", "origin") or ""
+    if not source or source.startswith("-"):
+        return None                     # a leading dash would be read as a git option
+    return source
+
+
+def fetch_remote_version(sdir: Path, source: str) -> str | None:
+    cache = sdir / CACHE_DIR
+    if not (cache / "HEAD").is_file():
+        if git(sdir, "init", "--bare", "--quiet", CACHE_DIR) is None:
+            return None
     fetched = git(
-        repo,
+        cache,
         # git aborts a stalled transfer itself, which releases its own locks.
         # The subprocess timeout is the backstop for a connect that hangs.
         "-c", "http.lowSpeedLimit=1000", "-c", "http.lowSpeedTime=3",
         "-c", "gc.auto=0", "-c", "maintenance.auto=false",
-        "fetch", "--quiet", "--no-tags", "--no-recurse-submodules", REMOTE, BRANCH,
+        "fetch", "--quiet", "--no-tags", "--no-recurse-submodules", "--depth", "1",
+        source, f"+refs/heads/{BRANCH}:{CACHE_REF}",
         timeout=FETCH_TIMEOUT, capture=False,
     )
     if fetched is None:
         return None
-    return git(repo, "show", f"{REMOTE}/{BRANCH}:VERSION")
+    return git(cache, "show", f"{CACHE_REF}:VERSION")
 
 
 # --- commands ----------------------------------------------------------------
 
-def notice(method: str, installed: str, remote: str, repo: Path, branch: str | None) -> str:
-    if method != "symlink":
-        return f"ReStack v{remote} available (installed v{installed}): /restack-upgrade  {SNOOZE_HINT}"
-    # A symlinked install is the checkout, so the upgrade is a pull. Copying
-    # over it with /restack-upgrade would replace the links (ADR-016).
-    lead = f"ReStack v{remote} on {REMOTE}/{BRANCH}; your symlinked checkout"
-    if branch == BRANCH:
-        return f'{lead} is at v{installed}: git -C "{repo.as_posix()}" pull --ff-only  {SNOOZE_HINT}'
-    where = f"branch {branch}" if branch and branch != "HEAD" else "detached HEAD"
-    return f"{lead} ({where}) is at v{installed}  {SNOOZE_HINT}"
+def notice(installed: str, remote: str) -> str:
+    return f"ReStack v{remote} available (installed v{installed}): /restack-upgrade  {SNOOZE_HINT}"
 
 
 def check(now: float) -> str | None:
@@ -269,13 +287,15 @@ def check(now: float) -> str | None:
     if opted_out(sdir):
         return None
     _, install = load_json(sdir / INSTALL_FILE)
-    if not isinstance(install, dict) or not install.get("repo"):
+    if not isinstance(install, dict):
         return None
     if not runs_from_recorded_install(install):
         return None
-    repo = native_path(str(install["repo"]))
-    if not (repo / ".git").exists() or not shutil.which("git"):
-        return None                     # a download, not a clone: nothing to compare against
+    if not shutil.which("git"):
+        return None
+    source = source_url(install)
+    if source is None:
+        return None                     # nothing names where releases come from
 
     state = load_state(sdir)
     if throttled(state.get("checked_at"), now):
@@ -292,11 +312,12 @@ def check(now: float) -> str | None:
     except OSError:
         return None
 
-    method = "symlink" if install.get("method") == "symlink" else "copy"
-    # A copy install runs what setup copied. A symlinked one runs the checkout.
-    installed = read_text(repo / "VERSION") if method == "symlink" else str(install.get("version") or "")
-    remote = fetch_remote_version(repo)
-    state.update(method=method, installed=installed, remote=remote)
+    # The install is a copy (ADR-019), so what runs is what setup recorded. A
+    # symlinked install from before 2.7.0 is sent to /restack-upgrade like any
+    # other: its setup run replaces the links with copies.
+    installed = str(install.get("version") or "")
+    remote = fetch_remote_version(sdir, source)
+    state.update(installed=installed, remote=remote)
 
     have, want = parse_version(installed), parse_version(remote)
     if remote is None:
@@ -313,8 +334,7 @@ def check(now: float) -> str | None:
 
     if state["result"] != "available" or snoozed(state, remote, now):
         return None
-    branch = git(repo, "rev-parse", "--abbrev-ref", "HEAD") if method == "symlink" else None
-    return notice(method, installed, remote, repo, branch)
+    return notice(installed, remote)
 
 
 def record_failure(exc: BaseException) -> None:
@@ -384,11 +404,9 @@ def status(now: float) -> int:
         print(f"  install:    {sdir / INSTALL_FILE} {'cannot be read' if present else 'is missing'} "
               f"- the check stays silent until setup writes it")
     else:
-        method = install.get("method", "copy")
-        version = install.get("version")
-        if method == "symlink":         # the checkout is what runs; install.json's version is stale
-            version = read_text(native_path(str(install.get("repo", ""))) / "VERSION") or version
-        line = f"v{version}, {method}, repo {install.get('repo')}"
+        line = f"v{install.get('version')}, source {source_url(install) or 'unknown - the check stays silent'}"
+        if install.get("method") == "symlink":
+            line += " - symlinked by a setup older than 2.7.0; /restack-upgrade replaces the links with copies"
         if not runs_from_recorded_install(install):
             line += f" - describes {install.get('skills_dir')}, not this install; re-run setup"
         print(f"  install:    {line}")
@@ -398,8 +416,8 @@ def status(now: float) -> int:
     detail = {
         "available": f"v{state.get('remote')} available (installed v{state.get('installed')})",
         "current": f"up to date (v{state.get('installed')})",
-        "ahead": f"ahead of {REMOTE}/{BRANCH} (v{state.get('installed')} > v{state.get('remote')})",
-        "offline": f"could not reach {REMOTE}/{BRANCH} (offline, slow, or needs credentials)",
+        "ahead": f"ahead of the source's {BRANCH} (v{state.get('installed')} > v{state.get('remote')})",
+        "offline": f"could not reach the source's {BRANCH} (offline, slow, or needs credentials)",
         "unreadable-version": f"unreadable version (installed {state.get('installed')!r}, remote {state.get('remote')!r})",
         "error": f"FAILED - {state.get('error')}",
         "pending": "started and did not finish (interrupted or timed out)",
