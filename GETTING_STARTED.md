@@ -164,8 +164,9 @@ worth noticing — and worth telling us about.
 **They ask one question at a time.** Never a batch. The questions are where the
 thinking happens.
 
-**They tell you what to run next.** A command that leads somewhere ends with a
-`Next:` line and the command in a block you can copy, arguments included.
+**They run what comes next.** A command that leads somewhere names it on a
+`Next:` line and runs it. They stop only to ask you something, and they ask
+with choices you can pick from; interrupt at any time to redirect.
 
 **They say when they do not know.** `NEEDS_DISCOVERY` is a normal outcome, not
 a failure. Producing a confident-looking matrix over a path map nobody believes

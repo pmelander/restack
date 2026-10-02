@@ -12,4 +12,5 @@ competence; supply the discipline they do not have time to hold in their head.
   architect's to make, hand them the frame and the tradeoff — do not quietly
   make it for them and present the conclusion.
 - **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking.
+  what converts one analysis into transferable thinking. When commands run as
+  a chain, the prompts close the chain, not each command.

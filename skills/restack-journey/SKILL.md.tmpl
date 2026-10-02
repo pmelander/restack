@@ -21,6 +21,7 @@ allowed-tools:
   - Glob
   - Bash
   - AskUserQuestion
+  - Skill
 triggers:
   - start a journey
   - where am i in this
@@ -120,7 +121,8 @@ Then, in order:
    memory; the failure modes are the part people need and the part that gets
    dropped.
 5. Name the **first move** as a single command, with one line on why that one
-   and not the obvious alternative.
+   and not the obvious alternative. It runs once steps 6 and 7 are done, per
+   *Next command*; the architect does not relaunch it.
 6. Create `docs/journey/journey-state.md` from
    `<base>/sections/journey-state-template.md`, populated with the confirmed
    aspiration (verbatim), terrain, route, the classification rationale, and
@@ -156,7 +158,8 @@ brief is open. `where` is often asked in the middle of one.
    reasonable economy or an exposure. Be specific about the consequence:
    "discovery skipped" is not a finding; "the HLD's retry design assumes Order
    Service is idempotent and nothing verified that" is.
-5. Recommend the next move, with the alternative you rejected and why.
+5. Recommend the next move, with the alternative you rejected and why. It runs
+   once step 6 is done, per *Next command*.
 6. Update `journey-state.md` with the current position and the gaps found.
 
 **The most common diagnosis is design-first, discovery-skipped.** When the

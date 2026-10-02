@@ -1,6 +1,12 @@
 # ADR-018: Close With the Next Command in a Copyable Block
 
-**Status:** Accepted
+**Status:** Accepted — partly superseded by
+[ADR-020](ADR-020-follow-up-commands-run-without-pause.md)
+
+> **Amended 2026-10-02 (2.8.0):** the next command now runs instead of being
+> handed over, and only questions pause a chain. See
+> [ADR-020](ADR-020-follow-up-commands-run-without-pause.md). The copy block
+> below is the fallback where the `Skill` tool is unavailable.
 
 **Date:** 2026-10-02
 

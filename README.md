@@ -192,10 +192,10 @@ settle it.
 terrain), *is impact low enough to stop iterating?*, and *which approach, and is
 it reversible?*
 
-**They end with the next command.** A run that leads somewhere closes with
-`Next:`, one line on why, and the command in a block you can copy. It is never
-offered while a decision is still open
-([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)).
+**They run the next command.** A run that leads somewhere names it with
+`Next:` and one line on why, then runs it. The workflow pauses only for
+questions, and every question is a choice
+([ADR-020](docs/adr/ADR-020-follow-up-commands-run-without-pause.md)).
 
 **They remember.** Journey state lives on disk in `docs/journey/`, so an
 engagement survives weeks, breaks, and handoffs — with an audit trail of what

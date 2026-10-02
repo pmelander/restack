@@ -54,9 +54,9 @@ backwards to discovery, not forwards to a choice.
 
 ### The next move
 
-A command that leads somewhere ends with `Next:` and the full command in a
-block with a Copy button, plus the `Alternative:` the skill weighed. A gate is
-answered first, never from that block.
+A command that leads somewhere names `Next:` and runs it, without asking. The
+chain pauses only for questions (gates, confirms, a close call between two
+moves), each asked as a choice. Interrupt to redirect.
 
 ---
 
