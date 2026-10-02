@@ -94,12 +94,13 @@ optional extras without asking.
 **Or do it yourself:**
 
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup          # Windows: .\setup.ps1
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup    # Windows: .\setup.ps1
 ```
 
-Either way: type `/restack` in Claude Code to see the sixteen skills, and
-`/restack-upgrade` when you want to update. You do not have to remember: once
+The install is a copy in your user profile, so the clone can be deleted
+afterwards. Either way: type `/restack` in Claude Code to see the sixteen
+skills, and `/restack-upgrade` when you want to update. It needs no clone. You do not have to remember: once
 a day, at the start of a journey or a discovery session, ReStack prints one
 line if a newer version is out. It never upgrades itself, and
 `/restack-upgrade off` turns the check off
@@ -124,7 +125,7 @@ disagreement still counts; its agreement is close to worthless.
 
 Every skill is prefixed so ReStack coexists with other suites — an unprefixed
 `design-review` or `patterns` silently overwrites whatever was installed there
-first. [Installation](docs/INSTALLATION.md) covers the symlink method,
+first. [Installation](docs/INSTALLATION.md) covers developing ReStack,
 upgrading from an unprefixed install, and troubleshooting.
 
 ---

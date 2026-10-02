@@ -3,30 +3,25 @@
   ReStack setup - install or update the skills for Claude Code.
 
 .DESCRIPTION
-  Copies (or symlinks) every skills\restack-* directory into the Claude Code
-  skills directory, removes ReStack skills that no longer exist upstream, and
-  records where the install came from so /restack-upgrade can find it later.
-  Only an install into the default skills directory is recorded; a -Target
-  run leaves the record alone (ADR-011, Notes).
+  Copies every skills\restack-* directory into $env:USERPROFILE\.claude\skills,
+  removes ReStack skills that no longer exist upstream, and records the install
+  in ~\.restack\install.json so /restack-upgrade can find it later.
+
+  The install is always a copy in the user profile (ADR-019). It does not
+  depend on this checkout: delete the checkout and the skills keep working.
+  The checkout is only where the next upgrade copies from.
 
   Windows-native equivalent of ./setup. Safe to re-run.
 
-  SAFETY: only ever creates, replaces or removes directories whose names begin
+  SAFETY: only ever creates, replaces or removes entries whose names begin
   with "restack-". Nothing else in the skills directory is touched, so it
-  cannot damage another skill suite.
-
-.PARAMETER Symlink
-  Symlink instead of copying, so repository edits are live. Requires Developer
-  Mode or an elevated shell on Windows.
+  cannot damage another skill suite. A link left by an older symlinked install
+  is removed as a link, never followed: Windows PowerShell 5.1's
+  Remove-Item -Recurse on a directory link can delete the contents of the
+  directory it points at, which would be the checkout.
 
 .PARAMETER DryRun
   Show what would change; write nothing.
-
-.PARAMETER Target
-  Install into this directory instead of $HOME\.claude\skills, once. Not
-  recorded in ~\.restack\install.json, so /restack-upgrade keeps tracking the
-  default install. For a permanent install elsewhere, set $env:CLAUDE_SKILLS_DIR
-  instead; an install there is recorded.
 
 .PARAMETER Quiet
   Only print the summary.
@@ -35,37 +30,38 @@
   .\setup.ps1
 .EXAMPLE
   .\setup.ps1 -DryRun
-.EXAMPLE
-  .\setup.ps1 -Symlink
 #>
 [CmdletBinding()]
 param(
-    [switch]$Symlink,
     [switch]$DryRun,
-    [string]$Target,
-    [switch]$Quiet
+    [switch]$Quiet,
+    # Removed in 2.7.0. Declared only so that using them gets a clear message
+    # instead of a parameter-binding error.
+    [switch]$Symlink,
+    [string]$Target
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($Symlink -or $Target) {
+    $which = if ($Symlink) { '-Symlink' } else { '-Target' }
+    Write-Host "Error: $which was removed in ReStack 2.7.0. Skills always install as a copy"
+    Write-Host "into `$env:USERPROFILE\.claude\skills, independent of this checkout (ADR-019)."
+    Write-Host "Run .\setup.ps1 with no options."
+    exit 2
+}
 
 $RepoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $VersionFile = Join-Path $RepoDir 'VERSION'
 if (Test-Path $VersionFile) { $Version = (Get-Content $VersionFile -Raw).Trim() } else { $Version = 'unknown' }
 
-if ($env:CLAUDE_SKILLS_DIR) {
-    $DefaultSkillsDir = $env:CLAUDE_SKILLS_DIR
-} else {
-    $DefaultSkillsDir = Join-Path $env:USERPROFILE '.claude\skills'
-}
-if ($Target) { $SkillsDir = $Target } else { $SkillsDir = $DefaultSkillsDir }
-
-if ($Symlink) { $Method = 'symlink' } else { $Method = 'copy' }
+$SkillsDir = Join-Path $env:USERPROFILE '.claude\skills'
 $StateDir = Join-Path $env:USERPROFILE '.restack'
 
 function Say([string]$Message) { if (-not $Quiet) { Write-Host $Message } }
 
 # Relative path -> hash for every file under a skill directory. Comparing only
-# SKILL.md misses a section edited on its own, which then never reaches a copy
+# SKILL.md misses a section edited on its own, which then never reaches the
 # install.
 function Get-TreeHash([string]$Dir) {
     $map = @{}
@@ -82,14 +78,20 @@ function Test-SameTree([string]$A, [string]$B) {
     return $true
 }
 
-# One directory however it is spelled: relative, trailing separator, / or \,
-# different case. -eq on strings is case-insensitive, as NTFS is.
-function Test-SameDir([string]$A, [string]$B) {
-    $full = foreach ($p in $A, $B) {
-        $abs = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($p)
-        [System.IO.Path]::GetFullPath($abs).TrimEnd('\', '/')
+# A symbolic link or junction: anything that is a reparse point.
+function Test-Link($Item) {
+    return [bool]($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint)
+}
+
+# Remove one installed entry. A link goes through Directory.Delete with
+# recursive = $false, which removes the link itself and never what it points
+# at. Remove-Item -Recurse is used only on a real directory.
+function Remove-Entry($Item) {
+    if (Test-Link $Item) {
+        [System.IO.Directory]::Delete($Item.FullName, $false)
+    } else {
+        Remove-Item -LiteralPath $Item.FullName -Recurse -Force
     }
-    return $full[0] -eq $full[1]
 }
 
 # --- sanity ------------------------------------------------------------------
@@ -110,52 +112,26 @@ foreach ($s in $Sources) {
     }
 }
 
+# CLAUDE_SKILLS_DIR used to move the install. It no longer does; say so rather
+# than install somewhere the architect did not expect.
+$skillsEnvNote = ''
+if ($env:CLAUDE_SKILLS_DIR) {
+    $skillsEnvNote = "CLAUDE_SKILLS_DIR is set ($env:CLAUDE_SKILLS_DIR) and was ignored: since 2.7.0 ReStack always installs into $SkillsDir."
+}
+
 if (-not $DryRun -and -not (Test-Path $SkillsDir)) {
     New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 }
 
-# --- is this the install the record describes? -------------------------------
-# install.json describes one install: the one a bare setup.ps1 maintains,
-# because that is what /restack-upgrade re-runs. A -Target run into a scratch
-# directory used to overwrite it, and /restack-upgrade then verified the
-# scratch tree.
-
-$Record = Test-SameDir $SkillsDir $DefaultSkillsDir
-
-# --- can this shell actually create symlinks? --------------------------------
-# Without Developer Mode or elevation, New-Item -ItemType SymbolicLink throws.
-# Probe once so the failure is a clear message rather than an abort halfway
-# through the install, and so we never claim "edits are live" when they are not.
-
-$SymlinkDegraded = $false
-$SymlinkUnverified = $false
-if ($Method -eq 'symlink') {
-    if ($DryRun) {
-        $SymlinkUnverified = $true
-    } else {
-        $probe = Join-Path $SkillsDir '.restack-symlink-probe'
-        if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Recurse -Force }
-        try {
-            New-Item -ItemType SymbolicLink -Path $probe -Target $RepoDir -ErrorAction Stop | Out-Null
-            Remove-Item -LiteralPath $probe -Force
-        } catch {
-            if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Recurse -Force }
-            $Method = 'copy'
-            $SymlinkDegraded = $true
-        }
-    }
-}
-
 Say "ReStack v$Version"
 Say "  from: $RepoDir"
-Say "  into: $SkillsDir  ($Method)"
-if ($SymlinkDegraded) { Say "        (-Symlink requested; this shell cannot create symlinks)" }
+Say "  into: $SkillsDir  (copy)"
 if ($DryRun) { Say "  DRY RUN - nothing will be written" }
 Say ""
 
 # --- install -----------------------------------------------------------------
 
-$nNew = 0; $nUpd = 0; $nSame = 0; $nDel = 0
+$nNew = 0; $nUpd = 0; $nSame = 0; $nDel = 0; $nUnlinked = 0
 
 foreach ($s in $Sources) {
     $name = $s.Name
@@ -165,26 +141,20 @@ foreach ($s in $Sources) {
     $action = 'update'
     if ($null -eq $destItem) {
         $action = 'install'; $nNew++
+    } elseif (Test-Link $destItem) {
+        # Left by a symlinked install from before 2.7.0. Replaced with a copy.
+        $nUpd++; $nUnlinked++
+    } elseif (Test-SameTree $s.FullName $dest) {
+        $action = 'unchanged'; $nSame++
     } else {
-        $isLink = $destItem.LinkType -eq 'SymbolicLink'
-        if ($Method -eq 'symlink' -and $isLink -and $destItem.Target -contains $s.FullName) {
-            $action = 'unchanged'; $nSame++
-        } elseif ($Method -eq 'copy' -and -not $isLink) {
-            if (Test-SameTree $s.FullName $dest) {
-                $action = 'unchanged'; $nSame++
-            } else { $nUpd++ }
-        } else { $nUpd++ }
+        $nUpd++
     }
 
     if ($action -ne 'unchanged') { Say "  $action  /$name" }
     if ($DryRun -or $action -eq 'unchanged') { continue }
 
-    if ($null -ne $destItem) { Remove-Item -LiteralPath $dest -Recurse -Force }
-    if ($Method -eq 'symlink') {
-        New-Item -ItemType SymbolicLink -Path $dest -Target $s.FullName | Out-Null
-    } else {
-        Copy-Item -LiteralPath $s.FullName -Destination $dest -Recurse -Force
-    }
+    if ($null -ne $destItem) { Remove-Entry $destItem }
+    Copy-Item -LiteralPath $s.FullName -Destination $dest -Recurse -Force
 }
 
 # --- remove skills deleted upstream -----------------------------------------
@@ -193,12 +163,12 @@ foreach ($s in $Sources) {
 # command the project no longer has.
 
 if (Test-Path $SkillsDir) {
-    $installed = @(Get-ChildItem -Path $SkillsDir -Directory -Filter 'restack-*' -ErrorAction SilentlyContinue)
+    $installed = @(Get-ChildItem -Path $SkillsDir -Directory -Filter 'restack-*' -Force -ErrorAction SilentlyContinue)
     foreach ($d in $installed) {
         if (-not (Test-Path (Join-Path $SourceRoot $d.Name))) {
             Say "  remove   /$($d.Name)  (no longer in ReStack)"
             $nDel++
-            if (-not $DryRun) { Remove-Item -LiteralPath $d.FullName -Recurse -Force }
+            if (-not $DryRun) { Remove-Entry $d }
         }
     }
 }
@@ -229,19 +199,38 @@ if ($missing -gt 0) {
 }
 
 # --- record the install ------------------------------------------------------
-# Recorded under the default's own spelling, so the file reads the same however
-# -Target named it.
+# `repo` is the checkout this install was copied from: where /restack-upgrade
+# pulls next. The skills do not need it to exist.
 
-$recordNote = ''
-if (-not $Record) {
-    $recordNote = "$(Join-Path $StateDir 'install.json') left unchanged - $SkillsDir is not the default skills directory ($DefaultSkillsDir), and the record tracks only that one, because it is what /restack-upgrade re-installs. For a permanent install elsewhere, set `$env:CLAUDE_SKILLS_DIR = '$SkillsDir' instead of -Target."
-} elseif (-not $DryRun) {
+# `source` is where /restack-upgrade and the update check fetch releases from:
+# this checkout's origin, or the project itself for a download. Read only when
+# this directory is itself a checkout, so a ReStack copy vendored inside some
+# other repository never records that repository's origin. git writes to
+# stderr when there is no origin, which 'Stop' would turn into a terminating
+# error, so it runs under 'Continue'.
+$Source = ''
+if ((Test-Path (Join-Path $RepoDir '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)) {
+    $previous = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $out = & git -C $RepoDir remote get-url origin 2>$null
+        if ($LASTEXITCODE -eq 0 -and $out) { $Source = "$out".Trim() }
+    } catch {
+        $Source = ''
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+}
+if (-not $Source) { $Source = 'https://github.com/pmelander/restack.git' }
+
+if (-not $DryRun) {
     if (-not (Test-Path $StateDir)) { New-Item -ItemType Directory -Path $StateDir -Force | Out-Null }
     $state = [ordered]@{
         version      = $Version
+        source       = $Source
         repo         = $RepoDir
-        skills_dir   = $DefaultSkillsDir
-        method       = $Method
+        skills_dir   = $SkillsDir
+        method       = 'copy'
         installed_at = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     }
     $state | ConvertTo-Json | Out-File -FilePath (Join-Path $StateDir 'install.json') -Encoding utf8
@@ -275,25 +264,19 @@ if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
     $codexNote = 'Codex CLI not found - the outside opinion falls back to a same-family subagent (weaker; shares blind spots). Optional: npm i -g @openai/codex && codex login'
 }
 
-if ($recordNote) { Write-Host ""; Write-Host "Note: $recordNote" }
+if ($nUnlinked -gt 0) {
+    if ($DryRun) { $verb = 'would be' } else { $verb = 'were' }
+    Write-Host ""
+    Write-Host "Note: $nUnlinked symlink(s) from an older install $verb replaced with copies. The links were"
+    Write-Host "removed as links; the checkout they pointed at is untouched."
+}
+if ($skillsEnvNote) { Write-Host ""; Write-Host "Note: $skillsEnvNote" }
 if ($depNote) { Write-Host ""; Write-Host "Note: $depNote" }
 if ($codexNote) { Write-Host ""; Write-Host "Note: $codexNote" }
 
-if ($SymlinkDegraded) {
-    Write-Host ""
-    Write-Host "Warning: -Symlink was requested but this shell cannot create symlinks, so"
-    Write-Host "the skills were INSTALLED BY COPY. Edits in the repository are NOT live -"
-    Write-Host "re-run setup.ps1 after each change, or enable Developer Mode"
-    Write-Host "(Settings > For developers) or run in an elevated shell, then retry."
-}
-
 if ($DryRun) {
     Write-Host ""; Write-Host "(dry run - nothing was written)"
-    if ($SymlinkUnverified) { Write-Host "Symlink support not probed in a dry run; a real run verifies it." }
 } else {
     Write-Host ""; Write-Host "Type /restack in Claude Code to see the skills."
-    if ($Method -eq 'symlink') {
-        Write-Host "Symlinked: edits in $RepoDir are live after a regenerate."
-        Write-Host "Claude Code re-reads skills when they change; a fresh session is the sure way."
-    }
+    Write-Host "The install is a copy: it keeps working if $RepoDir is moved or deleted."
 }

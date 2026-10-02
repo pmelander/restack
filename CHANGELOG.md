@@ -3,6 +3,60 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.7.0] — 2026-10-02
+
+The install is always a copy in the user profile, and nothing depends on a
+clone ([ADR-019](docs/adr/ADR-019-copy-only-install.md)). Most installers delete
+their clone after `setup`. Until now, that left `/restack-upgrade` with nothing
+to pull and the update check silent, and on a symlinked install it broke every
+skill.
+
+### Changed
+
+- **`/restack-upgrade` installs from a temporary clone.** It clones the latest
+  `main` from the recorded source at depth 1 into a `restack-upgrade.*`
+  directory, runs that clone's `setup`, verifies, summarises the changelog, and
+  deletes the directory. It never pulls, stashes or switches a checkout, a
+  maintainer's included. If the installed version is ahead of the release, it
+  stops and asks before downgrading. Deletion refuses any path not named
+  `restack-upgrade.*`, so a lost variable cannot fall back to the system temp
+  folder.
+- **The update check needs no checkout.** It fetches `main` from the recorded
+  source into a bare cache, `~/.restack/upstream.git`. A record from before
+  2.7.0 falls back to the origin of the checkout it names. Throttle, snooze,
+  opt-out and timeouts are unchanged.
+- **`setup` records `source`**: the checkout's origin, or the project URL for a
+  download.
+- **Developing ReStack** is `python scripts/gen_skills.py && ./setup`. Sessions
+  load what was last installed, so another session's work in progress no
+  longer leaks into them.
+- INSTALL.md and the installation guide: clone anywhere, run setup, delete the
+  clone if you like. Agents install from a `restack-install.*` temporary clone
+  and delete it afterwards.
+
+### Removed
+
+- **`setup --symlink`, `--target` and `CLAUDE_SKILLS_DIR`** (and `-Symlink` and
+  `-Target` in `setup.ps1`). The two options are refused with a message, and
+  the variable is ignored with a note. `--copy` is still accepted and does
+  nothing. Tests that need a scratch install point `HOME` and `USERPROFILE` at
+  one.
+- The symlink-specific update notice, which told a symlinked install to
+  `git pull`.
+
+### Fixed
+
+- **Removing a link could delete through it.** `setup`'s "removed upstream" loop
+  ran `rm -rf` on a trailing-slash glob. A test confirmed that Git Bash deleted
+  the contents of a junction's target that way. Links are now removed as links
+  (`rm -f`; `Directory.Delete(path, $false)` in `setup.ps1`), and a symlinked
+  install from before 2.7.0 is converted to copies with its checkout untouched.
+  Both cases are covered by tests on both installers.
+- The uninstall instructions used `rm -rf ~/.claude/skills/restack-*/`, which
+  has the same trailing-slash hazard on a symlinked install.
+- `docs/INSTALLATION.md` had `$HOME\restack` mangled into `$HOME` plus a line
+  reading `estack`, and an uninstall section that removed only four skills.
+
 ## [2.6.0] — 2026-10-02
 
 ### Added

@@ -1,20 +1,24 @@
 # Installing ReStack
 
-**For a person:** clone and run setup.
+**For a person:** clone, run setup, and delete the clone if you like. The
+install is a copy in your user profile and does not need it.
 
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
-cd ~/restack && ./setup          # Windows: .\setup.ps1
+git clone --depth 1 https://github.com/pmelander/restack.git restack-install
+cd restack-install && ./setup          # Windows: .\setup.ps1
+cd .. && rm -rf restack-install        # optional. Windows: Remove-Item -Recurse -Force restack-install
 ```
 
-Type `/restack` in Claude Code. Done.
+Type `/restack` in Claude Code. Done. `/restack-upgrade` updates it later, with
+no clone needed.
 
 > **Update check: on by default, easy to turn off.** Once a day, at
 > `/restack-journey start` or `where` or at `/restack-discover paths`, ReStack
-> runs `git fetch origin main` in this checkout. If a newer version exists, it
-> prints one line. It never upgrades itself. If outbound fetches from a skill
-> need approval where you work, **turn it off before the first session**:
-> `/restack-upgrade off`, or see [Update check and opt-out](#update-check-and-opt-out).
+> runs a small `git fetch` of `main` from the repository you installed from. If
+> a newer version exists, it prints one line. It never upgrades itself. If
+> outbound fetches from a skill need approval where you work, **turn it off
+> before the first session**: `/restack-upgrade off`, or see
+> [Update check and opt-out](#update-check-and-opt-out).
 
 Everything below is for an agent installing on someone's behalf.
 
@@ -31,27 +35,40 @@ not reference material.
 
 Say this to the user before running anything, so they can decline:
 
-> ReStack is 15 Claude Code skills for architecture work, built on Residuality
-> Theory. Installing means cloning the repository and copying 15 directories
-> into `~/.claude/skills/`, all named `restack-*`. It will not touch any other
-> skill. Two optional extras exist — openpyxl for spreadsheet import, and the
-> Codex CLI for cross-model second opinions — and I will not install either
-> without asking. Once a day, at the start of a journey, the skills run
-> `git fetch` in the checkout to see whether a newer ReStack exists. That can
-> be turned off, and I can do it now if you prefer.
+> ReStack is 16 Claude Code skills for architecture work, built on Residuality
+> Theory. Installing means cloning the repository into a temporary directory
+> and copying 16 directories into `~/.claude/skills/`, all named `restack-*`.
+> It will not touch any other skill, and the copy does not depend on the clone,
+> which I delete afterwards. Two optional extras exist — openpyxl for
+> spreadsheet import, and the Codex CLI for cross-model second opinions — and I
+> will not install either without asking. Once a day, at the start of a
+> journey, the skills fetch `main` from the repository to see whether a newer
+> ReStack exists. That can be turned off, and I can do it now if you prefer.
 
 **Get an explicit yes before writing anything into `~/.claude/skills/`.**
 Installing skills changes how their Claude Code behaves in every future
 session, which is not a change to make on an implied instruction.
 
-### Step 1 — decide where the repository goes
+### Step 1 — get the release into a temporary directory
 
-If a checkout already exists, use it. Otherwise ask where they want it, or
-propose `~/restack` and let them redirect you.
+If the user pointed you at an existing checkout, use it and skip the clone, and
+do not delete it in step 6. It is theirs. Otherwise:
 
 ```bash
-git clone https://github.com/pmelander/restack.git ~/restack
+D="$(mktemp -d "${TMPDIR:-/tmp}/restack-install.XXXXXX")" && echo "INSTALL_DIR=$D"
+git clone --quiet --depth 1 https://github.com/pmelander/restack.git "$D/restack"
 ```
+
+On Windows PowerShell:
+
+```powershell
+$d = Join-Path $env:TEMP ("restack-install." + [guid]::NewGuid().ToString("N")); "INSTALL_DIR=$d"
+git clone --quiet --depth 1 https://github.com/pmelander/restack.git "$d\restack"
+```
+
+Carry the printed `INSTALL_DIR` into every later step literally. Shell
+variables do not survive between commands, and on Windows `$TMP` and `$TEMP`
+name the whole temp folder.
 
 Do not clone into `~/.claude/skills/`. The repository is not a skill; `setup`
 installs *from* it.
@@ -59,7 +76,7 @@ installs *from* it.
 ### Step 2 — show what will happen, before it happens
 
 ```bash
-cd ~/restack && ./setup --dry-run
+"<INSTALL_DIR>/restack/setup" --dry-run
 ```
 
 This writes nothing. It lists every skill that would be installed, updated or
@@ -69,17 +86,14 @@ a removal means a skill of theirs shares the `restack-` prefix.
 ### Step 3 — install
 
 ```bash
-cd ~/restack && ./setup
+"<INSTALL_DIR>/restack/setup"
 ```
 
-On Windows without a POSIX shell:
-
-```powershell
-cd ~\restack; .\setup.ps1
-```
+On Windows PowerShell: `& "<INSTALL_DIR>\restack\setup.ps1"`.
 
 Report the summary line verbatim. It states how many skills were installed,
-updated, removed and unchanged.
+updated, removed and unchanged. setup also records the repository you cloned
+from, which is where `/restack-upgrade` and the update check fetch releases.
 
 ### Step 4 — the optional extras
 
@@ -89,7 +103,7 @@ required.
 **openpyxl** — only `/restack-excel` needs it, for `.xlsx` (CSV works without).
 
 ```bash
-cd ~/restack && pip install -r requirements.txt
+pip install -r "<INSTALL_DIR>/restack/requirements.txt"
 ```
 
 **Codex CLI** — makes the outside opinion a genuine outside voice. Without it,
@@ -107,18 +121,35 @@ user's behalf, and never ask for or handle an API key.
 **Do not install either without asking.** It is their machine, and a global npm
 install in particular is not implied by "install ReStack".
 
-### Step 5 — verify and hand over
+### Step 5 — verify
 
 ```bash
-ls -d ~/.claude/skills/restack-*/ | wc -l    # expect 15
+ls -d ~/.claude/skills/restack-* | wc -l    # expect 16
+```
+
+### Step 6 — delete the temporary clone
+
+Only the directory you created in step 1, never a checkout the user gave you:
+
+```bash
+D="<INSTALL_DIR from step 1>"
+case "$(basename "$D")" in restack-install.*) rm -rf "$D" ;; *) echo "refusing to delete '$D'" ;; esac
+```
+
+On Windows PowerShell:
+
+```powershell
+$d = "<INSTALL_DIR from step 1>"
+if ((Split-Path -Leaf $d) -like "restack-install.*") { Remove-Item -LiteralPath $d -Recurse -Force } else { "refusing to delete '$d'" }
 ```
 
 Then tell them:
 
-> ReStack v{version} installed — {n} skills. Type `/restack` in Claude Code to
-> see them. Start with `/restack-journey start` on a real system; it will
-> classify the terrain and map the route. `/restack-upgrade` updates it later,
-> and `/restack-upgrade off` turns off the once-a-day update check.
+> ReStack v{version} installed — {n} skills, as a copy in your profile. Type
+> `/restack` in Claude Code to see them. Start with `/restack-journey start` on
+> a real system; it will classify the terrain and map the route.
+> `/restack-upgrade` updates it later, and `/restack-upgrade off` turns off the
+> once-a-day update check.
 >
 > Worth reading first: RESIDUALITY.md — the skills use *aspiration*, *actor*,
 > *intention*, *path*, *stressor* and *residual* precisely, and without that
@@ -134,42 +165,48 @@ Then tell them:
 - **Do not modify their Claude Code settings**, hooks, or configuration.
   Installing ReStack means copying skill directories. Nothing else.
 - **If a step fails, stop and report it.** Do not improvise a repair by hand —
-  a partial install is confusing, and `./setup` re-run is the correct fix for
+  a partial install is confusing, and re-running `setup` is the correct fix for
   almost everything.
 - **If they already have ReStack**, this is an upgrade, not an install. Use
-  `/restack-upgrade`, which checks for local changes before pulling.
+  `/restack-upgrade`.
 
 ### If you are installing from a fork or a branch
 
-Use the URL and branch they gave you, and say which one you used. Do not
-default to `main` on a different remote — a fork's `main` may be behind, and
-the version they end up with should be the one they asked for.
+Use the URL and branch they gave you (`git clone --branch <branch> <url>`), and
+say which one you used. Do not default to `main` on a different remote — a
+fork's `main` may be behind, and the version they end up with should be the one
+they asked for. setup records the fork as the source, so later upgrades come
+from it too.
 
 ---
 
-## Install methods
+## setup options
 
-| Method | Command | When |
-|---|---|---|
-| **Copy** (default) | `./setup` | normal use — the install is independent of the checkout |
-| **Symlink** | `./setup --symlink` | developing ReStack; edits in the repo are live. Needs symlink support — see below |
-| **One-off target** | `./setup --target DIR` | a scratch or test install. Not recorded in `install.json` |
-| **Dry run** | `./setup --dry-run` | see what would change |
+| Command | What it does |
+|---|---|
+| `./setup` | install or update the copy in `~/.claude/skills`. Safe to re-run |
+| `./setup --dry-run` | show what would change; write nothing |
+| `./setup --quiet` | print only the summary |
 
-`CLAUDE_SKILLS_DIR` overrides the default location for all of them. For a
-permanent install outside `~/.claude/skills`, export it rather than using
-`--target`: an install there is recorded, and `/restack-upgrade` re-installs
-there.
+The install is always a copy in the user profile
+([ADR-019](docs/adr/ADR-019-copy-only-install.md)). `--symlink` and `--target`
+were removed in 2.7.0 and are refused with a message. `CLAUDE_SKILLS_DIR` is
+ignored, with a note. If a symlinked install from before 2.7.0 is present, setup
+replaces each link with a copy and removes the link as a link. The directory it
+pointed at is not touched.
 
-**Symlinks on Windows.** Git Bash silently *copies* when `ln -s` is used without
-symlink support enabled — the command succeeds and you get a directory. setup
-probes for this and, if it cannot create symlinks, says so and installs by copy
-rather than claiming edits are live. To get working symlinks: enable Developer
-Mode (Settings › For developers), run in an elevated shell, or
+## Developing ReStack
+
+Keep a clone, edit the templates, regenerate, and install:
 
 ```bash
-MSYS=winsymlinks:nativestrict ./setup --symlink
+python scripts/gen_skills.py && ./setup
 ```
+
+Your sessions load what you last installed, never what is half-edited in the
+working tree. `/restack-upgrade` never touches your clone. It installs the
+latest release from a temporary clone, and it asks first if what you installed
+is ahead of the release.
 
 ## What setup does that a plain copy does not
 
@@ -179,35 +216,35 @@ MSYS=winsymlinks:nativestrict ./setup --symlink
 - **Reports what changed** — installed, updated, removed, unchanged.
 - **Refuses to install a broken tree** — a skill directory with no `SKILL.md`
   would be silently ignored by Claude Code, so setup stops instead.
-- **Records the install** in `~/.restack/install.json`, which is how
-  `/restack-upgrade` finds the repository later. Only an install into the
-  default skills directory is recorded, so a `--target` run cannot overwrite
-  the record of the real one.
+- **Verifies every section a skill names is installed**, and fails if one is not.
+- **Records the install** in `~/.restack/install.json`, including the source
+  that `/restack-upgrade` and the update check fetch releases from.
 - **Checks the optional dependency** and tells you what it affects.
 - **Stays inside the `restack-` prefix**, so it cannot damage another suite.
 
 ## Update check and opt-out
 
 **What it does.** At `/restack-journey start`, `/restack-journey where` and
-`/restack-discover paths`, at most once a day, the skills run
-`git fetch origin main` in the checkout that `~/.restack/install.json` names.
-They then compare `origin/main:VERSION` with the installed version. If a newer
-version exists, they print one line:
+`/restack-discover paths`, at most once a day, the skills fetch `main` at depth 1
+from the `source` that `~/.restack/install.json` records: the repository you
+installed from. The fetch goes into a small cache, `~/.restack/upstream.git`, so
+no checkout is needed. They then compare that `VERSION` with the installed
+version. If a newer version exists, they print one line:
 
 ```
-ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  (snooze a week: /restack-upgrade snooze)
+ReStack v2.8.0 available (installed v2.7.0): /restack-upgrade  (snooze a week: /restack-upgrade snooze)
 ```
 
 Otherwise they print nothing.
 
 **What it does not do.** It never upgrades anything, and it never runs inside a
 decision gate. It sends nothing beyond the git protocol, has no telemetry, and
-contacts no endpoint except the `origin` you cloned from. It cannot prompt for
+contacts no endpoint except the source you installed from. It cannot prompt for
 credentials: a repository that needs them counts as offline. The fetch is
-capped at five seconds. Offline, no checkout or no Python means it stays
-silent. Its only local effect is to update `origin/main` in the checkout.
-Design and rationale:
-[ADR-016](docs/adr/ADR-016-update-awareness.md).
+capped at five seconds. Offline, no recorded source, or no Python means it
+stays silent. Design and rationale:
+[ADR-016](docs/adr/ADR-016-update-awareness.md), amended by
+[ADR-019](docs/adr/ADR-019-copy-only-install.md).
 
 **Turn it off.** Do this before the first session if outbound fetches from a
 skill are not acceptable in your environment. Any one of these works, and each
@@ -222,31 +259,32 @@ is read before anything touches the network:
 
 A `config.json` that exists but is not valid JSON also counts as off.
 `/restack-upgrade check` shows the current setting (`setting: off - ...`), the
-last check and any snooze. `rm -rf ~/.restack` removes the opt-out along with
-everything else, so set it again after a reinstall.
+source, the last check and any snooze. `rm -rf ~/.restack` removes the opt-out
+along with everything else, so set it again after a reinstall.
 
 **Snooze instead.** `/restack-upgrade snooze` hides the notice for seven days,
 or `snooze <days>` for 1–90. A newer release still shows straight away.
-
-**Symlinked development installs** get different wording, because the upgrade
-is a pull, not `/restack-upgrade`. On `main`, the line names
-`git -C "<repo>" pull --ff-only`. On any other branch, it only reports the gap.
 
 **Files in `~/.restack/`:**
 
 | File | Written by | Holds |
 |---|---|---|
-| `install.json` | `setup` | version, repo path, skills dir, method, date |
+| `install.json` | `setup` | version, source, the directory installed from, skills dir, method, date |
 | `config.json` | you, or `/restack-upgrade off` / `on` | `update_check`. `setup` never touches it |
 | `update-check.json` | the check | last check time and result, snooze |
+| `upstream.git/` | the check | a bare cache of `main`, fetched at depth 1 |
 
 ## Uninstalling
 
 ```bash
-rm -rf ~/.claude/skills/restack-*/
+rm -rf ~/.claude/skills/restack-*
 rm -rf ~/.restack
 ```
 
-The repository checkout can then be deleted too. Nothing else is left behind —
-ReStack writes only to the skills directory and `~/.restack`, and the documents
-the skills produce live in your own project's `docs/`.
+No trailing slash on the first line. On a symlinked install from before 2.7.0,
+`rm -rf link/` would delete the contents of the checkout the link points at,
+while `rm -rf link` removes only the link.
+
+Nothing else is left behind — ReStack writes only to the skills directory and
+`~/.restack`, and the documents the skills produce live in your own project's
+`docs/`.

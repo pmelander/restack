@@ -16,6 +16,13 @@
 
 **Review Date:** 2027-04-02
 
+> **Amended 2026-10-02 by [ADR-019](ADR-019-copy-only-install.md).** The check
+> no longer fetches inside a checkout. Most installers delete theirs, and the
+> check went silent for them. It now fetches `main` from the `source` that
+> install.json records into a bare cache at `~/.restack/upstream.git`. Installs
+> are always copies, so the symlink wording in point 3 and in *The open
+> question* is withdrawn. Throttle, snooze, opt-out and timeouts are unchanged.
+
 ## Context
 
 An install learns it is stale only when someone remembers to run
@@ -59,11 +66,13 @@ A check also brings costs, and they shape the design:
    timestamp cannot be written, the script does not fetch, because "at most once
    a day" is the promise. A timestamp more than five minutes in the future is
    ignored, so a clock that was set back cannot silence the check for good.
-3. **What it compares.** It reads `repo`, `method` and `version` from
+3. **What it compares.** ~~It reads `repo`, `method` and `version` from
    `~/.restack/install.json`, runs `git fetch origin main` in that checkout, and
    compares `origin/main:VERSION` with the installed version. The installed
    version is install.json's `version` for a copy install, and the checkout's
-   own `VERSION` for a symlinked one. Versions compare numerically, and the
+   own `VERSION` for a symlinked one.~~ *(2.7.0: it fetches the recorded
+   `source` into `~/.restack/upstream.git` and compares with install.json's
+   `version`, see banner.)* Versions compare numerically, and the
    notice fires only when the remote is strictly newer.
 4. **What it prints.** One line, and the snooze offer is part of that line:
    `ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  (snooze a week: /restack-upgrade snooze)`.
