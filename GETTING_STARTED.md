@@ -164,9 +164,10 @@ worth noticing — and worth telling us about.
 thinking happens.
 
 **They tell you what to run next.** Each command ends with a `Next:` line. In
-the Claude desktop app and on claude.ai it is also a button, which sends the
-command without its arguments; the skill names the target it worked out from
-your journey state as its first line. Buttons appear only after a gate has
+the Claude desktop app and on claude.ai it is also a button, which hands over
+the command without its arguments (in the Code tab it fills in your message
+box, and you press send). The skill names the target it worked out from your
+journey state as its first line. Buttons appear only after a gate has
 been answered, never in place of one.
 
 **They say when they do not know.** `NEEDS_DISCOVERY` is a normal outcome, not

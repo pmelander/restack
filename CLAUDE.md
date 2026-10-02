@@ -116,7 +116,8 @@ Change a cross-cutting behaviour once, in the fragment, then regenerate.
 
 `next-step.md` is how every command hands off: a `Next:` line with the full
 command, plus a button where the host has a widget tool with `sendPrompt`.
-A button sends `/restack-<skill> [subcommand]` and never an argument, and it is
+A button sends `Run /restack-<skill> [subcommand]` (never a bare `/...`, which
+hosts drop) and never an argument, and it is
 never rendered while a decision brief is open
 ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). A skill that wants to
 name its next move should write the `Next:` line, not invent its own handoff

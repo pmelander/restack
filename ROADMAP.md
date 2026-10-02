@@ -149,7 +149,9 @@ cannot send a stale target, and no text from a file reaches `sendPrompt()`. See
 [ADR-017](docs/adr/ADR-017-next-step-as-a-button.md).
 
 What is still unknown: whether the one line a bare command spends naming its
-target is friction people notice, or the confirmation they wanted anyway.
+target is friction people notice, or the confirmation they wanted anyway. Also
+unknown: whether claude.ai sends a button's text directly, as documented, or
+fills the message box the way the desktop app's Code tab does.
 
 ### 8. ~~Cross-model second opinion~~ — done
 

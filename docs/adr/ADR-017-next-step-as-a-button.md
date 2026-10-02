@@ -26,10 +26,10 @@ command. The architect then copies or retypes it, and a subcommand typo costs
 a round trip.
 
 The Claude desktop app and claude.ai offer a widget tool, `show_widget`, whose
-HTML has a global `sendPrompt(text)` that submits text as if the architect had
-typed it. That turns the next move into one click. It also lets a skill put
-words in the architect's mouth, and in this toolkit that can go wrong in three
-ways:
+HTML has a global `sendPrompt(text)` that hands text to the chat as if the
+architect had typed it. That puts the next move one click away. It also lets a
+skill put words in the architect's mouth, and in this toolkit that can go wrong
+in three ways:
 
 1. **Gates.** A decision brief is answered through `AskUserQuestion` so the
    decisions log records the architect's answer. A button that sends "proceed"
@@ -49,6 +49,31 @@ also varies. It is `mcp__visualize__show_widget` in one session and
 `mcp__<server-id>__show_widget` in another, sometimes deferred and loadable only
 through `ToolSearch`. The session that built this had both: one loaded and one
 deferred.
+
+### What a click test in the desktop app's Code tab found
+
+The first version sent the bare command, `/restack-adr list`. Clicked, it did
+nothing. A diagnostic widget then separated the possible causes:
+
+| Button | Wiring | Text sent | Result |
+|---|---|---|---|
+| A | inline `onclick` | plain text | text landed in the input box |
+| B | script listener | plain text | text landed in the input box |
+| C | script listener | `/restack-adr list` | nothing arrived |
+| D | script listener | `Run /restack-adr list` | text landed in the input box |
+
+Two facts follow, and the tool's own description mentions neither:
+
+- **In the Code tab, `sendPrompt` fills the input box and does not send.** The
+  architect presses send. The tool is documented to send directly, and claude.ai
+  may do so; that has not been verified.
+- **Text that starts with `/` does not arrive at all.** That is plausibly
+  deliberate: a widget that could type harness slash commands would be a
+  control-bypass risk. A request phrased for Claude, which is what `sendPrompt`
+  is documented for, does arrive.
+
+The fixed button was then tested end to end. Clicked and sent unedited,
+`Run /restack-adr list` loaded `/restack-adr` and ran `list`.
 
 ## Decision
 
@@ -74,13 +99,13 @@ deferred.
    contains a gate, and that gate still runs as a brief.
 6. **The reflection prompt keeps the last word.** It goes below the buttons,
    because a button makes moving on cheaper than reflecting.
-7. **A button carries the command, never its arguments.** It sends
-   `/restack-<skill>` plus at most its subcommand, and its label is exactly what
-   it sends, plus ` ↗`. The pattern
-   `^/restack-[a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*)?$` accepts every command
-   form in the sixteen skills (88 at the time of writing) and rejects
-   arguments, gate answers and quote break-outs. The `Next:` line keeps the
-   arguments. A command that arrives without its argument resolves it from the
+7. **A button carries the command, never its arguments.** It sends `Run `
+   followed by `/restack-<skill>` and at most its subcommand. It never sends a
+   bare `/...`, which hosts drop. Its label is the command alone, plus ` ↗`.
+   The pattern `^Run /restack-[a-z]+(-[a-z]+)*( [a-z]+(-[a-z]+)*)?$` accepts
+   every command form in the sixteen skills (88 at the time of writing). It
+   rejects arguments, gate answers, quote break-outs, free text around the
+   command and a bare slash command. The `Next:` line keeps the arguments. A command that arrives without its argument resolves it from the
    state on disk *at that moment* and names it in its first line. If that
    differs from an earlier `Next:` line, it says the line is stale. If the
    state does not settle it to one candidate, it asks.
@@ -101,12 +126,14 @@ where a stale suggestion does the most damage. Three reasons decide it:
   with no quote character to break out with. "Arguments, but sanitised" depends
   on a model sanitising correctly at render time, every time. Real names also
   defeat a safe character set: "Order Service" has a space and capitals.
-- **The choice stays visible.** `sendPrompt` submits as the architect. Sent by
-  a button, `/restack-stressor walk checkout` reads as the architect choosing
-  `checkout`, both in the transcript and to the skill that receives it. The
-  architect chose to move on. The skill chose the path. Without the argument,
-  the receiving command names its target in its first line, where the architect
-  sees it and can redirect it.
+- **The choice stays visible.** `sendPrompt` speaks as the architect. Sent by
+  a button, `Run /restack-stressor walk checkout` reads as the architect
+  choosing `checkout`, both in the transcript and to the skill that receives it.
+  The architect chose to move on. The skill chose the path. Without the
+  argument, the receiving command names its target in its first line, where the
+  architect sees it and can redirect it. In a host that fills the input box,
+  the architect can also type the argument before sending, which leaves the
+  choice with its owner.
 
 The cost is one line of confirmation on a click, plus a question when the state
 holds more than one candidate. Specificity is not lost. The `Next:` line still
@@ -117,8 +144,11 @@ routes to "a **specific** command".
 
 ### Positive
 
-- One click to the next move, with no subcommand typos, on hosts that support
-  it. Every other host prints identical text.
+- The next move is a click away, with no subcommand typos, on hosts that
+  support it. Every other host prints identical text.
+- In the Code tab the architect still presses send, so a widget cannot submit
+  anything on its own. That is a stronger guarantee for gates than this
+  design assumed.
 - Next moves have one shape across all sixteen skills, which helps in a
   terminal as much as in the desktop app.
 - Gate integrity holds. No button exists while a brief is open, and no button
@@ -136,10 +166,16 @@ routes to "a **specific** command".
 - A button makes moving on cheaper than reflecting. Keeping the reflection
   prompt below the buttons gives it the last word, but nothing makes the
   architect answer it.
+- In the Code tab it is two clicks, not one: the button, then send. The
+  roadmap's "one click" holds only where a host sends directly.
+- The payload's shape rests on observed host behaviour that is not documented:
+  that a leading `/` is dropped and `Run /...` is not. A host change could
+  break buttons silently. The `Next:` line still carries the command, so the
+  loss is convenience, not information.
 - Nothing automated covers rendering or clicking. The rules are verified by
-  reading. The pattern was verified by a script against every command heading
-  and a set of hostile strings. The widget was rendered once in the desktop
-  app; what a click sends is checked by hand, not by a test.
+  reading. The pattern was verified by a script against every command heading,
+  the fragment's own snippet and a set of hostile strings. The click was
+  verified by hand in the desktop app's Code tab, as the table above records.
 
 ### Neutral
 

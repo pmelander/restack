@@ -21,11 +21,16 @@ individual skills carry their own `version:` in frontmatter.
   themed only with the host's own tokens.
 - **A button carries the command, never its arguments**
   ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). It sends
-  `/restack-<skill> [subcommand]`, and the label is exactly what it sends. A
-  command that arrives bare resolves its argument from `docs/journey/` at click
-  time and names it in its first line, so a button clicked days later cannot
+  `Run /restack-<skill> [subcommand]`, and the label is the command alone. A
+  command that arrives bare resolves its argument from `docs/journey/` when it
+  runs and names it in its first line, so a button clicked days later cannot
   send a stale target. No text from files or tool output reaches
   `sendPrompt()`.
+- **What a click does, by host.** In the desktop app's Code tab, `sendPrompt`
+  fills the message box and the architect presses send. Text starting with `/`
+  never arrives there at all, which is why a button sends `Run /restack-...`
+  rather than the bare command. Both were found by a click test and are
+  recorded in ADR-017.
 - **A button never answers a gate.** It never sends `proceed`, `yes` or an
   option. Briefs are still answered through `AskUserQuestion`, so the
   decisions log records the answer.

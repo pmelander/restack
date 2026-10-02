@@ -190,8 +190,9 @@ it reversible?*
 **They name the next move, and never take it for you.** A command ends with
 `Next:` and the full command to run, plus the alternative it weighed, each with
 one line of reasoning. In the Claude desktop app and on claude.ai the move is
-also a button. A button launches the command without its arguments, so the
-target is worked out from the journey state when you click, not when the button
+also a button; in the desktop app's Code tab it fills in your message box and
+you press send. A button carries the command without its arguments, so the
+target is worked out from the journey state when you send, not when the button
 was drawn. It is never rendered while a decision is open, and it can never
 answer one ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)).
 

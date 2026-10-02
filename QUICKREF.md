@@ -52,10 +52,11 @@ backwards to discovery, not forwards to a choice.
 ### The next move
 
 Commands end with `Next:` and the full command, plus the `Alternative:` the
-skill weighed. In the desktop app and on claude.ai they are also buttons. A
-button sends the command **without its arguments** (`walk`, not
-`walk checkout`), and the skill resolves the target from `docs/journey/` when
-you click. A button never answers a gate.
+skill weighed. In the desktop app and on claude.ai they are also buttons (in
+the Code tab a button fills in the message box; you press send). A button
+carries the command **without its arguments** (`walk`, not `walk checkout`),
+and the skill resolves the target from `docs/journey/` when it runs. A button
+never answers a gate.
 
 ---
 
