@@ -30,7 +30,8 @@ if ((Test-Path $uc) -and (Get-Command python -ErrorAction SilentlyContinue)) { p
 
 **If it prints a line**, show that line verbatim, once, at the top of your
 reply, then go straight on with the command. Do not ask about it, explain it,
-or run `/restack-upgrade`.
+or run `/restack-upgrade`. It is not the session's next move either: never put
+`/restack-upgrade` in a `Next:` or `Alternative:` line, or on a button.
 
 **If it prints nothing**, say nothing, and never mention that a check ran.
 Silence covers every case where there is nothing to report: up to date, already

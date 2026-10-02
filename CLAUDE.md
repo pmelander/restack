@@ -27,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── voice.md                    # tier 1
 │       ├── paths-and-shell.md          # tier 1
 │       ├── completion-status.md        # tier 1
+│       ├── next-step.md                # tier 1
 │       ├── decision-brief.md           # tier 2
 │       ├── evidence.md                 # tier 2
 │       ├── completeness.md             # tier 2
@@ -73,7 +74,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-016
+    ├── adr/                            # ADR-001 .. ADR-017
     └── ...                             # Generated documentation location
 ```
 
@@ -111,11 +112,20 @@ Fragments live in `scripts/preamble/`, composed per `manifest.json`.
 
 | Tier | For | Adds |
 |---|---|---|
-| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, paths and shell, completion status |
+| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, paths and shell, completion status, next step |
 | 2 | skills that shape architectural decisions | decision briefs, evidence rules, completeness, confusion protocol |
 | 3 | the residuality core (`/restack-journey`, `/restack-stressor`, `/restack-discover`) | vocabulary, stop gates, journey state contract |
 
 Change a cross-cutting behaviour once, in the fragment, then regenerate.
+
+`next-step.md` is how every command hands off: a `Next:` line with the full
+command, plus a button where the host has a widget tool with `sendPrompt`.
+A button sends `Run /restack-<skill> [subcommand]` (never a bare `/...`, which
+hosts drop) and never an argument, and it is
+never rendered while a decision brief is open
+([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). A skill that wants to
+name its next move should write the `Next:` line, not invent its own handoff
+format.
 
 ### Sections (on-demand depth)
 

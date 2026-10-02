@@ -5,12 +5,15 @@ individual skills carry their own `version:` in frontmatter.
 
 ## [2.5.0] — 2026-10-02
 
-Update awareness ([ROADMAP](ROADMAP.md) item 6). An install now hears that it
+Two roadmap items. **Update awareness** (item 6): an install now hears that it
 is stale without anyone remembering to ask. 2.4.0 fixed defects that failed
 silently in every install, and an install that never upgrades keeps them, with
 nothing to say so ([ADR-016](docs/adr/ADR-016-update-awareness.md)).
+**Next step as a button** (item 7): the move a command recommends can be
+clicked rather than retyped, where the host can render it
+([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)).
 
-### Added
+### Added — update awareness
 
 - **A one-line update notice at session open.** `/restack-journey start` and
   `where`, and `/restack-discover paths`, run a check at most once a day and
@@ -35,6 +38,39 @@ nothing to say so ([ADR-016](docs/adr/ADR-016-update-awareness.md)).
   path, the throttle, the snooze, both opt-outs, both symlink wordings, Git Bash
   paths, a BOM in `install.json`, a transport that never answers, and the
   section's `sh`, `bash` and PowerShell snippets exactly as written.
+
+### Added — next step as a button
+
+- **One shape for the next move.** A tier-1 preamble fragment, `next-step.md`,
+  composed into all sixteen skills. Commands that point at a next command end
+  with `Next:` and the full command, arguments included, with one line on why.
+  An `Alternative:` line follows only when the skill weighed one. There is no
+  `Next:` line while a decision brief is unanswered. The reflection prompt
+  still ends the response.
+- **The move as a button, where the host can render one** (the Claude desktop
+  app, claude.ai). The widget tool is found by capability: a name ending in
+  `show_widget`, loaded or deferred, with its `read_me` called once as silent
+  setup. Where there is no tool, the skill prints the line and says nothing
+  about buttons. There are one to three buttons, the recommended move first,
+  themed only with the host's own tokens.
+- **A button carries the command, never its arguments**
+  ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). It sends
+  `Run /restack-<skill> [subcommand]`, and the label is the command alone. A
+  command that arrives bare resolves its argument from `docs/journey/` when it
+  runs and names it in its first line, so a button clicked days later cannot
+  send a stale target. No text from files or tool output reaches
+  `sendPrompt()`.
+- **What a click does, by host.** In the desktop app's Code tab, `sendPrompt`
+  fills the message box and the architect presses send. Text starting with `/`
+  never arrives there at all, which is why a button sends `Run /restack-...`
+  rather than the bare command. Both were found by a click test and are
+  recorded in ADR-017.
+- **A button never answers a gate.** It never sends `proceed`, `yes` or an
+  option. Briefs are still answered through `AskUserQuestion`, so the
+  decisions log records the answer.
+
+The buttons changed no skill template, so they bump no skill `version:`: as
+with `paths-and-shell.md` in 2.4.0, the change is in the shared preamble.
 
 ### Fixed
 
