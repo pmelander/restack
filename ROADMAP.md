@@ -129,7 +129,7 @@ notice is noise and the cadence should drop to weekly.
 
 ### 7. ~~Next step as a button~~ — built and withdrawn
 
-Shipped in 2.5.0 and withdrawn in 2.5.1 the same day. In the desktop app's Code
+Shipped in 2.5.0 and withdrawn in 2.5.2 the same day. In the desktop app's Code
 tab a button fills the message box rather than sending, text starting with `/`
 never arrives, and a button often needed several clicks before its command
 appeared at all. Those are host behaviours ReStack can neither test nor fix,

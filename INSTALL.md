@@ -153,10 +153,13 @@ the version they end up with should be the one they asked for.
 |---|---|---|
 | **Copy** (default) | `./setup` | normal use — the install is independent of the checkout |
 | **Symlink** | `./setup --symlink` | developing ReStack; edits in the repo are live. Needs symlink support — see below |
-| **Custom target** | `./setup --target DIR` | non-standard skills directory |
+| **One-off target** | `./setup --target DIR` | a scratch or test install. Not recorded in `install.json` |
 | **Dry run** | `./setup --dry-run` | see what would change |
 
-`CLAUDE_SKILLS_DIR` overrides the default location for all of them.
+`CLAUDE_SKILLS_DIR` overrides the default location for all of them. For a
+permanent install outside `~/.claude/skills`, export it rather than using
+`--target`: an install there is recorded, and `/restack-upgrade` re-installs
+there.
 
 **Symlinks on Windows.** Git Bash silently *copies* when `ln -s` is used without
 symlink support enabled — the command succeeds and you get a directory. setup
@@ -177,7 +180,9 @@ MSYS=winsymlinks:nativestrict ./setup --symlink
 - **Refuses to install a broken tree** — a skill directory with no `SKILL.md`
   would be silently ignored by Claude Code, so setup stops instead.
 - **Records the install** in `~/.restack/install.json`, which is how
-  `/restack-upgrade` finds the repository later.
+  `/restack-upgrade` finds the repository later. Only an install into the
+  default skills directory is recorded, so a `--target` run cannot overwrite
+  the record of the real one.
 - **Checks the optional dependency** and tells you what it affects.
 - **Stays inside the `restack-` prefix**, so it cannot damage another suite.
 

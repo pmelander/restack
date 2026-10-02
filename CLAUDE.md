@@ -118,7 +118,7 @@ Fragments live in `scripts/preamble/`, composed per `manifest.json`.
 Change a cross-cutting behaviour once, in the fragment, then regenerate.
 
 Rendering the next move as a `show_widget` button was built and withdrawn in
-2.5.1 because clicks were unreliable. Read
+2.5.2 because clicks were unreliable. Read
 [ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) before trying it again.
 
 ### Sections (on-demand depth)

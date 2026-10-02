@@ -4,6 +4,8 @@
 # Copies (or symlinks) every skills/restack-*/ directory into the Claude Code
 # skills directory, removes ReStack skills that no longer exist upstream, and
 # records where the install came from so /restack-upgrade can find it later.
+# Only an install into the default skills directory is recorded; a --target run
+# leaves the record alone (ADR-011, Notes).
 #
 # POSIX sh. No dependencies. Safe to re-run.
 #
@@ -16,7 +18,8 @@ set -eu
 
 REPO_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 VERSION=$(cat "$REPO_DIR/VERSION" 2>/dev/null || echo "unknown")
-SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+DEFAULT_SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+SKILLS_DIR="$DEFAULT_SKILLS_DIR"
 STATE_DIR="$HOME/.restack"
 
 METHOD="copy"
@@ -37,12 +40,16 @@ Options:
                 cannot, setup says so and installs by copy instead.
   --copy        Copy the skills (default).
   --dry-run     Show what would change; write nothing.
-  --target DIR  Install into DIR instead of \$HOME/.claude/skills.
+  --target DIR  Install into DIR instead of \$HOME/.claude/skills, once.
+                Not recorded in ~/.restack/install.json, so /restack-upgrade
+                keeps tracking the default install. For a permanent install
+                elsewhere, use CLAUDE_SKILLS_DIR instead.
   -q, --quiet   Only print the summary.
   -h, --help    Show this help.
 
 Environment:
-  CLAUDE_SKILLS_DIR   Overrides the default skills directory.
+  CLAUDE_SKILLS_DIR   Overrides the default skills directory. An install there
+                      is recorded, like one into \$HOME/.claude/skills.
 
 Re-running is safe: it updates what changed and reports what it did.
 EOF
@@ -85,6 +92,21 @@ for src in "$REPO_DIR"/skills/restack-*/; do
 done
 
 [ -n "$DRY_RUN" ] || mkdir -p "$SKILLS_DIR"
+
+# --- is this the install the record describes? -------------------------------
+# install.json describes one install: the one a bare ./setup maintains, because
+# that is what /restack-upgrade re-runs. A --target run into a scratch directory
+# used to overwrite it, and /restack-upgrade then verified the scratch tree.
+# -ef matches one directory however it is spelled - relative, trailing slash,
+# or, on Windows, different case, which `pwd -P` does not normalise. It needs
+# the directory to exist, so a dry run of a fresh install falls back to the
+# string, less one trailing slash. Either way a miss errs toward leaving the
+# record alone.
+
+RECORD=""
+if [ "${SKILLS_DIR%/}" = "${DEFAULT_SKILLS_DIR%/}" ] || [ "$SKILLS_DIR" -ef "$DEFAULT_SKILLS_DIR" ]; then
+  RECORD="yes"
+fi
 
 # --- can this shell actually create symlinks? --------------------------------
 # MSYS/Git Bash on Windows silently COPIES when `ln -s` is used without
@@ -198,14 +220,19 @@ if [ "$missing" -gt 0 ]; then
 fi
 
 # --- record the install ------------------------------------------------------
+# Recorded under the default's own spelling, so the file reads the same however
+# --target named it.
 
-if [ -z "$DRY_RUN" ]; then
+record_note=""
+if [ -z "$RECORD" ]; then
+  record_note="$STATE_DIR/install.json left unchanged - $SKILLS_DIR is not the default skills directory ($DEFAULT_SKILLS_DIR), and the record tracks only that one, because it is what /restack-upgrade re-installs. For a permanent install elsewhere, use CLAUDE_SKILLS_DIR=$SKILLS_DIR instead of --target."
+elif [ -z "$DRY_RUN" ]; then
   mkdir -p "$STATE_DIR"
   cat > "$STATE_DIR/install.json" <<EOF
 {
   "version": "$VERSION",
   "repo": "$REPO_DIR",
-  "skills_dir": "$SKILLS_DIR",
+  "skills_dir": "$DEFAULT_SKILLS_DIR",
   "method": "$METHOD",
   "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
@@ -244,6 +271,7 @@ else
     "$VERSION" "$n_new" "$n_upd" "$n_del" "$n_same"
 fi
 
+[ -n "$record_note" ] && printf '\nNote: %s\n' "$record_note"
 [ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
 [ -n "$codex_note" ] && printf '\nNote: %s\n' "$codex_note"
 
@@ -262,7 +290,11 @@ fi
 
 if [ -n "$DRY_RUN" ]; then
   printf '\n(dry run — nothing was written)\n'
-  [ -n "${SYMLINK_UNVERIFIED:-}" ] && printf 'Symlink support not probed in a dry run; a real run verifies it.\n'
+  # An if, not `[ ] && printf`: as the script's last command, a false test
+  # would become its exit status, and every dry run without --symlink exited 1.
+  if [ -n "${SYMLINK_UNVERIFIED:-}" ]; then
+    printf 'Symlink support not probed in a dry run; a real run verifies it.\n'
+  fi
 else
   printf '\nType /restack in Claude Code to see the skills.\n'
   if [ "$METHOD" = "symlink" ]; then

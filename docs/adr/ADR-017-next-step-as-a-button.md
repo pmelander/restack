@@ -1,6 +1,6 @@
 # ADR-017: Render the Next Step as a Button That Carries the Command, Never Its Arguments
 
-**Status:** Rejected — built, shipped in 2.5.0, withdrawn in 2.5.1 the same day
+**Status:** Rejected — built, shipped in 2.5.0, withdrawn in 2.5.2 the same day
 
 **Date:** 2026-10-02
 
@@ -18,7 +18,7 @@
 
 ## Context
 
-> **This decision was implemented, shipped in 2.5.0, and withdrawn in 2.5.1.**
+> **This decision was implemented, shipped in 2.5.0, and withdrawn in 2.5.2.**
 > In use, a button often needed several clicks before its command appeared in
 > the message box. See [Withdrawal](#withdrawal) for what was and was not
 > established. The code is not in the tree. It is reachable from merge commit
@@ -282,6 +282,6 @@ times.
 - [ADR-015](ADR-015-vendored-sections-and-base-relative-paths.md): the previous
   tier-1 fragment, and the same "stated once, composed everywhere" pattern
 - `scripts/preamble/next-step.md` at `aca5ad4`: the rule as the skills read
-  it, removed in 2.5.1
+  it, removed in 2.5.2
 - `scripts/preamble/decision-brief.md`, `scripts/preamble/stop-gates.md`: why a
   button never answers a gate

@@ -8,7 +8,7 @@
 
 **Technical Story:** Installation and upgrade were manual and lossy
 
-**Implementation Status:** implemented (symlink degradation fixed in 2.1.1 — see Notes)
+**Implementation Status:** implemented (symlink degradation fixed in 2.1.1; install record limited to the default skills directory in 2.5.1 — see Notes)
 
 **Implemented Date:** 2026-09-05
 
@@ -57,7 +57,8 @@ directory, and beyond a copy they:
 - **refuse a broken tree** rather than installing a skill Claude Code will
   ignore
 - **record the install** in `~/.restack/install.json` (version, repo path,
-  skills directory, method, date)
+  skills directory, method, date) — *since 2.5.1, only an install into the
+  default skills directory; see Notes*
 - **check the optional dependency** and say what it affects
 - support `--dry-run`, `--symlink` and `--target`
 
@@ -168,3 +169,58 @@ written inline instead.
 
 That is the tier system behaving as intended: a utility does not inherit
 machinery built for architectural judgement.
+
+**2.5.1 — the record described whichever install ran last.** `setup --target
+<scratch>` wrote `install.json` like any other run, so testing the installer
+against a scratch directory replaced the record of the real install.
+`/restack-upgrade` then read the scratch tree's `skills_dir` and `method`, and
+step 4b verified a directory Claude Code never loads.
+[ADR-016](ADR-016-update-awareness.md)'s update check already stayed silent on
+a mismatched record, but that guarded one reader. The writer was the cause.
+
+Three fixes were weighed:
+
+- **(a) Record only an install into the default skills directory**
+  (`$CLAUDE_SKILLS_DIR`, else `~/.claude/skills`), and print a note when
+  skipping. **Chosen.**
+- **(b) A `--no-record` flag.** Rejected. It works only when whoever runs
+  `--target` remembers it, and the person who clobbers the record is the one
+  who was not thinking about it. A control that depends on remembering fails
+  open.
+- **(c) Key `install.json` by skills directory.** Rejected. Every reader (the
+  `sed` one-liners in `/restack-upgrade`, and `update_check.py`) would then
+  have to choose an entry. The only right choice is (a)'s rule, applied by
+  each reader instead of once by the writer. It would also change the format
+  and let records of deleted scratch directories pile up.
+
+(a) states a rule the system already had. `/restack-upgrade` re-runs a bare
+`setup`, which installs into the default directory and nowhere else. A record
+of a `--target` install therefore described something no upgrade would ever
+maintain. The rule is now explicit: **`install.json` describes the install a
+bare `setup` maintains.** It is written in the default's own spelling, so a
+`--target` that names the default directory relatively, with a trailing
+slash, or in different case records exactly what a bare run would.
+
+What it costs: a permanent install outside `~/.claude/skills` made with
+`--target` is no longer recorded. It was never upgradable either. The
+supported route is an exported `CLAUDE_SKILLS_DIR`, which `/restack-upgrade`'s
+bare `setup` also honours. The note printed on a skipped record says so. It
+prints under `--quiet`, like the other notes.
+
+The scripts compare paths differently but decide alike. `setup` uses
+`test -ef`, which sees through case on Windows and through symlinks. `pwd -P`
+was tried first, and it keeps whatever case it was given. `setup.ps1` compares
+normalised full paths case-insensitively and does not resolve links. In the
+one case where they could differ, a target that reaches the default through a
+link, `setup.ps1` leaves the record alone. That is the safe direction.
+
+A record clobbered before 2.5.1 is rewritten by the next bare `setup`. A
+symlinked install never gets one from `/restack-upgrade` (ADR-016), so its
+repair table now names the symptom.
+
+`tests/test_setup.py` runs the same cases against both scripts, with `HOME` and
+`USERPROFILE` in a scratch directory. Writing it found two more defects.
+Every `./setup --dry-run` without `--symlink` exited 1, because its last
+command was `[ -n "$x" ] && printf`, while `setup.ps1` exited 0. And on Windows,
+`bash` on PATH can be the WSL launcher, which runs against WSL's own home and
+not the scratch one, so the tests now refuse it.
