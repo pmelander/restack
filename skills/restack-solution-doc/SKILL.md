@@ -390,6 +390,7 @@ printed, it is `~/.claude/skills/restack-solution-doc`.
 | `<base>/sections/hld-structure.md` | running /restack-solution-doc hld - writing or reviewing the high-level design |
 | `<base>/sections/lld-structure.md` | running /restack-solution-doc lld - writing a component-level design |
 | `<base>/sections/operational-docs.md` | running /restack-solution-doc deployment or runbook - documenting how the system is deployed and operated |
+| `<base>/sections/trace.md` | running /restack-solution-doc update - before finishing, for the replaced-terms gate over the updated document |
 
 ---
 
@@ -489,6 +490,10 @@ marked inline. A two-line amendment at the end of an LLD whose body still
 specifies the old grants, endpoints and responses is amendment by footnote. The
 developer reads the body and builds the old design.
 
+Before finishing, **read** `<base>/sections/trace.md` and run `terms` with the
+replaced terms over the document (`--in <file>`). **STOP** while a listed
+passage still specifies the replaced behaviour unmarked.
+
 When the change comes from an ADR, check its **Knock-on changes** list and work
 through every document it names, not just the one you were asked about. A
 replaced deployment guide or runbook is archived in the same step (see
@@ -520,7 +525,7 @@ cannot find drift; drift is a property of the set.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`hld-structure.md`, `lld-structure.md`, `operational-docs.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`hld-structure.md`, `lld-structure.md`, `operational-docs.md`, `trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

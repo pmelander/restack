@@ -3,6 +3,63 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.9.0] — 2026-10-02
+
+A script finds where the documents drift, and hands the reviewer a worklist
+([ADR-021](docs/adr/ADR-021-trace-checks-as-a-worklist.md)). 2.4.0 wrote the
+field feedback down as rules, and most of their acceptance checks are
+mechanical: does this ID exist, did this file change after that date, do these
+cells add up. Until now the model ran them by re-reading every document.
+
+### Added
+
+- **`/restack-trace`**, a tier-1 utility skill, and `scripts/trace.py`
+  (standard library, read-only, no network). `scan` reports ten classes:
+  - `REF`: an ADR, decision or assumption cited with no definition;
+  - `REG`: register drift (a row a later status line or update contradicts,
+    statuses outside the vocabulary, several tables, rows outside any table);
+  - `KO`: Knock-on rows recorded as pending, documents "updated" that have not
+    changed since the ADR's date, "bannered" with no banner, names that
+    resolve to nothing, and ADRs missing the field after it became routine;
+  - `AM`: amendments after the body that no banner at the top covers;
+  - `SUP`: descriptive documents citing a superseded ADR unmarked;
+  - `BASE`: matrices scored before a decision that changed the actor set, and
+    documents quoting them without `scored pre-D<n>`;
+  - `MX`: row and column totals that do not match their cells, and cells
+    scored above 1;
+  - `ALERT`, `PH`, `PDF`: runbook-only alerts, placeholders, stale exports.
+
+  `terms` lists passages that still use a replaced mechanism's terms unmarked.
+  `refs` lists every citation of an ID, marked or unmarked.
+- **`scripts/shared/trace.md`**, vendored into design-review, journey, adr,
+  solution-doc and trace: the locating snippet, what each code feeds, and the
+  reading rules. The output is a worklist, never a verdict: every item is
+  confirmed in the document before it is reported, trace rates nothing, and
+  silence is not consistency.
+- `tests/test_trace.py` (35 cases) against `tests/fixtures/trace/`, a synthetic
+  engagement with a planted defect and a clean neighbour per check. Dates are
+  tested from both mtimes and git commit times, and the shared section's
+  snippet is run as written.
+
+### Changed
+
+- `/restack-design-review consistency` starts from the trace worklist. It
+  replaces none of the seven checks.
+- `/restack-journey review` uses trace's `KO`, `BASE`, `REG` and `REF` items as
+  the starting evidence for three of its eleven failures.
+- **`/restack-adr update` and `/restack-solution-doc update` gate on the
+  replaced terms**: after an amendment they run `terms` and stop while a
+  passage still specifies the replaced behaviour unmarked. This turns field
+  observation 21 into a step. `/restack-adr update` also takes its Knock-on
+  candidates from `refs`.
+
+### Notes
+
+- Calibrated read-only against the 2.4.0 reference engagement: 71 items,
+  against 188 for the first prototype, among them 17 register rows contradicted
+  by later updates and 59 rows stranded outside any table. Nothing from that
+  engagement is in this repository.
+
 ## [2.8.0] — 2026-10-02
 
 Follow-up commands run without pause, and only questions stop them

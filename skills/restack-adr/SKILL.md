@@ -398,6 +398,7 @@ printed, it is `~/.claude/skills/restack-adr`.
 |---|---|
 | `<base>/sections/adr-format.md` | writing or updating an ADR - the template, what each field is for, and the residual traceability fields |
 | `<base>/sections/outcome-review.md` | running /restack-adr review - revisiting a decision months later to capture what actually happened |
+| `<base>/sections/trace.md` | running /restack-adr update - for the Knock-on candidates (refs) and, after an amendment, the replaced-terms gate (terms) |
 
 ---
 
@@ -475,7 +476,15 @@ knock-on changes). Then:
 4. Record the derived details and fill **Knock-on changes** as in `create`
    steps 7 and 9. A supersession invalidates the documents written against the
    old decision, and those documents are what people actually follow.
-5. Log to `docs/journey/decisions-log.md`.
+   **Read** `<base>/sections/trace.md`. Run `refs ADR-<number>`: its unmarked
+   citations in descriptive documents are the Knock-on candidates, found
+   rather than remembered.
+5. **Gate on the replaced terms.** After an amendment, run `terms` with the
+   terms of the mechanism it replaces. Each passage listed is marked inline or
+   confirmed as still correct. **STOP** while one still specifies the replaced
+   behaviour unmarked. This is the step that keeps an amendment from becoming
+   a footnote.
+6. Log to `docs/journey/decisions-log.md`.
 
 Never quietly rewrite a decision to match what happened. That destroys the only
 record of what was actually believed at the time.
@@ -510,7 +519,7 @@ the reversibility and residual-traceability fields and what they are for.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`adr-format.md`, `outcome-review.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`adr-format.md`, `outcome-review.md`, `trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

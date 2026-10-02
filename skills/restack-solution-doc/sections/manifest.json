@@ -20,6 +20,13 @@
       "file": "operational-docs.md",
       "title": "Deployment guide and operations runbook",
       "trigger": "running /restack-solution-doc deployment or runbook - documenting how the system is deployed and operated"
+    },
+    {
+      "id": "trace",
+      "file": "trace.md",
+      "shared": true,
+      "title": "Trace - a worklist from the documents",
+      "trigger": "running /restack-solution-doc update - before finishing, for the replaced-terms gate over the updated document"
     }
   ]
 }

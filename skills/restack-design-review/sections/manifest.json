@@ -45,6 +45,13 @@
       "shared": true,
       "title": "Outside opinion - cross-model second read",
       "trigger": "the design under review is a one-way door and an adversarial outside read is worth the cost"
+    },
+    {
+      "id": "trace",
+      "file": "trace.md",
+      "shared": true,
+      "title": "Trace - a worklist from the documents",
+      "trigger": "running /restack-design-review consistency, or the consistency pass of complete - before the seven checks, for the trace worklist"
     }
   ]
 }

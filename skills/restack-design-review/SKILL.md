@@ -392,6 +392,7 @@ printed, it is `~/.claude/skills/restack-design-review`.
 | `<base>/sections/dimension-performance.md` | running /restack-design-review performance, or the performance pass of a complete review |
 | `<base>/sections/findings-and-report.md` | writing up any review - severity, evidence standards, and the report format |
 | `<base>/sections/second-opinion.md` | the design under review is a one-way door and an adversarial outside read is worth the cost |
+| `<base>/sections/trace.md` | running /restack-design-review consistency, or the consistency pass of complete - before the seven checks, for the trace worklist |
 
 ---
 
@@ -476,6 +477,13 @@ HLD, residuals against their records, placeholders and empty evidence,
 operational documents against the current design, and amendments against their
 own bodies (footnote amendments and stale amendments, reported as `AM-n`).
 
+**Start from the trace worklist.** Before the checks, **read**
+`<base>/sections/trace.md` and run `scan docs`. Its `SUP`, `REF`, `PH`,
+`ALERT`, `PDF`, `AM` and `KO` items are where checks 1, 5, 6 and 7 and the
+Knock-on pattern start. Each item is confirmed in the document before it
+becomes an `AC-n` or `AM-n`. The worklist replaces none of the checks: checks
+2, 3 and 4 are about meaning, and trace cannot see them.
+
 Worth running on its own, more often than a full review — it is cheap, and drift
 compounds. Any design past a handful of ADRs is a candidate.
 
@@ -514,7 +522,7 @@ they are applying, which is the thing worth fixing.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `artifact-consistency.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`matrix-crosscheck.md`, `artifact-consistency.md`, `dimension-architecture.md`, `dimension-api-security.md`, `dimension-performance.md`, `findings-and-report.md`, `second-opinion.md`, `trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 
