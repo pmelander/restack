@@ -1,6 +1,6 @@
 ---
 name: restack-discover
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 3
 model: opus
 description: |
@@ -466,6 +466,7 @@ printed, it is `~/.claude/skills/restack-discover`.
 | `<base>/sections/intention-tracing.md` | running /restack-discover intentions - following one intention end to end through the system |
 | `<base>/sections/organisational-stressors.md` | running /restack-discover organisation - mapping stakeholders and translating resistance into stressors |
 | `<base>/sections/confidence-model.md` | running /restack-discover gaps or /restack-discover confidence - rating what you know and deciding whether discovery is done |
+| `<base>/sections/update-check.md` | the first step of /restack-discover paths, before any question or brief - never inside a gate or while a brief is open |
 
 ---
 
@@ -478,6 +479,9 @@ those eight, and they are much cheaper to avoid than to detect afterwards.
 ## `/restack-discover paths`
 
 Map the significant paths through an existing system.
+
+**First, the update check.** Read `<base>/sections/update-check.md` and run it.
+On most days it prints nothing, and it never asks anything.
 
 1. **Establish the aspiration.** What is this system for? Paths that serve no
    aspiration are either out of scope or evidence the aspiration is incomplete.
@@ -628,7 +632,7 @@ failure this gate exists to prevent.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`anti-patterns.md`, `actor-investigation.md`, `intention-tracing.md`, `organisational-stressors.md`, `confidence-model.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`anti-patterns.md`, `actor-investigation.md`, `intention-tracing.md`, `organisational-stressors.md`, `confidence-model.md`, `update-check.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

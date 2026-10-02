@@ -3,6 +3,60 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.5.0] — 2026-10-02
+
+Update awareness ([ROADMAP](ROADMAP.md) item 6). An install now hears that it
+is stale without anyone remembering to ask. 2.4.0 fixed defects that failed
+silently in every install, and an install that never upgrades keeps them, with
+nothing to say so ([ADR-016](docs/adr/ADR-016-update-awareness.md)).
+
+### Added
+
+- **A one-line update notice at session open.** `/restack-journey start` and
+  `where`, and `/restack-discover paths`, run a check at most once a day and
+  print `ReStack v{new} available (installed v{old}): /restack-upgrade`, with a
+  snooze offer on the same line. Up to date, offline, no checkout, no
+  `install.json` and no Python all print nothing. The check never runs while a
+  decision brief is open or inside a stop gate, and it never upgrades anything:
+  a skill set that changes under an in-flight journey breaks its audit trail.
+  The instructions live once, in a shared section (`update-check.md`).
+- **`/restack-upgrade snooze [days]`, `off` and `on`.** A snooze holds one
+  version for seven days by default, and a newer release breaks through it.
+  `off` writes `{"update_check": false}` to `~/.restack/config.json`.
+  `RESTACK_UPDATE_CHECK=off` in the environment also turns it off and wins over
+  the file, for machines where an outbound fetch from a skill is not
+  acceptable. A `config.json` that cannot be read counts as off.
+  `/restack-upgrade check` now shows the setting, the last check and any
+  snooze, including a check that failed.
+- **`skills/restack-upgrade/scripts/update_check.py`**, standard library only.
+  The only network call is `git fetch origin main` in the recorded checkout,
+  capped at five seconds, with credential prompts and windows suppressed.
+- **`tests/test_update_check.py`**, 34 cases, run in CI. They cover every silent
+  path, the throttle, the snooze, both opt-outs, both symlink wordings, Git Bash
+  paths, a BOM in `install.json`, a transport that never answers, and the
+  section's `sh`, `bash` and PowerShell snippets exactly as written.
+
+### Fixed
+
+- **`/restack-upgrade` could replace a symlinked install with copies.** Step 4
+  ran plain `./setup`. On a symlinked install it now runs a `--symlink`
+  dry run and asks the architect to re-link from a shell that can create
+  symlinks, if a skill was added or removed. Step 3 stops when the checkout is
+  not on `main`. `docs/INSTALLATION.md` said "`./setup` after a pull" for
+  symlink installs, and now says `./setup --symlink`.
+
+### Decided
+
+- **Symlinked development installs report, with different wording**, the open
+  question from the roadmap. On `main` the notice names
+  `git -C "<repo>" pull --ff-only`. On a branch it only reports the gap. It
+  never points at the copy upgrade
+  ([ADR-016](docs/adr/ADR-016-update-awareness.md)).
+
+### Changed
+
+- `/restack-journey` 2.2.0, `/restack-discover` 2.2.0, `/restack-upgrade` 1.3.0.
+
 ## [2.4.0] — 2026-10-02
 
 Twenty improvements from one long brownfield journey: discovery, three stressor

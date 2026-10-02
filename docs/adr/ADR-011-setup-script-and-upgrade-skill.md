@@ -96,6 +96,10 @@ assumption.
 
 ### What we did not take from gstack
 
+*Revisited in 2.5.0: [ADR-016](ADR-016-update-awareness.md) adds an update
+check. It is not in the preamble, its snooze does not escalate, and there is
+still no auto-upgrade.*
+
 Update checks in the preamble, snooze with escalating backoff, auto-upgrade,
 version migration scripts, team mode, vendored-copy synchronisation, multi-host
 support. Each solves a real problem for a large distributed suite and would be

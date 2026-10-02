@@ -32,6 +32,13 @@
       "file": "confidence-model.md",
       "title": "Confidence model and the confidence gate",
       "trigger": "running /restack-discover gaps or /restack-discover confidence - rating what you know and deciding whether discovery is done"
+    },
+    {
+      "id": "update-check",
+      "file": "update-check.md",
+      "shared": true,
+      "title": "Update check - one line at session open",
+      "trigger": "the first step of /restack-discover paths, before any question or brief - never inside a gate or while a brief is open"
     }
   ]
 }

@@ -9,6 +9,13 @@ cd ~/restack && ./setup          # Windows: .\setup.ps1
 
 Type `/restack` in Claude Code. Done.
 
+> **Update check: on by default, easy to turn off.** Once a day, at
+> `/restack-journey start` or `where` or at `/restack-discover paths`, ReStack
+> runs `git fetch origin main` in this checkout. If a newer version exists, it
+> prints one line. It never upgrades itself. If outbound fetches from a skill
+> need approval where you work, **turn it off before the first session**:
+> `/restack-upgrade off`, or see [Update check and opt-out](#update-check-and-opt-out).
+
 Everything below is for an agent installing on someone's behalf.
 
 ---
@@ -29,7 +36,9 @@ Say this to the user before running anything, so they can decline:
 > into `~/.claude/skills/`, all named `restack-*`. It will not touch any other
 > skill. Two optional extras exist — openpyxl for spreadsheet import, and the
 > Codex CLI for cross-model second opinions — and I will not install either
-> without asking.
+> without asking. Once a day, at the start of a journey, the skills run
+> `git fetch` in the checkout to see whether a newer ReStack exists. That can
+> be turned off, and I can do it now if you prefer.
 
 **Get an explicit yes before writing anything into `~/.claude/skills/`.**
 Installing skills changes how their Claude Code behaves in every future
@@ -108,7 +117,8 @@ Then tell them:
 
 > ReStack v{version} installed — {n} skills. Type `/restack` in Claude Code to
 > see them. Start with `/restack-journey start` on a real system; it will
-> classify the terrain and map the route. `/restack-upgrade` updates it later.
+> classify the terrain and map the route. `/restack-upgrade` updates it later,
+> and `/restack-upgrade off` turns off the once-a-day update check.
 >
 > Worth reading first: RESIDUALITY.md — the skills use *aspiration*, *actor*,
 > *intention*, *path*, *stressor* and *residual* precisely, and without that
@@ -170,6 +180,60 @@ MSYS=winsymlinks:nativestrict ./setup --symlink
   `/restack-upgrade` finds the repository later.
 - **Checks the optional dependency** and tells you what it affects.
 - **Stays inside the `restack-` prefix**, so it cannot damage another suite.
+
+## Update check and opt-out
+
+**What it does.** At `/restack-journey start`, `/restack-journey where` and
+`/restack-discover paths`, at most once a day, the skills run
+`git fetch origin main` in the checkout that `~/.restack/install.json` names.
+They then compare `origin/main:VERSION` with the installed version. If a newer
+version exists, they print one line:
+
+```
+ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  (snooze a week: /restack-upgrade snooze)
+```
+
+Otherwise they print nothing.
+
+**What it does not do.** It never upgrades anything, and it never runs inside a
+decision gate. It sends nothing beyond the git protocol, has no telemetry, and
+contacts no endpoint except the `origin` you cloned from. It cannot prompt for
+credentials: a repository that needs them counts as offline. The fetch is
+capped at five seconds. Offline, no checkout or no Python means it stays
+silent. Its only local effect is to update `origin/main` in the checkout.
+Design and rationale:
+[ADR-016](docs/adr/ADR-016-update-awareness.md).
+
+**Turn it off.** Do this before the first session if outbound fetches from a
+skill are not acceptable in your environment. Any one of these works, and each
+is read before anything touches the network:
+
+| How | Command |
+|---|---|
+| From Claude Code | `/restack-upgrade off` (and `/restack-upgrade on` to undo) |
+| By hand, POSIX shell or Git Bash | `mkdir -p ~/.restack && printf '{"update_check": false}\n' > ~/.restack/config.json` |
+| By hand, PowerShell | `New-Item -ItemType Directory -Force "$HOME\.restack" \| Out-Null; Set-Content "$HOME\.restack\config.json" '{"update_check": false}' -Encoding ASCII` |
+| Machine or fleet policy | set the environment variable `RESTACK_UPDATE_CHECK=off`. It wins over the file |
+
+A `config.json` that exists but is not valid JSON also counts as off.
+`/restack-upgrade check` shows the current setting (`setting: off - ...`), the
+last check and any snooze. `rm -rf ~/.restack` removes the opt-out along with
+everything else, so set it again after a reinstall.
+
+**Snooze instead.** `/restack-upgrade snooze` hides the notice for seven days,
+or `snooze <days>` for 1–90. A newer release still shows straight away.
+
+**Symlinked development installs** get different wording, because the upgrade
+is a pull, not `/restack-upgrade`. On `main`, the line names
+`git -C "<repo>" pull --ff-only`. On any other branch, it only reports the gap.
+
+**Files in `~/.restack/`:**
+
+| File | Written by | Holds |
+|---|---|---|
+| `install.json` | `setup` | version, repo path, skills dir, method, date |
+| `config.json` | you, or `/restack-upgrade off` / `on` | `update_check`. `setup` never touches it |
+| `update-check.json` | the check | last check time and result, snooze |
 
 ## Uninstalling
 

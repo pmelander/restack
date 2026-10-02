@@ -22,3 +22,8 @@ jobs:
 
       - name: Check every skill has valid frontmatter
         run: python scripts/check_skills.py
+
+      # Behaviour of the scripts skills ship (update check: ADR-016). Uses a
+      # local bare repository as origin, so it needs git and no network.
+      - name: Test shipped scripts
+        run: python -m unittest discover -s tests -v

@@ -109,30 +109,23 @@ auto-resolved. Terrain classification and the confidence gate probably qualify:
 both are judgements about what you do not know, and a model auto-answering them
 is precisely the false confidence this toolkit exists to avoid.
 
-### 6. Update awareness
+### 6. ~~Update awareness~~ — done
 
-Today an install only learns it is stale when someone remembers to run
-`/restack-upgrade`. The skills should notice for themselves, at the right
-moments and no others.
+Shipped in 2.5.0. `/restack-journey start` and `where`, and
+`/restack-discover paths`, print one line at most once a day when `origin/main`
+has a newer `VERSION`, with a snooze. The check never upgrades anything and
+never runs inside a gate. It is off with `/restack-upgrade off` or
+`RESTACK_UPDATE_CHECK=off`. See
+[ADR-016](docs/adr/ADR-016-update-awareness.md) and
+[INSTALL.md](INSTALL.md#update-check-and-opt-out).
 
-The shape worth building:
+The open question was settled: a symlinked install reports, with different
+wording. On `main` it names `git pull --ff-only`. On a branch it only reports
+the gap. It never points at `/restack-upgrade`'s copy path.
 
-- **When:** at session-opening commands only (`/restack-journey start` and
-  `where`, `/restack-discover paths`), and at most once a day, using a timestamp
-  in `~/.restack/`. Never inside a stop gate or while a brief is open, because
-  an upgrade notice there competes with the decision.
-- **How:** read `repo` from `~/.restack/install.json` and compare the local
-  `VERSION` against `origin/main:VERSION`. Being offline or having no git
-  checkout is silent, never an error.
-- **What it does:** one line, "ReStack v2.4.0 available (installed v2.3.0):
-  `/restack-upgrade`", plus a snooze. It never upgrades itself. A skill set that
-  changes under an in-flight journey breaks the journey's audit trail.
-- **Opt-out:** a setting in `~/.restack/` turns it off, for environments where
-  an outbound fetch from a skill is not acceptable.
-
-gstack's update check is the reference for the throttle and snooze. Open
-question: should a symlinked development install report "local behind remote"?
-It cannot be upgraded by copy, so the notice would need different wording.
+What is still unknown: whether once a day is the right cadence, or whether
+architects snooze it every time. If the snooze is the normal response, the
+notice is noise and the cadence should drop to weekly.
 
 ### 7. Next step as a button
 

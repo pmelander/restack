@@ -170,11 +170,13 @@ Claude should start asking you questions to fill in the ADR template.
   restack-adr/          ...
   ... 15 in total, all prefixed restack-
   restack-excel/        SKILL.md + read_spreadsheet.py
-  restack-upgrade/      SKILL.md
+  restack-upgrade/      SKILL.md + scripts/update_check.py
   [your other skills, untouched]
 
 ~/.restack/
-  install.json          version, repo path, method, date
+  install.json          version, repo path, method, date (written by setup)
+  config.json           your settings: {"update_check": false} opts out (optional)
+  update-check.json     last update check and any snooze (written by the check)
 ```
 
 ## Updating
@@ -194,8 +196,17 @@ By hand:
 cd ~/restack && git pull && ./setup
 ```
 
-A symlink install still needs `./setup` after a pull, because a newly added
-skill has no symlink yet. Edits to existing skills are live without it.
+A symlink install needs `./setup --symlink` after a pull that adds or removes a
+skill, because a new skill has no symlink yet. Edits to existing skills are
+live without it. Never run plain `./setup` on a symlink install: it replaces
+the links with copies. The same happens with `--symlink` in a shell that cannot
+create symlinks.
+
+You do not have to remember to check. Once a day, `/restack-journey start` or
+`where` and `/restack-discover paths` print one line when a newer version is on
+`origin/main`. `/restack-upgrade snooze` hides it for a week, and
+`/restack-upgrade off` turns the check off. See
+[INSTALL.md](../INSTALL.md#update-check-and-opt-out).
 
 `/restack-upgrade` is also the repair path — re-running `setup` fixes almost
 every partial-install symptom. Use `./setup --dry-run` first to see what it
