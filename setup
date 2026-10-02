@@ -222,6 +222,14 @@ fi
 # --- record the install ------------------------------------------------------
 # Recorded under the default's own spelling, so the file reads the same however
 # --target named it.
+#
+# Every value goes through json_str. Written raw, CLAUDE_SKILLS_DIR=C:\Users\...
+# recorded an invalid \U escape, and the update check (ADR-016) read the whole
+# file as unreadable and stayed silent. setup.ps1 gets this from ConvertTo-Json.
+
+json_str() {
+  printf '"%s"' "$(printf '%s' "$1" | sed 's/[\\"]/\\&/g')"
+}
 
 record_note=""
 if [ -z "$RECORD" ]; then
@@ -230,11 +238,11 @@ elif [ -z "$DRY_RUN" ]; then
   mkdir -p "$STATE_DIR"
   cat > "$STATE_DIR/install.json" <<EOF
 {
-  "version": "$VERSION",
-  "repo": "$REPO_DIR",
-  "skills_dir": "$DEFAULT_SKILLS_DIR",
-  "method": "$METHOD",
-  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  "version": $(json_str "$VERSION"),
+  "repo": $(json_str "$REPO_DIR"),
+  "skills_dir": $(json_str "$DEFAULT_SKILLS_DIR"),
+  "method": $(json_str "$METHOD"),
+  "installed_at": $(json_str "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
 }
 EOF
 fi

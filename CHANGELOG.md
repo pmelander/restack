@@ -3,6 +3,31 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.5.2] — 2026-10-02
+
+### Fixed
+
+- **`setup` wrote invalid JSON for a path with a backslash or double quote.**
+  It interpolated `version`, `repo`, `skills_dir` and `method` raw into
+  `~/.restack/install.json`, so `CLAUDE_SKILLS_DIR='C:\Users\me\skills'` under
+  Git Bash recorded `"C:\Users\..."`, an invalid `\U` escape. The update check
+  (ADR-016) then read no record at all and stayed silent; the sed one-liners
+  in `/restack-upgrade` still worked, which hid it. Every value now goes
+  through a `json_str` helper that escapes `\` and `"`, which is what
+  `setup.ps1` already got from `ConvertTo-Json`. A record written wrongly
+  before this release is rewritten by the next `./setup` with no `--target`:
+  `/restack-upgrade` runs it for a copy install, and a symlinked one needs
+  `./setup --symlink` from a shell that can create symlinks. Until then
+  `/restack-upgrade check` reports the record as `cannot be read`, and the
+  update notice cannot announce this release to that install.
+
+### Added
+
+- `tests/test_setup.py`: an eighth case, for both installers, that sets
+  `CLAUDE_SKILLS_DIR` to a backslash path on Windows and checks the record
+  parses and names that directory. Elsewhere the directory name carries a `\`
+  and a `"`, so CI on Linux covers the escaping too.
+
 ## [2.5.1] — 2026-10-02
 
 ### Fixed
