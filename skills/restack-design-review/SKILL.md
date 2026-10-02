@@ -1,6 +1,6 @@
 ---
 name: restack-design-review
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 2
 model: opus
 description: |
@@ -48,6 +48,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -75,8 +99,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -124,6 +151,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -264,17 +300,19 @@ individually leaves the cause untouched.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-design-review`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-design-review/sections/matrix-crosscheck.md` | any review run on a system that has had a stressor analysis - classifying each finding by whether the matrix should have caught it |
-| `skills/restack-design-review/sections/artifact-consistency.md` | any review of a design with more than a handful of ADRs, and whenever triage sends a finding here rather than to the matrix |
-| `skills/restack-design-review/sections/dimension-architecture.md` | running /restack-design-review architecture or data, or the architecture and data passes of a complete review |
-| `skills/restack-design-review/sections/dimension-api-security.md` | running /restack-design-review api or security, or the API and security passes of a complete review |
-| `skills/restack-design-review/sections/dimension-performance.md` | running /restack-design-review performance, or the performance pass of a complete review |
-| `skills/restack-design-review/sections/findings-and-report.md` | writing up any review - severity, evidence standards, and the report format |
-| `scripts/shared/second-opinion.md` | the design under review is a one-way door and an adversarial outside read is worth the cost |
+| `<base>/sections/matrix-crosscheck.md` | any review run on a system that has had a stressor analysis - classifying each finding by whether the matrix should have caught it |
+| `<base>/sections/artifact-consistency.md` | any review of a design with more than a handful of ADRs, and whenever triage sends a finding here rather than to the matrix |
+| `<base>/sections/dimension-architecture.md` | running /restack-design-review architecture or data, or the architecture and data passes of a complete review |
+| `<base>/sections/dimension-api-security.md` | running /restack-design-review api or security, or the API and security passes of a complete review |
+| `<base>/sections/dimension-performance.md` | running /restack-design-review performance, or the performance pass of a complete review |
+| `<base>/sections/findings-and-report.md` | writing up any review - severity, evidence standards, and the report format |
+| `<base>/sections/second-opinion.md` | the design under review is a one-way door and an adversarial outside read is worth the cost |
 
 ---
 
@@ -295,21 +333,21 @@ Whatever the scope, the sequence is the same:
    time and damages the review's credibility.
 4. **Run the dimension passes** for the scope requested (below).
 5. **Triage, then cross-check.** **Read**
-   `skills/restack-design-review/sections/matrix-crosscheck.md`. First split
+   `<base>/sections/matrix-crosscheck.md`. First split
    findings into **system** findings and **artifact** findings — documents
    disagreeing with each other do not classify against the matrix, and forcing
-   them to produces nonsense. Classify the system findings A/B/C/D; send the
+   them to produces nonsense. Classify the system findings A/B/C/D/S; send the
    artifact findings to
-   `skills/restack-design-review/sections/artifact-consistency.md`. Do this
+   `<base>/sections/artifact-consistency.md`. Do this
    before writing up — the distribution often changes what the findings mean.
 6. **Write the report.** **Read**
-   `skills/restack-design-review/sections/findings-and-report.md` for severity
+   `<base>/sections/findings-and-report.md` for severity
    definitions, the evidence standard, and the report format.
 7. **Gate:** where a finding implies a materially different design and the
    alternatives are close, issue a decision brief rather than asserting the fix.
    **STOP.**
    Where the design is a **one-way door**, an adversarial outside read is worth
-   its cost first — **read** `scripts/shared/second-opinion.md`. Not on a routine
+   its cost first — **read** `<base>/sections/second-opinion.md`. Not on a routine
    review: review findings are checkable against the design and the matrix, so
    the marginal value is low and the data leaving is not.
 8. Log the review as an artifact in the journey state, and register every
@@ -319,12 +357,12 @@ Whatever the scope, the sequence is the same:
 
 | Command | Read | Covers |
 |---|---|---|
-| `/restack-design-review architecture` | `sections/dimension-architecture.md` | boundaries, coupling, cohesion, state, failure containment, evolvability |
-| `/restack-design-review data` | `sections/dimension-architecture.md` (data half) | ownership, consistency, dual writes, schema evolution, retention, recovery |
-| `/restack-design-review api` | `sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
-| `/restack-design-review security` | `sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
-| `/restack-design-review performance` | `sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
-| `/restack-design-review consistency` | `sections/artifact-consistency.md` | ADRs against each other and against the design docs, actors, residuals, placeholders, operational docs |
+| `/restack-design-review architecture` | `<base>/sections/dimension-architecture.md` | boundaries, coupling, cohesion, state, failure containment, evolvability |
+| `/restack-design-review data` | `<base>/sections/dimension-architecture.md` (data half) | ownership, consistency, dual writes, schema evolution, retention, recovery |
+| `/restack-design-review api` | `<base>/sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
+| `/restack-design-review security` | `<base>/sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
+| `/restack-design-review performance` | `<base>/sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
+| `/restack-design-review consistency` | `<base>/sections/artifact-consistency.md` | ADRs against each other and against the design docs, actors, residuals, placeholders, operational docs |
 
 Each is the full sequence above, narrowed. A scoped review still does the
 matrix cross-check and still produces a verdict.
@@ -353,10 +391,11 @@ verdict.
 
 ## `/restack-design-review consistency`
 
-**Read** `skills/restack-design-review/sections/artifact-consistency.md` and run
-the six checks: ADR against ADR, ADR against design docs, actors against the
-HLD, residuals against their records, placeholders and empty evidence, and
-operational documents against the current design.
+**Read** `<base>/sections/artifact-consistency.md` and run
+the seven checks: ADR against ADR, ADR against design docs, actors against the
+HLD, residuals against their records, placeholders and empty evidence,
+operational documents against the current design, and amendments against their
+own bodies (footnote amendments and stale amendments, reported as `AM-n`).
 
 Worth running on its own, more often than a full review — it is cheap, and drift
 compounds. Any design past a handful of ADRs is a candidate.

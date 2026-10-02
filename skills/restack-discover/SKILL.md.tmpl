@@ -1,6 +1,6 @@
 ---
 name: restack-discover
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 3
 model: opus
 description: |
@@ -90,7 +90,7 @@ rigorous about the wrong system.
 ---
 
 Before starting any discovery session, **Read**
-`skills/restack-discover/sections/anti-patterns.md`. Most discovery failures are one of
+`<base>/sections/anti-patterns.md`. Most discovery failures are one of
 those eight, and they are much cheaper to avoid than to detect afterwards.
 
 ---
@@ -104,7 +104,15 @@ Map the significant paths through an existing system.
 2. **Settle the boundary — explicitly.** What is in scope, and what is a
    neighbouring system you will treat as one opaque actor with a known
    contract? Do this now. A boundary that is never agreed is the single most
-   common reason discovery fails to converge.
+   common reason discovery fails to converge. Ask two things, each as a
+   one-line confirm, and write the answers into `journey-state.md` as
+   `Implementation status:` and `Design boundary:` (skip any already there):
+   - **Is anything implemented, or is this design-only?** If it is design-only,
+     evidence is documents and people. Do not search for repositories or work
+     items.
+   - **Which team boundary does the design stop at?** Anything past it becomes
+     a handoff ask. Do not analyse it. Discovery that creeps into neighbour
+     teams' systems costs iterations, and the architect has to pull it back.
 3. **Find the entry points.** Where do intentions enter? Include the ones that
    are not the front door: scheduled jobs, admin tools, partner callbacks,
    support scripts, manual processes.
@@ -143,8 +151,9 @@ Applicant -> [Web Portal] -> ??? -> [Core Banking?] -> ??? -> Underwriting
 
 Investigate what a specific actor actually does.
 
-**Read** `skills/restack-discover/sections/actor-investigation.md` and follow the
-seven-step protocol. Rate confidence per claim, not per actor — mixed
+**Read** `<base>/sections/actor-investigation.md` and follow the
+seven-step protocol, including the hosting, network and identity probe (6b)
+for any actor on a shared platform. Rate confidence per claim, not per actor — mixed
 confidence within one actor is normal and hides risk when averaged away.
 
 Prioritise actors that are **critical** (on a path serving the aspiration) or
@@ -157,7 +166,7 @@ to start.
 
 Trace how one intention actually propagates.
 
-**Read** `skills/restack-discover/sections/intention-tracing.md` and follow it.
+**Read** `<base>/sections/intention-tracing.md` and follow it.
 Classify every hop as propagate / transform / fork / absorb, name what each
 transformation loses, and answer the question the protocol insists on: **where
 does the intention die?**
@@ -172,7 +181,7 @@ only one of them was designed on purpose.
 Identify and prioritise what you still do not know.
 
 **Read** the "Prioritising gaps" part of
-`skills/restack-discover/sections/confidence-model.md`.
+`<base>/sections/confidence-model.md`.
 
 1. Inventory every gap and assumption across the path maps and actor profiles.
 2. Score each: impact if wrong, likelihood of being wrong, cost to close.
@@ -190,7 +199,7 @@ rather than carrying it as unfinished work.
 
 Map the organisational landscape as a source of stressors.
 
-**Read** `skills/restack-discover/sections/organisational-stressors.md` and work from
+**Read** `<base>/sections/organisational-stressors.md` and work from
 it. Map who is connected — including the adjacent-system owner who gains
 nothing and absorbs the risk — establish each one's concern, position and
 **resistance mechanism**, then translate each mechanism into a walkable
@@ -211,7 +220,7 @@ those rather than recording resistance as a wall.
 **The confidence gate.** Decide whether the system is understood well enough to
 stress.
 
-**Read** `skills/restack-discover/sections/confidence-model.md` and run the gate from
+**Read** `<base>/sections/confidence-model.md` and run the gate from
 it. Thresholds are terrain-dependent and the difference is the point: in
 brownfield an unknown becomes a registered assumption, in a minefield an
 unknown on a critical path blocks.

@@ -60,6 +60,24 @@ $StateDir = Join-Path $env:USERPROFILE '.restack'
 
 function Say([string]$Message) { if (-not $Quiet) { Write-Host $Message } }
 
+# Relative path -> hash for every file under a skill directory. Comparing only
+# SKILL.md misses a section edited on its own, which then never reaches a copy
+# install.
+function Get-TreeHash([string]$Dir) {
+    $map = @{}
+    Get-ChildItem -LiteralPath $Dir -Recurse -File | ForEach-Object {
+        $map[$_.FullName.Substring($Dir.Length)] = (Get-FileHash -LiteralPath $_.FullName).Hash
+    }
+    return $map
+}
+
+function Test-SameTree([string]$A, [string]$B) {
+    $ha = Get-TreeHash $A; $hb = Get-TreeHash $B
+    if ($ha.Count -ne $hb.Count) { return $false }
+    foreach ($k in $ha.Keys) { if ($hb[$k] -ne $ha[$k]) { return $false } }
+    return $true
+}
+
 # --- sanity ------------------------------------------------------------------
 
 $SourceRoot = Join-Path $RepoDir 'skills'
@@ -130,10 +148,7 @@ foreach ($s in $Sources) {
         if ($Method -eq 'symlink' -and $isLink -and $destItem.Target -contains $s.FullName) {
             $action = 'unchanged'; $nSame++
         } elseif ($Method -eq 'copy' -and -not $isLink) {
-            $srcSkill = Join-Path $s.FullName 'SKILL.md'
-            $dstSkill = Join-Path $dest 'SKILL.md'
-            if ((Test-Path $dstSkill) -and
-                ((Get-FileHash $srcSkill).Hash -eq (Get-FileHash $dstSkill).Hash)) {
+            if (Test-SameTree $s.FullName $dest) {
                 $action = 'unchanged'; $nSame++
             } else { $nUpd++ }
         } else { $nUpd++ }
@@ -164,6 +179,31 @@ if (Test-Path $SkillsDir) {
             if (-not $DryRun) { Remove-Item -LiteralPath $d.FullName -Recurse -Force }
         }
     }
+}
+
+# --- verify every section path resolves --------------------------------------
+# A skill names its sections as <base>/sections/<file>. If one is missing from
+# the install, the step that reads it silently does not run - which is how the
+# outside opinion went missing for every copy install. Check the tree that was
+# actually installed (the source tree in a dry run), and fail loudly.
+
+$missing = 0
+foreach ($s in $Sources) {
+    if ($DryRun) { $root = $s.FullName } else { $root = Join-Path $SkillsDir $s.Name }
+    $skillMd = Join-Path $root 'SKILL.md'
+    if (-not (Test-Path -LiteralPath $skillMd)) { continue }
+    $refs = Select-String -LiteralPath $skillMd -Pattern '<base>/sections/[A-Za-z0-9_.-]+\.md' -AllMatches |
+        ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object -Unique
+    foreach ($ref in $refs) {
+        $file = Join-Path $root ($ref.Substring('<base>/'.Length))
+        if (-not (Test-Path -LiteralPath $file)) {
+            Write-Host "Error: /$($s.Name) names $ref but $file is missing."
+            $missing++
+        }
+    }
+}
+if ($missing -gt 0) {
+    Write-Error "$missing section file(s) missing - the install is incomplete. Re-run setup.ps1; if it persists, report it."
 }
 
 # --- record the install ------------------------------------------------------

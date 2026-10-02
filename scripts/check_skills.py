@@ -50,6 +50,16 @@ RUNTIME_STATE_PREFIXES = (".restack/", "~/.restack/", "$HOME/.restack/")
 # The installed location of the skills tree maps back onto skills/ here.
 INSTALLED_PREFIXES = ("~/.claude/skills/", "$HOME/.claude/skills/")
 
+# The skill's own directory, as Claude Code prints it at load.
+BASE_PREFIX = "<base>/"
+
+# Section paths that resolve in this checkout and nowhere else. They passed the
+# existence check for months because the check ran from the repository root -
+# the one place they work. From an install, a Glob for them returns nothing.
+REPO_ONLY_SECTION = re.compile(r"^(?:skills/[^/]+/sections/|scripts/shared/|sections/|templates/)")
+
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+
 # Method used by several skills lives here, registered with "shared": true.
 SHARED_SECTIONS = ROOT / "scripts" / "shared"
 
@@ -57,19 +67,43 @@ SHARED_SECTIONS = ROOT / "scripts" / "shared"
 def scan_paths(f: Path, label: str, skill_dir: Path | None) -> int:
     """Check every path-looking token in one file. Returns how many were checked.
 
-    `skill_dir` owns the file, or is None for a shared section. A shared section
-    is read by several skills, so a bare `sections/...` token there has no single
-    owner — skipped rather than guessed at, per the conservative rule below.
+    `skill_dir` owns the file, or is None for a shared section's source. A shared
+    section is read by several skills, so a `<base>/...` token there has no single
+    owner; it is checked in each skill's vendored copy instead.
     """
     checked = 0
 
-    for raw in PATH_TOKEN.findall(f.read_text(encoding="utf-8")):
+    # Generated banners are notes to maintainers, not paths Claude is told to use.
+    text = HTML_COMMENT.sub("", f.read_text(encoding="utf-8"))
+    for raw in PATH_TOKEN.findall(text):
         token = raw.strip("`\"'()[],")
 
         if "/" not in token:
             continue                                    # bare filename, not a path
+        if token.startswith(BASE_PREFIX):
+            rest = token[len(BASE_PREFIX):]
+            if skill_dir is None or any(c in rest for c in "<>*"):
+                continue                                # per consuming skill / placeholder
+            checked += 1
+            target = skill_dir / rest
+            if not target.exists():
+                errors.append(
+                    f"{label}: references '{token}' but "
+                    f"{target.relative_to(ROOT)} does not exist"
+                )
+            continue
+        if REPO_ONLY_SECTION.match(token):
+            checked += 1
+            errors.append(
+                f"{label}: references '{token}', which resolves only from a "
+                f"ReStack checkout - vendor it via sections/manifest.json and "
+                f"write it as <base>/sections/<file>"
+            )
+            continue
         if any(c in token for c in "<>*") or "NNN" in token:
             continue                                    # placeholder
+        if token.startswith("$") and not token.startswith("$HOME/"):
+            continue                                    # shell variable in a snippet
         if token.startswith(USER_OUTPUT_PREFIXES):
             continue                                    # written into the user's project
         if token.startswith(RUNTIME_STATE_PREFIXES):
@@ -83,12 +117,7 @@ def scan_paths(f: Path, label: str, skill_dir: Path | None) -> int:
                 if mapped.startswith(prefix):
                     mapped = "skills/" + mapped[len(prefix):]
                     break
-            if mapped.startswith("sections/"):
-                if skill_dir is None:
-                    continue                            # ambiguous in a shared section
-                target = skill_dir / mapped             # relative to this skill
-            else:
-                target = ROOT / mapped                  # repo-relative
+            target = ROOT / mapped                      # repo-relative
 
         checked += 1
         if not target.exists():
@@ -171,7 +200,6 @@ def check_skill(skill_dir: Path) -> dict:
     # Sections: manifest and directory must agree in both directions.
     sections_dir = skill_dir / "sections"
     registered: set[str] = set()
-    shared_count = 0
     if sections_dir.is_dir():
         manifest_path = sections_dir / "manifest.json"
         if not manifest_path.exists():
@@ -191,15 +219,28 @@ def check_skill(skill_dir: Path) -> dict:
                 if sid in seen_ids:
                     errors.append(f"{rel}/sections/manifest.json: duplicate id '{sid}'")
                 seen_ids.add(sid)
+                source = entry.get("source") or (f"scripts/shared/{sfile}" if entry.get("shared") else None)
                 if sfile:
-                    if entry.get("shared"):
-                        shared_count += 1
-                        shared = ROOT / "scripts" / "shared" / sfile
-                        if not shared.exists():
+                    if source:
+                        if not (ROOT / source).exists():
                             errors.append(
-                                f"{rel}/sections/manifest.json: shared section '{sfile}' "
-                                f"is registered but missing from scripts/shared/"
+                                f"{rel}/sections/manifest.json: '{sfile}' is vendored from "
+                                f"{source}, which does not exist"
                             )
+                        # setup installs skills/restack-*/ only, so the skill
+                        # needs its own copy. gen_skills.py writes it.
+                        vendored = sections_dir / sfile
+                        if not vendored.exists():
+                            errors.append(
+                                f"{rel}/sections/{sfile}: vendored from {source} but has no copy here - "
+                                f"it would not be installed. Run: python scripts/gen_skills.py {name}"
+                            )
+                        elif BANNER not in vendored.read_text(encoding="utf-8")[:400]:
+                            errors.append(
+                                f"{rel}/sections/{sfile}: vendored copy has no {BANNER} banner - "
+                                f"it was probably hand-edited. Edit {source}"
+                            )
+                        registered.add(sfile)
                     else:
                         registered.add(sfile)
                         if not (sections_dir / sfile).exists():
@@ -217,9 +258,8 @@ def check_skill(skill_dir: Path) -> dict:
     return {
         "name": name,
         "generated": generated,
-        # Owned sections plus shared ones: the report should describe what the
-        # skill actually reads, not only what it owns.
-        "sections": len(registered) + shared_count,
+        # Owned sections plus vendored shared ones: what the skill actually reads.
+        "sections": len(registered),
         "paths": paths,
     }
 

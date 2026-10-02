@@ -20,6 +20,20 @@
       "file": "catalog-and-evolution.md",
       "title": "Catalog structure, effectiveness tracking and deprecation",
       "trigger": "running /restack-patterns catalog, effectiveness or evolve - maintaining the library over time"
+    },
+    {
+      "id": "pattern-template",
+      "file": "pattern-template.md",
+      "source": "templates/pattern-template.md",
+      "title": "Pattern template",
+      "trigger": "writing up a pattern from /restack-patterns extract"
+    },
+    {
+      "id": "anti-pattern-template",
+      "file": "anti-pattern-template.md",
+      "source": "templates/anti-pattern-template.md",
+      "title": "Anti-pattern template",
+      "trigger": "writing up an anti-pattern from /restack-patterns anti-patterns"
     }
   ]
 }

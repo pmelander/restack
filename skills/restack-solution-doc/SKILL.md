@@ -1,6 +1,6 @@
 ---
 name: restack-solution-doc
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 2
 model: opus
 description: |
@@ -48,6 +48,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -75,8 +99,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -124,6 +151,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -266,13 +302,15 @@ thing a new team does with unexplained complexity is delete it.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-solution-doc`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-solution-doc/sections/hld-structure.md` | running /restack-solution-doc hld - writing or reviewing the high-level design |
-| `skills/restack-solution-doc/sections/lld-structure.md` | running /restack-solution-doc lld - writing a component-level design |
-| `skills/restack-solution-doc/sections/operational-docs.md` | running /restack-solution-doc deployment or runbook - documenting how the system is deployed and operated |
+| `<base>/sections/hld-structure.md` | running /restack-solution-doc hld - writing or reviewing the high-level design |
+| `<base>/sections/lld-structure.md` | running /restack-solution-doc lld - writing a component-level design |
+| `<base>/sections/operational-docs.md` | running /restack-solution-doc deployment or runbook - documenting how the system is deployed and operated |
 
 ---
 
@@ -294,7 +332,7 @@ Then ask only what is genuinely missing — one question at a time.
 
 ## `/restack-solution-doc hld`
 
-**Read** `skills/restack-solution-doc/sections/hld-structure.md` and write from
+**Read** `<base>/sections/hld-structure.md` and write from
 it.
 
 Two sections carry the value and are the ones most often omitted:
@@ -305,12 +343,16 @@ Two sections carry the value and are the ones most often omitted:
   standard misreading that everything unmentioned is either included or
   forgotten.
 
+Any impact figure quoted from the stressor history carries its scoring baseline
+(`scored pre-D<n>`) when a later decision changed the actor set. Otherwise the
+HLD quotes a forecast for a design that no longer exists.
+
 Write to `docs/architecture/HLD.md`. Close with a reflection prompt about what
 was hardest to articulate — that is reliably where the design is weakest.
 
 ## `/restack-solution-doc lld [component]`
 
-**Read** `skills/restack-solution-doc/sections/lld-structure.md`.
+**Read** `<base>/sections/lld-structure.md`.
 
 Write one per component that needs it, not per component that exists. The
 section names the four cases that justify an LLD; a document written for
@@ -325,7 +367,7 @@ Write to `docs/architecture/LLD-<component>.md`.
 ## `/restack-solution-doc deployment`
 
 **Read** the deployment half of
-`skills/restack-solution-doc/sections/operational-docs.md`.
+`<base>/sections/operational-docs.md`.
 
 Verification steps must be specific enough that two people would agree on
 whether the deploy worked, and the rollback section must name what **cannot**
@@ -334,7 +376,7 @@ be rolled back. Write to `docs/deployment/DEPLOYMENT.md`.
 ## `/restack-solution-doc runbook`
 
 **Read** the runbook half of
-`skills/restack-solution-doc/sections/operational-docs.md`.
+`<base>/sections/operational-docs.md`.
 
 Populate the failure-modes section from the stressor matrix rather than
 inventing it: for each significant stressor, what an operator observes, which
@@ -342,6 +384,10 @@ residual should absorb it, and what to do when the residual is not working.
 
 Include what **not** to do. It is the highest-value content in any runbook and
 is almost never written down. Write to `docs/operations/RUNBOOK.md`.
+
+Every alert the runbook names must exist in an ADR or LLD. If one does not,
+register it as a design gap rather than defining it here. Write every lever
+end to end: who pulls it, what it does, and the signal that confirms it worked.
 
 ## `/restack-solution-doc complete`
 
@@ -357,6 +403,17 @@ documentation just found, and it is worth more than the documents.
 Read the current document, establish what changed and why, then update. Where
 the change reflects a decision, make sure an ADR exists — documentation is not
 a substitute for a decision record.
+
+**Update the body, not just the end.** An amendment that contradicts the body
+goes at the **top as a banner**, and every contradicted passage is struck or
+marked inline. A two-line amendment at the end of an LLD whose body still
+specifies the old grants, endpoints and responses is amendment by footnote. The
+developer reads the body and builds the old design.
+
+When the change comes from an ADR, check its **Knock-on changes** list and work
+through every document it names, not just the one you were asked about. A
+replaced deployment guide or runbook is archived in the same step (see
+`<base>/sections/operational-docs.md`).
 
 Never quietly rewrite a design document to match what was built. If the
 implementation diverged, that divergence is the finding: either the design was

@@ -41,6 +41,21 @@ The fix is not more discovery — it is settling the boundary as an explicit
 decision: what is in scope for this aspiration, and what is a neighbouring
 system we treat as one opaque actor with a known contract.
 
+**Ignoring inherited platform defaults.** A guarantee designed at the
+application layer, such as single-writer, private-only or least privilege, can
+be defeated by a shared module's defaults that nobody on the team wrote: a
+storage key injected into every app's settings, a public endpoint enabled by
+the base template, auto-heal recycling instances on a health check the design
+now leans on. The application code and the design documents both look right.
+Read the platform's IaC and its common modules before claiming a guarantee
+holds.
+
+**Wandering past the boundary.** The mirror of an unagreed boundary: the
+boundary was agreed, and the analysis crossed it anyway, investigating a
+neighbour team's internals because they were reachable. The output becomes
+findings nobody in the room can act on. Past the boundary, record what the
+system visibly does and turn the rest into handoff asks.
+
 **Confidence by fatigue.** Declaring the map good because the team is tired of
 discovery. The confidence gate exists to make that visible; the honest output
 is `NEEDS_DISCOVERY` with a named unknown, not a summary written to let everyone

@@ -16,6 +16,13 @@
 
 **Review Date:** 2027-03-06
 
+> **Amended 2026-10-02 by [ADR-015](ADR-015-vendored-sections-and-base-relative-paths.md).**
+> The *Shared sections* subsection below says the index "renders the real path"
+> into `scripts/shared/`. That path never existed in an install, so the outside
+> opinion silently did not run for any copy install. Shared sections are now
+> vendored into each consuming skill and referenced as
+> `<base>/sections/second-opinion.md`. The rest of this decision stands.
+
 ## Context
 
 A single model generates from its own distribution. Where the method depends on
@@ -97,8 +104,9 @@ time, so the reader can discount accordingly.
 
 The method is one thing used by several skills, so it lives once at
 `scripts/shared/second-opinion.md`. `gen_skills.py` gained a `"shared": true`
-manifest flag: the content sits in `scripts/shared/`, the section index renders
-the real path, and it is still read on demand rather than inlined.
+manifest flag: the content sits in `scripts/shared/`, ~~the section index renders
+the real path~~ *(superseded 2026-10-02, see banner: each skill gets a vendored
+copy)*, and it is still read on demand rather than inlined.
 
 This is the first shared section. The alternative — duplicating the method into
 each consuming skill — would reintroduce exactly the two-sources-of-truth

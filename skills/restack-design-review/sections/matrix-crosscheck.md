@@ -16,7 +16,7 @@ matrix:
 
 - **System findings** — about how the architecture behaves under stress. A
   missing timeout, an unowned data write, a dependency with no degraded path.
-  These classify A/B/C/D below.
+  These classify A/B/C/D/S below.
 - **Artifact findings** — about the documents disagreeing with each other or
   with the design. A deployment guide describing a topology a later ADR
   replaced; an HLD missing actors an iteration added; an invariant left stale by
@@ -25,7 +25,7 @@ matrix:
 **Artifact findings do not classify against the matrix**, and forcing them to
 produces nonsense — the matrix has nothing to say about two documents
 contradicting each other. Send them to
-`skills/restack-design-review/sections/artifact-consistency.md`, which handles
+`<base>/sections/artifact-consistency.md`, which handles
 them properly, and report them in their own section.
 
 This split is not a technicality. On a real engagement with 42 ADRs and 9 LLDs,
@@ -39,7 +39,7 @@ finding; as the document count grows, drift takes over.
 #### Then classify the system findings
 
 For each, read `docs/stressor-analysis/` and
-`docs/journey/stressor-iteration-history.md`, then place it in one of four
+`docs/journey/stressor-iteration-history.md`, then place it in one of five
 classes. State the class next to the finding in the report.
 
 **A — The matrix caught this; the residual is missing.**
@@ -69,6 +69,16 @@ The design changed after the last iteration, a new dependency arrived, or the
 environment moved. Legitimate. Feed it back as a new stressor and note that the
 matrix is stale.
 
+**S — Lost on supersession.**
+The analysis once covered this, and a decision that covered it was retired
+without anything taking over its job. The protection was a side effect of the
+old ADR that nobody wrote down as its purpose: an alert, a gate, a field
+constraint. Distinguish it from C by asking whether an earlier ADR used to
+prevent the failure. If one did, it is S. This is a different correction to the
+method: the stressor analysis was fine, and supersession was not accounted
+point by point. Route to `/restack-adr update`'s decision-point accounting, and
+add the withdrawn point back or record the accepted gap.
+
 #### What the distribution tells you
 
 The mix matters more than any single finding.
@@ -79,6 +89,7 @@ The mix matters more than any single finding.
 | **B** | Residuals are being chosen without diagnosing the mechanism — pattern-matching to a familiar fix. |
 | **C** | The path map is incomplete. Go back to `/restack-discover`, not forward to fixes. |
 | **D** | The matrix is simply stale. Re-run the loop. |
+| **S** | Decisions are being retired whole. Make point-by-point accounting part of every supersession. |
 
 If most findings never reached this table at all because triage sent them to
 artifact consistency, that is its own diagnosis: the analysis is probably sound

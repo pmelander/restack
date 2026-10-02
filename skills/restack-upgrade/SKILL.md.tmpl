@@ -1,6 +1,6 @@
 ---
 name: restack-upgrade
-version: 1.1.0
+version: 1.2.0
 preamble-tier: 1
 model: sonnet
 description: |
@@ -31,6 +31,9 @@ Bring the installed skills up to date with the repository.
 The install is a **git checkout plus a copy step**: the repository lives
 somewhere on disk, and `setup` copies each `skills/restack-*/` directory into
 `~/.claude/skills/`. Upgrading is therefore *pull, then re-run setup*.
+
+**`/restack-upgrade check`** runs only the verification in step 4b against the
+current install and reports. It pulls nothing and writes nothing.
 
 ## Step 1 — find the install
 
@@ -126,6 +129,29 @@ is the thing a plain copy never does.
 Show its summary line to the architect verbatim. If it reports removals, name
 them — a command they were using may have gone.
 
+## Step 4b — verify every indexed file is installed
+
+`setup` already fails when a section is missing. Check again here anyway, against
+the directory Claude Code actually loads from. A skill whose section is missing
+does not error: it skips the step that section carries, and nobody notices.
+
+```bash
+SKILLS_DIR="$(sed -n 's/.*"skills_dir": *"\([^"]*\)".*/\1/p' ~/.restack/install.json 2>/dev/null)"
+SKILLS_DIR="${SKILLS_DIR:-$HOME/.claude/skills}"
+missing=0
+for skill in "$SKILLS_DIR"/restack-*/; do
+  for rel in $(grep -o '<base>/sections/[A-Za-z0-9_.-]*\.md' "$skill/SKILL.md" | sort -u); do
+    [ -f "$skill${rel#<base>/}" ] || { echo "MISSING: $(basename "$skill") -> $rel"; missing=$((missing + 1)); }
+  done
+done
+echo "missing indexed files: $missing"
+```
+
+Report the count. **Zero is the only passing result.** For anything above zero,
+name each missing file and run `./setup` again. If a file is still missing
+after that, the repository itself is broken: say so, and do not report the
+upgrade as done.
+
 ## Step 5 — say what changed
 
 Read `CHANGELOG.md` and summarise the entries **between the installed version
@@ -157,6 +183,7 @@ v{version}" and stop.
 | Some skills missing | interrupted copy | run `./setup` — it reinstalls what is absent |
 | A command exists but the skill is stale | repo pulled, setup not re-run | run `./setup` |
 | `/restack-excel` fails to find its helper | pre-v2 install | upgrade; the helper now ships inside the skill |
+| A step silently does not run (e.g. the outside opinion) | a section the skill names is not installed | `/restack-upgrade check`, then `./setup` |
 | Edits to the repo have no effect | installed by copy, not symlink | `./setup --symlink` |
 | `--symlink` was used and edits still have no effect | the shell could not create symlinks and setup fell back to copy — it warns when this happens | enable Developer Mode, or `MSYS=winsymlinks:nativestrict ./setup --symlink`; check with `ls -la ~/.claude/skills/` |
 

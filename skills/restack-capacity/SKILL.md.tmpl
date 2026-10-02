@@ -76,7 +76,7 @@ most reduce the uncertainty.
 
 ## `/restack-capacity estimate`
 
-**Read** `skills/restack-capacity/sections/demand-modelling.md` and follow the
+**Read** `<base>/sections/demand-modelling.md` and follow the
 five steps.
 
 Two things decide whether the estimate is worth anything:
@@ -96,7 +96,7 @@ and the single test that would most reduce uncertainty.
 
 Strategies: `horizontal` | `vertical` | `auto` | `database` | `cache` | `cdn`
 
-**Read** `skills/restack-capacity/sections/scaling-patterns.md`.
+**Read** `<base>/sections/scaling-patterns.md`.
 
 Design the approach per layer, then state for each: the trigger (on the thing
 that actually saturates, rarely CPU), the **warm-up time** — the window during
@@ -114,7 +114,7 @@ Issue a decision brief and record an ADR.
 ## `/restack-capacity bottleneck`
 
 **Read** the bottleneck half of
-`skills/restack-capacity/sections/scaling-patterns.md`.
+`<base>/sections/scaling-patterns.md`.
 
 Work along the critical path from the path map, establish each actor's
 **ceiling** — not its utilisation — and take the lowest. Then name the second
@@ -132,7 +132,7 @@ a queue that absorbs the burst — rather than more hardware.
 
 ## `/restack-capacity load-test`
 
-**Read** `skills/restack-capacity/sections/load-testing.md`.
+**Read** `<base>/sections/load-testing.md`.
 
 Design the test around the assumption you most want to kill, stated as a
 falsifiable prediction before running anything.
@@ -155,7 +155,7 @@ production, say which results that invalidates.
 ## `/restack-capacity forecast`
 
 **Read** the forecasting half of
-`skills/restack-capacity/sections/demand-modelling.md`.
+`<base>/sections/demand-modelling.md`.
 
 Model the **driver**, not the metric — traffic follows customers, and
 forecasting traffic directly hides the moment that relationship changes.
@@ -168,7 +168,7 @@ breaking point.
 ## `/restack-capacity right-size`
 
 **Read** the right-sizing half of
-`skills/restack-capacity/sections/scaling-patterns.md`.
+`<base>/sections/scaling-patterns.md`.
 
 Measure over a period that includes the peak. Then the distinction that matters:
 **separate over-provisioning from headroom.** A resource at 15% average may be

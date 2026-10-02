@@ -1,6 +1,6 @@
 ---
 name: restack-adr
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 2
 model: opus
 description: |
@@ -48,6 +48,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -75,8 +99,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -124,6 +151,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -275,18 +311,20 @@ the folder fills with trivia and people stop reading it.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-adr`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-adr/sections/adr-format.md` | writing or updating an ADR - the template, what each field is for, and the residual traceability fields |
-| `skills/restack-adr/sections/outcome-review.md` | running /restack-adr review - revisiting a decision months later to capture what actually happened |
+| `<base>/sections/adr-format.md` | writing or updating an ADR - the template, what each field is for, and the residual traceability fields |
+| `<base>/sections/outcome-review.md` | running /restack-adr review - revisiting a decision months later to capture what actually happened |
 
 ---
 
 ## `/restack-adr create <title>`
 
-1. **Read** `skills/restack-adr/sections/adr-format.md`.
+1. **Read** `<base>/sections/adr-format.md`.
 2. Determine the next number by scanning `docs/adr/` for existing files —
    scan, do not count. Report the number you took.
 3. **Check whether this decision implements a residual.** Look in
@@ -305,14 +343,21 @@ from memory of what it probably says.
    documentation of a fait accompli (fine, say so in the ADR), or the option
    space has not been explored (not fine — explore it now).
 7. Draft the ADR with every section filled substantively. An empty Negative
-   section means the thinking is not finished.
+   section means the thinking is not finished. Record every **derived detail**
+   you decided while drafting. Any that is a one-way door or Low confidence
+   becomes a brief instead.
 8. **Gate:** where the alternatives are genuinely close, or the decision is a
    one-way door, issue a decision brief rather than picking for the architect.
    **STOP.**
-9. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
-10. Log to `docs/journey/decisions-log.md` and add to the journey state's
+9. **Knock-on changes.** Grep `docs/` for the mechanism this decision changes.
+   For every descriptive document it invalidates, update it, banner it as
+   stale, or ticket it **now**, and fill the Knock-on table. A decision that
+   adds or removes an actor also makes any already-scored impact matrix stale:
+   mark it `scored pre-D<n>` in `docs/journey/stressor-iteration-history.md`.
+10. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
+11. Log to `docs/journey/decisions-log.md` and add to the journey state's
     artifact list.
-11. Close with a reflection prompt.
+12. Close with a reflection prompt.
 
 ## `/restack-adr list`
 
@@ -327,22 +372,38 @@ inventory.
 
 ## `/restack-adr update <number>`
 
-Read it, establish what changed, and choose the right mechanism:
+**Read** `<base>/sections/adr-format.md` (decision-point accounting, amendments,
+knock-on changes). Then:
 
-- The decision **stands, details changed** → edit in place.
-- The decision **no longer holds** → do not edit it. Set status to
-  `Superseded by ADR-NNN` and create the new ADR, whose Context explains what
-  changed. **The pair is the artifact** — it shows thinking evolving, which a
-  single current document cannot.
-- The decision was **abandoned, not replaced** → status `Deprecated`, and say
-  why in a dated note.
+1. Read the ADR and establish what changed.
+2. **Account for it point by point before choosing a mechanism.** List every
+   decision point, mark each *holds / replaced by ADR-x / withdrawn*, and for
+   each withdrawn point answer: *what failure did this prevent, and what
+   prevents it now?* If any answer is "nothing", issue a decision brief and
+   **STOP**. Superseding past an unanswered row is how a protection disappears
+   without anyone deciding to remove it.
+3. Choose the mechanism:
+   - The decision **stands, details changed** → amend in place. If the
+     amendment contradicts the body, it goes **at the top as a banner** and the
+     contradicted passages are struck or marked inline. Never as a footnote.
+   - The decision **no longer holds** → do not edit it. Set status to
+     `Superseded by ADR-NNN` and create the new ADR, whose Context explains
+     what changed and which carries the point-by-point table. **The pair is the
+     artifact** — it shows thinking evolving, which a single current document
+     cannot.
+   - The decision was **abandoned, not replaced** → status `Deprecated`, with
+     the point-by-point table and the reason in a dated note.
+4. Record the derived details and fill **Knock-on changes** as in `create`
+   steps 7 and 9. A supersession invalidates the documents written against the
+   old decision, and those documents are what people actually follow.
+5. Log to `docs/journey/decisions-log.md`.
 
 Never quietly rewrite a decision to match what happened. That destroys the only
 record of what was actually believed at the time.
 
 ## `/restack-adr review <number>`
 
-**Read** `skills/restack-adr/sections/outcome-review.md` and run the protocol.
+**Read** `<base>/sections/outcome-review.md` and run the protocol.
 
 The critical move is separating **outcome** from **reasoning**: a sound
 decision can have a bad outcome and vice versa, and judging only on results
@@ -363,7 +424,7 @@ no; that is a different answer from a hit in Decision.
 
 ## `/restack-adr template`
 
-Print the format from `skills/restack-adr/sections/adr-format.md`, including
+Print the format from `<base>/sections/adr-format.md`, including
 the reversibility and residual-traceability fields and what they are for.
 
 ---
@@ -400,6 +461,11 @@ Confirm you actually read every section the index named as applying to this run,
 - What did you work out while writing that you did not know when you started?
 - Did the act of naming alternatives change the decision? If it never does,
   the alternatives are not real.
+
+**When superseding**
+- What was the old decision quietly protecting that its title never said?
+- Which document will someone follow tomorrow that still describes the old
+  decision?
 
 **At review, months later**
 - What did you predict correctly, and what did you miss entirely?

@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 3
 model: opus
 description: |
@@ -45,6 +45,30 @@ competence; supply the discipline they do not have time to hold in their head.
   make it for them and present the conclusion.
 - **Every session ends with a reflection prompt.** Not optional. The prompt is
   what converts one analysis into transferable thinking.
+
+---
+
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
 
 ---
 
@@ -115,8 +139,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -164,6 +191,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -297,6 +333,14 @@ If `journey-state.md` is absent and the work is clearly mid-journey, say so and
 reconstruct it retrospectively from what exists in the repo before proceeding.
 Do not start a fresh journey over the top of an in-flight one.
 
+**Two fields bound every probe.** Read `Implementation status:` and `Design
+boundary:` from `journey-state.md` before investigating anything. In a
+design-only engagement, do not search for repositories or work items. Past the
+design boundary, record what the neighbour's system visibly does and turn
+every question about its internals into a handoff ask. Do not investigate
+there. If either field is missing, ask before probing (a one-line confirm is
+enough) and write the answer in.
+
 ### Write last
 
 Update state **at the end of every command**, not only `/restack-journey` commands.
@@ -306,6 +350,25 @@ registered an assumption and did not write it down has lost that work.
 Writes are append-only in spirit: never delete iteration history, never
 overwrite a prior decision — supersede it with a new dated entry that references
 the one it replaces. The trail is the point, especially in minefield terrain.
+
+### Canonical shapes (so any agent can append in one line)
+
+- **Assumptions register:** one table, for the whole journey:
+  `ID | Assumption | Source | Validates it | Depends on it | Status | Status date`.
+  Status is exactly one of `Open`, `Partly resolved`, `Resolved`,
+  `Resolved by design (test pending)`, `Withdrawn`, `Superseded by D<n>`. A
+  status change appends `- A-<n> · <status> · <date> · <why>` under
+  `## Status lines` and updates the row's two status cells. Never start a
+  second table, and never add an "Update" heading.
+- **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
+  brief, appended at the end. It records whether the decision changed the actor
+  set, because that makes earlier matrices `scored pre-D<n>`.
+- **Journey history** in `journey-state.md`: an append-only list at the **end**
+  of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
+
+`/restack-journey` carries the full templates. When an existing file uses
+another shape, append in its shape and register the drift once. Do not
+restructure someone's register in the middle of a journey without asking.
 
 ### Timestamps
 
@@ -388,15 +451,20 @@ the matrix in front of them, rather than by drifting onward.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-journey`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-journey/sections/route-greenfield.md` | the terrain has been classified Greenfield and you are mapping or re-checking the route |
-| `skills/restack-journey/sections/route-brownfield.md` | the terrain has been classified Brownfield or Oilfield and you are mapping or re-checking the route |
-| `skills/restack-journey/sections/route-minefield.md` | the terrain has been classified Minefield and you are mapping or re-checking the route |
-| `skills/restack-journey/sections/route-ongoing.md` | the system is live and you are running /restack-journey cadence, or the terrain has been classified Ongoing Evolution |
-| `skills/restack-journey/sections/terrain-classification.md` | running /restack-journey start, or re-classifying terrain mid-journey because the ground has changed |
+| `<base>/sections/route-greenfield.md` | the terrain has been classified Greenfield and you are mapping or re-checking the route |
+| `<base>/sections/route-brownfield.md` | the terrain has been classified Brownfield or Oilfield and you are mapping or re-checking the route |
+| `<base>/sections/route-minefield.md` | the terrain has been classified Minefield and you are mapping or re-checking the route |
+| `<base>/sections/route-ongoing.md` | the system is live and you are running /restack-journey cadence, or the terrain has been classified Ongoing Evolution |
+| `<base>/sections/terrain-classification.md` | running /restack-journey start, or re-classifying terrain mid-journey because the ground has changed |
+| `<base>/sections/journey-state-template.md` | creating docs/journey/journey-state.md at /restack-journey start, or reconstructing it mid-journey |
+| `<base>/sections/assumptions-register-template.md` | creating docs/journey/assumptions-register.md, or appending to one whose shape you need to confirm |
+| `<base>/sections/decisions-log-template.md` | creating docs/journey/decisions-log.md, or logging the first gate of a journey |
 
 ---
 
@@ -404,28 +472,44 @@ from memory of what it probably says.
 
 Begin a journey. Classify the terrain, map the route, name the first move.
 
-**Read** `skills/restack-journey/sections/terrain-classification.md` and run the
+**Read** `<base>/sections/terrain-classification.md` and run the
 protocol in it. Questions go one at a time — never batch aspiration, existing
 state, blast radius, resistance and capability into a single ask.
 
 Then, in order:
 
-1. Run the terrain classification protocol from the section above.
-2. **Gate:** issue decision brief `D1` with your terrain classification as the
-   recommendation, the evidence behind it, and the cost of misclassifying in
-   each direction. **STOP.** Wait for confirmation.
-3. Read the route section matching the confirmed terrain
+1. **Settle the two bounding questions first, before any probing.** Each one is
+   a one-line confirm, or a brief if the answer is contested:
+   - **Implementation status:** is anything implemented, or is this design-only?
+   - **Design boundary:** which team boundary does the design stop at, and what
+     beyond it becomes a handoff ask rather than something to investigate?
+
+   Getting these wrong costs iterations. Searching for repositories in a
+   spec-only engagement, or analysing a neighbour team's system as if it were in
+   scope, are the two corrections architects most often have to make
+   mid-journey.
+2. Run the terrain classification protocol from the section above.
+3. **Gate:** issue the terrain decision brief (`D1` in a new journey) with your
+   terrain classification as the recommendation, the evidence behind it, and
+   the cost of misclassifying in each direction. **STOP.** Wait for
+   confirmation.
+4. Read the route section matching the confirmed terrain
    (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, or
    `route-ongoing.md`) and present the route from it — including its expected
    iteration count and its named failure modes. Do not summarise the route from
    memory; the failure modes are the part people need and the part that gets
    dropped.
-4. Name the **first move** as a single command, with one line on why that one
+5. Name the **first move** as a single command, with one line on why that one
    and not the obvious alternative.
-5. Create `docs/journey/journey-state.md` from
-   `templates/journey-state-template.md`, populated with the confirmed
-   aspiration (verbatim), terrain, route, and the classification rationale.
-6. Log the terrain gate to `docs/journey/decisions-log.md`.
+6. Create `docs/journey/journey-state.md` from
+   `<base>/sections/journey-state-template.md`, populated with the confirmed
+   aspiration (verbatim), terrain, route, the classification rationale, and
+   the `Implementation status:` and `Design boundary:` answers. Create
+   `assumptions-register.md` and `decisions-log.md` from
+   `<base>/sections/assumptions-register-template.md` and
+   `<base>/sections/decisions-log-template.md`, so every later append lands in
+   one canonical shape.
+7. Log the terrain gate to `docs/journey/decisions-log.md`.
 
 **Output:** confirmed terrain with rationale, the route, expected iteration
 count, the first move, and the path to the journey state file.
@@ -441,7 +525,9 @@ engagement, or genuinely not knowing what comes next.
    reconstruct from repo evidence (existing ADRs, HLDs, review findings,
    discovery notes) before assessing anything.
 2. Inventory what actually exists on disk, not what the state file claims
-   exists. Divergence between the two is itself a finding.
+   exists. Divergence between the two is itself a finding. If
+   `Implementation status:` or `Design boundary:` is missing, ask for it now
+   (a one-line confirm) and write it in before assessing anything else.
 3. Place the architect on the route for their terrain. Name the phase.
 4. **Assess what was skipped**, and for each skip decide whether it is a
    reasonable economy or an exposure. Be specific about the consequence:
@@ -473,9 +559,25 @@ decides whether the architecture is done enough to build on.
    directly, or on peripheral paths. Concentration matters more than total.
 5. Estimate the cost of another iteration — effort, added complexity, and the
    new paths the next residuals will themselves create.
-6. **Gate:** issue the decision brief. **STOP.**
-7. Log the decision and rationale to `decisions-log.md` and append the
-   iteration to `stressor-iteration-history.md`.
+6. **Check the figures are current.** If any decision logged after the matrix
+   was scored added or removed an actor, the total describes a design that no
+   longer exists. Mark the iteration `scored pre-D<n>` and say so in the brief.
+   A gate passed on a stale forecast passes a design nobody scored.
+7. **Check for unwalked human actors.** If any human operator actor (on-call,
+   approver, break-glass holder) is registered as unwalked, as a matrix column
+   or an "unwalked actor" assumption, the gate **cannot pass to
+   Documentation**. Add the choice to the brief: walk now with the lever
+   template (`/restack-stressor walk`), or accept explicitly, recorded in the
+   decisions log with the reason. An unwalked operator is where the first
+   concrete defect tends to appear: an emergency switch described three ways,
+   one of which makes the runbook's diagnosis give a false negative.
+8. **Check the knock-on changes.** For every ADR written in this iteration, the
+   Knock-on changes field is filled and the documents it names were changed
+   after the ADR's date. Unfinished knock-ons go into the brief: proceeding to
+   Documentation over them is how pre-pivot documents survive into review.
+9. **Gate:** issue the decision brief. **STOP.**
+10. Log the decision and rationale to `decisions-log.md` and append the
+    iteration to `stressor-iteration-history.md`.
 
 ### Reading the signals
 
@@ -507,7 +609,7 @@ A journey health check. Audit the work, not the plan.
 2. Inventory every artifact produced, and open each one rather than trusting
    the index. An HLD that exists but has three unfilled template sections is
    not an artifact.
-3. Check for the seven journey failures:
+3. Check for the eleven journey failures:
 
    | Failure | How it looks | Why it matters |
    |---|---|---|
@@ -518,6 +620,10 @@ A journey health check. Audit the work, not the plan.
    | Organisational stressors absent | matrix has only technical stressors | the delivery constraint will bite |
    | Aspiration drift | current design does not serve the recorded aspiration | you are solving a different problem |
    | Assumptions unregistered | confident claims, empty assumptions register | nothing can be revalidated |
+   | Knock-on changes unfinished | an ADR's Knock-on field is empty, or names documents not modified after the ADR's date | descriptive documents still specify the old decision, and someone will follow them |
+   | Derived details unconfirmed | overturnable rows in ADRs' Derived details tables the architect never confirmed | decisions made on the architect's behalf are presented as theirs. List each one |
+   | Human actors unwalked | an operator, approver or break-glass holder registered but never walked | the levers they hold were never tested end to end |
+   | Stale figures quoted | an HLD or brief quotes impact figures from a matrix scored before a decision that changed the actor set | the number describes a design that no longer exists |
 
 4. Rate health: **Strong / Adequate / At risk / Failing**, with the specific
    evidence for the rating.
@@ -536,7 +642,7 @@ corrective sequence rather than assuming the architect will follow the list.
 
 Establish an ongoing rhythm for a live system.
 
-**Read** `skills/restack-journey/sections/route-ongoing.md` and work from it.
+**Read** `<base>/sections/route-ongoing.md` and work from it.
 
 1. Assess environment volatility and team capability maturity — both, by
    asking. Cadence is a function of the two and cannot be recommended from
@@ -551,7 +657,7 @@ Establish an ongoing rhythm for a live system.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

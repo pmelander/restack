@@ -110,7 +110,7 @@ python "$SAMPLE" --n 30 --seed <seed> --out specs.jsonl
 The default `--balance grounding,plausibility` stratifies over the nine cells,
 so roughly three specs per cell and blind draws guaranteed in every batch.
 
-**Step 2 - read `sections/render-protocol.md`.** Do not render from memory of
+**Step 2 - read `<base>/sections/render-protocol.md`.** Do not render from memory of
 what the briefs probably say. The no-tools rule on the blind tracks is the part
 that is easy to lose and impossible to detect afterwards.
 
@@ -152,7 +152,7 @@ Step 5 only, on a batch generated earlier.
 Read `skills/restack-events/reference/taxonomy.json` and adjust weights against
 what the last matrix showed. Weights are relative integers normalised at load;
 a dimension whose values all scored alike is not discriminating. Read
-`sections/handoff.md` first - it covers what to change between iterations and
+`<base>/sections/handoff.md` first - it covers what to change between iterations and
 why reusing a seed is not a second iteration.
 
 The taxonomy is data, not code. Never edit `sample.py` to change a

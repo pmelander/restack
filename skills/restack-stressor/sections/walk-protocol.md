@@ -81,6 +81,37 @@ path would prevent it. Do not design the residual yet — `/restack-stressor res
 does that against the whole matrix, where the leverage is visible. Just record
 the opportunity so it is not lost.
 
+#### Walking a lever
+
+A **lever** is anything a human pulls to change the system's behaviour: a kill
+switch, a mode flag, a break-glass, a manual failover, an approval. It is a
+path with a human actor at its start, and it is the path most often left
+unwalked. The operator is "noted, never walked" through iteration after
+iteration, and the first defect shows up at review instead.
+
+Walk every lever end to end, in three legs:
+
+```
+actor pulls lever -> system effect -> the signal that confirms the effect
+On-call         -> ops flag OFF  -> config store -> feature host stops applying
+                                                 -> status metric drops to 0 within 60s
+```
+
+At each leg, ask:
+
+- **Pull.** Who may pull it, through what interface, with what access? Is that
+  the same description in the ADR, the LLD and the runbook? A lever described
+  three ways gets pulled three ways.
+- **Effect.** What exactly changes, and how long does it take? Does the effect
+  depend on an actor that might itself be down, such as a write to the record
+  that holds the switch?
+- **Confirmation.** What signal tells the operator it worked? Is that signal
+  still emitted *after* the lever is pulled, or does the lever silence it?
+
+Any leg you cannot complete is a finding. A lever with no confirming signal
+cannot be used for diagnosis: "flip it, and if the host recovers the feature was
+the cause" gives a false negative when the flip silently failed.
+
 #### Walking multiple paths
 
 Most systems have several significant paths: the happy path, the error path,
@@ -89,7 +120,11 @@ Walk each separately. They expose different vulnerabilities, and an actor's
 true vulnerability is the union across every path it appears on.
 
 Walk the happy path first to establish the actor set, then the error path — the
-error path is where the largest surprises are, in almost every system.
+error path is where the largest surprises are, in almost every system. Then
+walk every **human operator actor** (on-call, approver, break-glass holder)
+through the levers they hold. An operator who is registered but never walked
+blocks the iterate gate's route to documentation (see `/restack-journey
+iterate`).
 
 #### Output
 

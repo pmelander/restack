@@ -39,6 +39,16 @@ for a nervous stakeholder.
 
 ---
 
+### Replacing an operational document
+
+When a new deployment guide or runbook replaces an old one, **archive the old
+one in the same step**: move it to `archive/<name>-v<n>-<YYYY-MM-DD>.md` next
+to the current one, with a banner at the top naming its replacement and the
+decision that superseded it. Never leave a stale guide beside a new one. An
+operator searching under time pressure opens whichever one they find first.
+
+---
+
 ### Operations runbook
 
 Written for whoever is holding the pager. Optimise ruthlessly for someone under
@@ -65,6 +75,16 @@ stress at 3am who did not build this.
 - **One entry per alert, and every alert has one.** An alert with no runbook
   entry is an alert that will be acknowledged and ignored, which is worse than
   no alert.
+- **Every alert the runbook names is defined in an ADR or LLD.** If it is not,
+  register it as a design gap in the assumptions register, and say so in the
+  entry. An alert that exists only in the runbook has no owner and no
+  guarantee it was ever built. One field runbook named seven such alerts.
+- **Every lever is written end to end:** who may pull it, what it does to the
+  system, and **the signal that confirms it took effect**. Then add what to do
+  when the signal does not come. If a diagnosis step depends on a lever ("flip
+  it; if the host recovers, the feature was the cause"), check that the ADR,
+  the LLD and the runbook describe the lever the same way. If they differ, one
+  reading turns that step into a false negative.
 - **Say what NOT to do.** "Do not restart the settlement worker mid-batch — it
   is not idempotent before the commit point." This is the highest-value content
   in any runbook and it is almost never written down.

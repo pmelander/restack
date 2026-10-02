@@ -32,13 +32,21 @@ stale, the finding is that **a decision was made without being recorded**. That
 is worse than drift, because the reasoning is gone. Route it to
 `/restack-adr create` or `/restack-adr update`, not to a documentation fix.
 
-#### The six checks
+#### The seven checks
 
 **1. ADR against ADR.** Does a later decision invalidate an earlier one's
 assumptions without the earlier being amended or superseded? Look for
 supersession chains, amendments, and ADRs about the same actor or path. A
 recorded invariant that a later ADR quietly changed is the most dangerous case,
 because it reads as current.
+
+Then, for every **unamended ADR older than the latest pivot** (the iteration or
+decision that changed the design's shape most), read each decision point
+against the *current contracts*, not only the ADR's amendments and status. What
+looks like stale wording can be a contract defect. In one field review, a
+response field an old ADR still specified contradicted a byte-identical
+guarantee a later ADR made. It was first rated as wording drift, and it was a
+broken contract.
 
 **2. ADR against design docs.** Does every accepted decision appear in the HLD
 and the relevant LLD? Take the ADRs since the last review and grep the design
@@ -63,7 +71,25 @@ acknowledged gap — it reads as measured.
 **6. Operational documents against the current design.** Does the runbook
 describe actors that still exist, and does the deployment guide describe the
 topology that was actually decided? These drift furthest because they are
-written once, late, and rarely revisited.
+written once, late, and rarely revisited. Every alert the runbook names must be
+defined in an ADR or LLD. An alert that exists only in the runbook is a design
+gap, because nothing guarantees it gets built.
+
+**7. Amendments against their own bodies.** Two failure shapes, reported as
+their own finding class (`AM-n`) and not folded into general drift:
+
+- **Amendment by footnote.** A short amendment at the end while the body still
+  specifies the replaced behaviour (grants, endpoints, response shapes). A
+  developer reads the body. For every amendment, grep the body of the same
+  document for the terms of the behaviour it replaces. Any surviving
+  unmarked passage is a finding.
+- **Stale amendment.** An amendment describing a mechanism that a later ADR,
+  sometimes from the same day, superseded. Grep every amendment for the
+  superseded mechanism's terms.
+
+Either one leaves a document that reads as current and specifies something
+nobody decided to build. The fix is a banner at the top and the contradicted
+passages struck inline. Writing a longer footnote does not fix it.
 
 #### Severity comes from who acts on it
 
@@ -103,3 +129,8 @@ written, and the descriptive documents lag. If most findings date from one
 iteration, the gap is a missing step in that loop rather than carelessness — and
 the fix is to update the HLD as part of implementing a residual, not to review
 harder afterwards.
+
+Check the ADRs from that iteration for a filled **Knock-on changes** field
+(`/restack-adr` format). An empty one, or one naming documents that were not
+changed after the ADR's date, is the missing step made visible. Report it as
+such, so the fix lands in the loop rather than in this one review.

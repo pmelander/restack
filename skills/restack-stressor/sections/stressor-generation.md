@@ -29,6 +29,27 @@ organisational rows is describing a system that will be built in a vacuum.
 Teams routinely find their single highest-impact stressor is a governance
 process, not a technology.
 
+#### Every safety lever gets three stressors
+
+Mandatory, under technical and organisational, for every kill switch, mode,
+break-glass or manual failover in the design. Ask:
+
+1. **Ineffective lever.** It is pulled and has no effect. Example: the operator
+   turns the feature off, the write to the control record fails, and the
+   feature keeps running.
+2. **Unconfirmable lever.** It has the effect and no one can confirm it.
+   Example: the stop worked, but the status signal was emitted by the component
+   the switch just stopped.
+3. **Wrong actor.** It is pulled by the wrong actor, or by the right actor at
+   the wrong time. Examples: a neighbour team's automation, a stale runbook
+   step, a break-glass used for convenience.
+
+A stressor set that covers "the feature fails off" thoroughly can still miss all
+three. In one field session, both of the first two were found while writing the
+runbook, not by the matrix. Generate at least one ineffective-lever and one
+unconfirmable-lever row per lever, and walk each with the lever template in
+the walk protocol.
+
 #### The absurd stressors are load-bearing
 
 Include at least one genuinely ridiculous stressor per generation. This is not

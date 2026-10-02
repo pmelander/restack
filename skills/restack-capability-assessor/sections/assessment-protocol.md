@@ -67,7 +67,7 @@ assessment.
 
 #### Write it up
 
-Use `templates/capability-assessment-template.md`, the canonical format.
+Use `<base>/sections/capability-assessment-template.md`, the canonical format.
 
 Three rules for the writing:
 

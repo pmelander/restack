@@ -20,6 +20,13 @@
       "file": "incremental-change.md",
       "title": "Incremental change patterns",
       "trigger": "running /restack-evolve increment or coach - planning a change as a sequence of safe reversible steps"
+    },
+    {
+      "id": "fitness-function-template",
+      "file": "fitness-function-template.md",
+      "source": "templates/fitness-function-template.md",
+      "title": "Fitness function template",
+      "trigger": "writing up a fitness function - the canonical format"
     }
   ]
 }
