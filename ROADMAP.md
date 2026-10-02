@@ -109,6 +109,11 @@ auto-resolved. Terrain classification and the confidence gate probably qualify:
 both are judgements about what you do not know, and a model auto-answering them
 is precisely the false confidence this toolkit exists to avoid.
 
+2.8.0 covers the first half: commands chain without pause between questions
+([ADR-020](docs/adr/ADR-020-follow-up-commands-run-without-pause.md)). Gates
+are still answered where they arise, never auto-resolved, so a single approval
+gate at the end remains open.
+
 ### 6. ~~Update awareness~~ — done
 
 Shipped in 2.5.0. `/restack-journey start` and `where`, and
@@ -145,6 +150,9 @@ What came back in 2.6.0 is smaller: the `Next:` line, with the command in a
 fenced `text` block the host gives a Copy button. Arguments are included,
 because a copied command is pasted and sent by the architect, not on their
 behalf ([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)).
+
+In 2.8.0 the command runs instead, through the `Skill` tool, and the block is
+the fallback ([ADR-020](docs/adr/ADR-020-follow-up-commands-run-without-pause.md)).
 
 ### 8. ~~Cross-model second opinion~~ — done
 

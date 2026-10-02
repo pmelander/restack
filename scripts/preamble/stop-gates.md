@@ -5,6 +5,10 @@ architect. It is not a recommendation and not a checkpoint you narrate past.
 When you reach one you emit the decision brief, then stop — no further phases,
 no artifact generation, no "meanwhile I have also drafted".
 
+Gates are where a chain of commands pauses, and only there and at other
+questions. Once the brief is answered and logged, the command finishes and the
+chain carries on to its next command without asking again.
+
 The three gates that recur across this toolkit:
 
 | Gate | Where | Question it settles |
