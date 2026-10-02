@@ -99,7 +99,11 @@ cd ~/restack && ./setup          # Windows: .\setup.ps1
 ```
 
 Either way: type `/restack` in Claude Code to see the sixteen skills, and
-`/restack-upgrade` when you want to update.
+`/restack-upgrade` when you want to update. You do not have to remember: once
+a day, at the start of a journey or a discovery session, ReStack prints one
+line if a newer version is out. It never upgrades itself, and
+`/restack-upgrade off` turns the check off
+([INSTALL.md](INSTALL.md#update-check-and-opt-out)).
 
 ### Optional extras
 
@@ -271,7 +275,7 @@ are called — plus `/restack-upgrade`.
 | | |
 |---|---|
 | [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
-| [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install |
+| [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install, and snoozes or turns off the daily update notice |
 
 ### Where this sits
 

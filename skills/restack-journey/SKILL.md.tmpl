@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 3
 model: opus
 description: |
@@ -89,6 +89,9 @@ the matrix in front of them, rather than by drifting onward.
 
 Begin a journey. Classify the terrain, map the route, name the first move.
 
+**First, the update check.** Read `<base>/sections/update-check.md` and run it.
+On most days it prints nothing, and it never asks anything.
+
 **Read** `<base>/sections/terrain-classification.md` and run the
 protocol in it. Questions go one at a time — never batch aspiration, existing
 state, blast radius, resistance and capability into a single ask.
@@ -137,6 +140,9 @@ count, the first move, and the path to the journey state file.
 
 For mid-journey orientation — resuming after a break, inheriting someone else's
 engagement, or genuinely not knowing what comes next.
+
+**First, the update check** in `<base>/sections/update-check.md`, unless a
+brief is open. `where` is often asked in the middle of one.
 
 1. Read all four journey state files. If none exist, say so plainly and
    reconstruct from repo evidence (existing ADRs, HLDs, review findings,

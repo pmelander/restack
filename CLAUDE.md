@@ -14,11 +14,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 .
 ├── setup / setup.ps1                   # install the skills into ~/.claude/skills
 ├── VERSION  CHANGELOG.md  INSTALL.md
-├── .github/workflows/skills.yml        # CI: generator drift + skills-tree validation
+├── .github/workflows/skills.yml        # CI: generator drift, skills-tree validation, tests
+├── tests/                              # unittest, stdlib only - shipped scripts' behaviour
 ├── scripts/
 │   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
 │   ├── check_skills.py                 # validates frontmatter, banners, sections
 │   ├── shared/                         # method shared by several skills, vendored into each
+│   │   ├── second-opinion.md           #   outside opinion (stressor, design-review)
+│   │   └── update-check.md             #   update notice at session open (journey, discover)
 │   └── preamble/                       # shared behaviour, composed by tier
 │       ├── manifest.json               # tier -> fragment composition
 │       ├── voice.md                    # tier 1
@@ -65,6 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-excel/                          # generated, tier 1
 │   │   └── read_spreadsheet.py                #   runtime helper, ships with the skill
 │   └── restack-upgrade/                        # generated, tier 1
+│       └── scripts/update_check.py             #   update check, run by journey + discover
 ├── templates/                          # Document templates, vendored into the skills that write them
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
@@ -142,8 +146,10 @@ skill: those resolve from this checkout and nowhere else, and
 `scripts/shared/` and is registered with `"shared": true` in each consuming
 manifest. `gen_skills.py` **vendors** a generated copy into each consuming
 skill's `sections/`, because `setup` installs `skills/restack-*/` and nothing
-else. First use: `scripts/shared/second-opinion.md`
-([ADR-013](docs/adr/ADR-013-outside-opinion.md)). Prefer a shared section over
+else. In use: `scripts/shared/second-opinion.md`
+([ADR-013](docs/adr/ADR-013-outside-opinion.md)) and
+`scripts/shared/update-check.md`
+([ADR-016](docs/adr/ADR-016-update-awareness.md)). Prefer a shared section over
 duplicating method into two skills; prefer an owned section when only one skill
 needs it. Edit the source, never the vendored copy; its banner says so.
 
@@ -163,9 +169,10 @@ python scripts/gen_skills.py            # regenerate everything with a template
 python scripts/gen_skills.py journey    # one skill
 python scripts/gen_skills.py --check    # CI: fail on drift between .tmpl and SKILL.md
 python scripts/check_skills.py          # CI: frontmatter, banners, sections, install paths
+python -m unittest discover -s tests    # CI: behaviour of the scripts skills ship
 ```
 
-Both run in CI on every push and pull request (`.github/workflows/skills.yml`).
+All three run in CI on every push and pull request (`.github/workflows/skills.yml`).
 `check_skills.py` covers what the generator cannot: a skill with no
 `description` is undiscoverable, a generated file with its banner removed has
 been hand-edited, a section file missing from `manifest.json` will never be
@@ -216,7 +223,8 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 
 ### Skills that ship executable scripts
 
-`/restack-excel` and `/restack-events` ship Python alongside their SKILL.md.
+`/restack-excel`, `/restack-events` and `/restack-upgrade` ship Python alongside
+their SKILL.md.
 Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
@@ -228,6 +236,19 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    skills do. `check_skills.py` verifies these resolve — a bare relative path
    only works when the working directory happens to be this repository, which
    is the bug that ADR exists to stop.
+3. **Test what the script does, in `tests/`.** `check_skills.py` proves a
+   path resolves, not that the script behaves. `tests/test_update_check.py`
+   runs every silent path, the throttle, snooze and opt-out, and the shared
+   section's shell snippets as written, against a scratch `~/.restack`
+   (`RESTACK_STATE_DIR`) and a local bare repository. Never test against the
+   real `~/.restack` or the live skills directory.
+
+`update_check.py` is the one script another skill calls:
+`/restack-journey` and `/restack-discover` run it through
+`update-check.md`. That is acceptable only because the dependency is
+optional by construction. If the script is missing, the snippet prints
+nothing, which is the same as "up to date"
+([ADR-016](docs/adr/ADR-016-update-awareness.md)).
 
 ### Adding Compliance Packs
 
@@ -303,6 +324,11 @@ git push origin feature/new-skill-name
 /restack-capacity right-size
 
 /restack-excel read <file> [sheet]       # Excel/CSV Reader
+
+/restack-upgrade                         # pull, reinstall, show what changed
+/restack-upgrade check                   # verify the install + update-check status
+/restack-upgrade snooze [days]           # hide the daily update notice
+/restack-upgrade off | on                # the update-check opt-out (~/.restack/config.json)
 ```
 
 ## Journey Memory Management

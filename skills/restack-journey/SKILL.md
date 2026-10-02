@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 3
 model: opus
 description: |
@@ -550,12 +550,16 @@ printed, it is `~/.claude/skills/restack-journey`.
 | `<base>/sections/journey-state-template.md` | creating docs/journey/journey-state.md at /restack-journey start, or reconstructing it mid-journey |
 | `<base>/sections/assumptions-register-template.md` | creating docs/journey/assumptions-register.md, or appending to one whose shape you need to confirm |
 | `<base>/sections/decisions-log-template.md` | creating docs/journey/decisions-log.md, or logging the first gate of a journey |
+| `<base>/sections/update-check.md` | the first step of /restack-journey start and /restack-journey where, before any question or brief - never inside a gate or while a brief is open |
 
 ---
 
 ## `/restack-journey start`
 
 Begin a journey. Classify the terrain, map the route, name the first move.
+
+**First, the update check.** Read `<base>/sections/update-check.md` and run it.
+On most days it prints nothing, and it never asks anything.
 
 **Read** `<base>/sections/terrain-classification.md` and run the
 protocol in it. Questions go one at a time — never batch aspiration, existing
@@ -605,6 +609,9 @@ count, the first move, and the path to the journey state file.
 
 For mid-journey orientation — resuming after a break, inheriting someone else's
 engagement, or genuinely not knowing what comes next.
+
+**First, the update check** in `<base>/sections/update-check.md`, unless a
+brief is open. `where` is often asked in the middle of one.
 
 1. Read all four journey state files. If none exist, say so plainly and
    reconstruct from repo evidence (existing ADRs, HLDs, review findings,
@@ -742,7 +749,7 @@ Establish an ongoing rhythm for a live system.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`, `update-check.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

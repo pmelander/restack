@@ -53,6 +53,13 @@
       "source": "templates/decisions-log-template.md",
       "title": "Decisions log template",
       "trigger": "creating docs/journey/decisions-log.md, or logging the first gate of a journey"
+    },
+    {
+      "id": "update-check",
+      "file": "update-check.md",
+      "shared": true,
+      "title": "Update check - one line at session open",
+      "trigger": "the first step of /restack-journey start and /restack-journey where, before any question or brief - never inside a gate or while a brief is open"
     }
   ]
 }

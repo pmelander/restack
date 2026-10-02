@@ -8,7 +8,9 @@ cd ~/restack && ./setup                # Windows: .\setup.ps1
 ```
 
 `./setup --dry-run` shows what would change · `--symlink` for development ·
-`/restack-upgrade` to update later. See [INSTALL.md](INSTALL.md).
+`/restack-upgrade` to update later. A one-line notice appears at most once a
+day when a newer version is out; `/restack-upgrade off` turns it off. See
+[INSTALL.md](INSTALL.md).
 
 ---
 
@@ -230,6 +232,8 @@ mostly artifact means the analysis is sound and the docs are not keeping up.
 /restack-upgrade                         # pull, reinstall, show what changed
                                          #   also repairs a broken install
 /restack-upgrade check                   # verify every indexed section is installed
+/restack-upgrade snooze [days]           # hide the daily update notice (default 7 days)
+/restack-upgrade off                     # turn the update check off; `on` to undo
 
 /restack-excel read <file> [sheet]       # to a markdown table
 /restack-excel preview <file> [rows]     # check the shape first
