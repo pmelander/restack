@@ -1,15 +1,32 @@
+# Everything git considers text is checked out with LF, on every platform,
+# whatever core.autocrlf says. setup compares the repository against the
+# install byte for byte, so a checkout that turns LF into CRLF makes an
+# unchanged skill look changed: setup then reports it "updated" after every
+# branch switch, and a copy made before the switch differs only in line
+# endings. gen_skills.py also writes LF, so a CRLF checkout of a generated
+# SKILL.md differs from what the generator would write.
+*               text=auto eol=lf
+
 # Shell scripts and the Python helper must keep LF endings. A CRLF `setup`
 # fails on Linux and macOS with "bad interpreter: /bin/sh^M", which is a
-# confusing way to discover a line-ending problem.
+# confusing way to discover a line-ending problem. Named explicitly so the
+# rule survives anyone loosening the default above.
 setup           text eol=lf
 *.sh            text eol=lf
 *.py            text eol=lf
+VERSION         text eol=lf
 
-# PowerShell is fine either way; CRLF is the native convention.
+# Skill content: what setup copies into ~/.claude/skills.
+*.md            text eol=lf
+*.tmpl          text eol=lf
+*.json          text eol=lf
+*.yml           text eol=lf
+
+# PowerShell is fine either way; CRLF is the native convention, and
+# setup.ps1 is not copied into the install.
 *.ps1           text eol=crlf
 
-# Markdown and data files: normalise in the repository, let checkout decide.
-*.md            text
-*.json          text
-*.yml           text
-VERSION         text eol=lf
+# Never touch binary content.
+*.xlsx          binary
+*.png           binary
+*.jpg           binary
