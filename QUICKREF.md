@@ -51,6 +51,12 @@ recommendations you can read past.
 A gate reached with **low confidence on an irreversible decision** routes
 backwards to discovery, not forwards to a choice.
 
+### The next move
+
+A command that leads somewhere ends with `Next:` and the full command in a
+block with a Copy button, plus the `Alternative:` the skill weighed. A gate is
+answered first, never from that block.
+
 ---
 
 ## Orchestration

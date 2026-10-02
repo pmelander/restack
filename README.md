@@ -191,6 +191,11 @@ settle it.
 terrain), *is impact low enough to stop iterating?*, and *which approach, and is
 it reversible?*
 
+**They end with the next command.** A run that leads somewhere closes with
+`Next:`, one line on why, and the command in a block you can copy. It is never
+offered while a decision is still open
+([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)).
+
 **They remember.** Journey state lives on disk in `docs/journey/`, so an
 engagement survives weeks, breaks, and handoffs — with an audit trail of what
 was decided and why.

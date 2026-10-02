@@ -25,6 +25,10 @@
 > `f1aa577` on `main`, at head `aca5ad4`. Everything up to *Withdrawal* is left
 > as written when the decision was accepted, because the reasoning is the part
 > worth keeping.
+>
+> **Amended 2026-10-02 (2.6.0):** the `Next:` line came back without the
+> button, with the command in a block the architect copies. See
+> [ADR-018](ADR-018-next-command-as-a-copy-block.md).
 
 Most commands end by naming the next move as a command, but in no fixed form.
 `/restack-journey start` names "the first move as a single command";

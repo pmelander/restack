@@ -163,6 +163,9 @@ worth noticing — and worth telling us about.
 **They ask one question at a time.** Never a batch. The questions are where the
 thinking happens.
 
+**They tell you what to run next.** A command that leads somewhere ends with a
+`Next:` line and the command in a block you can copy, arguments included.
+
 **They say when they do not know.** `NEEDS_DISCOVERY` is a normal outcome, not
 a failure. Producing a confident-looking matrix over a path map nobody believes
 is the failure.
