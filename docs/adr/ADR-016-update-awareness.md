@@ -135,6 +135,9 @@ to re-link from a shell that can create symlinks.
   `skills_dir` holds the very `restack-upgrade` it is running from
   (`os.path.samefile`, which follows links). Otherwise it stays silent, because
   silence is better than reporting on an install nobody uses.
+  *Fixed at the source in 2.5.1: setup no longer records a `--target` run
+  ([ADR-011](ADR-011-setup-script-and-upgrade-skill.md), Notes). The guard
+  stays, because records written before then are still on disk.*
 - **The timeout must hold.** On a timeout, Python kills git. On Windows it then
   waits for git's pipes to close. The transport helper inherits git's stderr and
   outlives the kill, so with stderr piped a "3-second" timeout took 20 seconds

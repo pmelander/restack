@@ -27,6 +27,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from shells import posix_env, posix_shell  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "skills" / "restack-upgrade" / "scripts" / "update_check.py"
 SECTION = ROOT / "scripts" / "shared" / "update-check.md"
@@ -207,7 +210,8 @@ class UpdateCheck(unittest.TestCase):
         self.assertEqual(self.saved(), {})
 
     def test_install_json_for_another_install_is_silent(self):
-        # setup --target <scratch> rewrites install.json for the scratch target.
+        # setup --target <scratch> rewrote install.json for the scratch target
+        # until 2.5.1, and a record from then is still on disk somewhere.
         other = self.tmp / "scratch-skills"
         (other / "restack-upgrade").mkdir(parents=True)
         self.install("2.4.0", skills_dir=other)
@@ -395,29 +399,33 @@ class UpdateCheck(unittest.TestCase):
     def test_posix_shell_snippet(self):
         self.install("2.4.0")
         self.publish("2.5.0")
-        shells = [s for s in ("sh", "bash") if shutil.which(s)]
+        # posix_shell, not shutil.which: on Windows `bash` may be the WSL
+        # launcher, which would run the snippet against the WSL user's real home.
+        shells = {s: p for s in ("sh", "bash") if (p := posix_shell(s))}
         if not shells:
             self.skipTest("no POSIX shell")
-        for shell in shells:
+        for shell, path in shells.items():
             with self.subTest(shell=shell):
                 if (self.state / "update-check.json").exists():
                     self.age_last_check(25 * 3600)
                 env = dict(os.environ, HOME=self.home.as_posix(), RESTACK_STATE_DIR=str(self.state))
                 env.pop("RESTACK_UPDATE_CHECK", None)
-                done = subprocess.run([shutil.which(shell), "-c", self.snippet("bash")], cwd=self.tmp,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, timeout=60)
+                done = subprocess.run([path, "-c", self.snippet("bash")], cwd=self.tmp,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                      env=posix_env(path, env), timeout=60)
                 self.assertEqual(done.stdout.decode().strip(),
                                  f"ReStack v2.5.0 available (installed v2.4.0): /restack-upgrade  {HINT}")
                 self.assertEqual(done.stderr, b"")
 
     def test_posix_shell_snippet_without_the_script_is_silent(self):
         shutil.rmtree(self.skills / "restack-upgrade")
-        shell = shutil.which("sh") or shutil.which("bash")
+        shell = posix_shell("sh") or posix_shell("bash")
         if not shell:
             self.skipTest("no POSIX shell")
         env = dict(os.environ, HOME=self.home.as_posix(), RESTACK_STATE_DIR=str(self.state))
         done = subprocess.run([shell, "-c", self.snippet("bash")], cwd=self.tmp,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, timeout=60)
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              env=posix_env(shell, env), timeout=60)
         self.assertEqual((done.stdout + done.stderr).decode().strip(), "")
 
     def test_powershell_snippet(self):
