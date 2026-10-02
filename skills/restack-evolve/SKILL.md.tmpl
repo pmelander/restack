@@ -91,7 +91,7 @@ a residual you are trusting, and the matrix trusts them all equally.
 
 Assess how well this architecture accommodates change.
 
-**Read** `skills/restack-evolve/sections/brittleness.md` and measure with real
+**Read** `<base>/sections/brittleness.md` and measure with real
 changes, not opinions: name three to five changes the system will plausibly be
 asked for, trace each through the path map, and score blast radius,
 coordination, reversibility and confidence.
@@ -107,7 +107,7 @@ Write to `docs/architecture/evolvability-<date>.md`.
 
 ## `/restack-evolve fitness-functions`
 
-**Read** `skills/restack-evolve/sections/fitness-functions.md`.
+**Read** `<base>/sections/fitness-functions.md`.
 
 1. **Start from the residuals.** For each in the design, ask what automated
    check would fail if it stopped working. The section carries the mapping
@@ -118,7 +118,7 @@ Write to `docs/architecture/evolvability-<date>.md`.
    where it runs, what happens on failure, and an owner.
 4. Automate, or mark it explicitly manual with a date — an honest gap rather
    than a pretend control.
-5. Write up using `templates/fitness-function-template.md`, the canonical
+5. Write up using `<base>/sections/fitness-function-template.md`, the canonical
    format.
 
 **Few and trusted beats many and muted.** Twenty functions where three fail
@@ -127,7 +127,7 @@ is ignored too.
 
 ## `/restack-evolve brittleness`
 
-**Read** `skills/restack-evolve/sections/brittleness.md`.
+**Read** `<base>/sections/brittleness.md`.
 
 Find where the architecture resists change, using the four-axis scoring on real
 changes. Check the usual sources — undeclared coupling, deployment coupling,
@@ -144,7 +144,7 @@ three teams" makes every residual slower and raises effective impact system-wide
 
 ## `/restack-evolve increment`
 
-**Read** `skills/restack-evolve/sections/incremental-change.md`.
+**Read** `<base>/sections/incremental-change.md`.
 
 Design the change as a sequence where each step is individually valuable, safe
 and reversible.

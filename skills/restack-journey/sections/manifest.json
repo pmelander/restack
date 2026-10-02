@@ -32,6 +32,27 @@
       "file": "terrain-classification.md",
       "title": "Terrain classification protocol",
       "trigger": "running /restack-journey start, or re-classifying terrain mid-journey because the ground has changed"
+    },
+    {
+      "id": "journey-state-template",
+      "file": "journey-state-template.md",
+      "source": "templates/journey-state-template.md",
+      "title": "Journey state template",
+      "trigger": "creating docs/journey/journey-state.md at /restack-journey start, or reconstructing it mid-journey"
+    },
+    {
+      "id": "assumptions-register-template",
+      "file": "assumptions-register-template.md",
+      "source": "templates/assumptions-register-template.md",
+      "title": "Assumptions register template",
+      "trigger": "creating docs/journey/assumptions-register.md, or appending to one whose shape you need to confirm"
+    },
+    {
+      "id": "decisions-log-template",
+      "file": "decisions-log-template.md",
+      "source": "templates/decisions-log-template.md",
+      "title": "Decisions log template",
+      "trigger": "creating docs/journey/decisions-log.md, or logging the first gate of a journey"
     }
   ]
 }

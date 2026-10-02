@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 3
 model: opus
 description: |
@@ -45,6 +45,30 @@ competence; supply the discipline they do not have time to hold in their head.
   make it for them and present the conclusion.
 - **Every session ends with a reflection prompt.** Not optional. The prompt is
   what converts one analysis into transferable thinking.
+
+---
+
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
 
 ---
 
@@ -115,8 +139,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -164,6 +191,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -297,6 +333,14 @@ If `journey-state.md` is absent and the work is clearly mid-journey, say so and
 reconstruct it retrospectively from what exists in the repo before proceeding.
 Do not start a fresh journey over the top of an in-flight one.
 
+**Two fields bound every probe.** Read `Implementation status:` and `Design
+boundary:` from `journey-state.md` before investigating anything. In a
+design-only engagement, do not search for repositories or work items. Past the
+design boundary, record what the neighbour's system visibly does and turn
+every question about its internals into a handoff ask. Do not investigate
+there. If either field is missing, ask before probing (a one-line confirm is
+enough) and write the answer in.
+
 ### Write last
 
 Update state **at the end of every command**, not only `/restack-journey` commands.
@@ -306,6 +350,25 @@ registered an assumption and did not write it down has lost that work.
 Writes are append-only in spirit: never delete iteration history, never
 overwrite a prior decision — supersede it with a new dated entry that references
 the one it replaces. The trail is the point, especially in minefield terrain.
+
+### Canonical shapes (so any agent can append in one line)
+
+- **Assumptions register:** one table, for the whole journey:
+  `ID | Assumption | Source | Validates it | Depends on it | Status | Status date`.
+  Status is exactly one of `Open`, `Partly resolved`, `Resolved`,
+  `Resolved by design (test pending)`, `Withdrawn`, `Superseded by D<n>`. A
+  status change appends `- A-<n> · <status> · <date> · <why>` under
+  `## Status lines` and updates the row's two status cells. Never start a
+  second table, and never add an "Update" heading.
+- **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
+  brief, appended at the end. It records whether the decision changed the actor
+  set, because that makes earlier matrices `scored pre-D<n>`.
+- **Journey history** in `journey-state.md`: an append-only list at the **end**
+  of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
+
+`/restack-journey` carries the full templates. When an existing file uses
+another shape, append in its shape and register the drift once. Do not
+restructure someone's register in the middle of a journey without asking.
 
 ### Timestamps
 
@@ -382,16 +445,18 @@ imagined; it gets structurally better at absorbing ones you did not.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-stressor`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-stressor/sections/walk-protocol.md` | running /restack-stressor walk - traversing a path actor by actor, with or without a stressor applied |
-| `skills/restack-stressor/sections/stressor-generation.md` | running /restack-stressor generate, or extending an existing stressor set with a new class |
-| `skills/restack-stressor/sections/matrix-construction.md` | running /restack-stressor analyze or /restack-stressor vulnerabilities - building the matrix, scoring it, or interpreting what it shows |
-| `skills/restack-stressor/sections/residual-identification.md` | running /restack-stressor residues - proposing residuals and ranking them by leverage |
-| `skills/restack-stressor/sections/workshop-facilitation.md` | running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect |
-| `scripts/shared/second-opinion.md` | running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning |
+| `<base>/sections/walk-protocol.md` | running /restack-stressor walk - traversing a path actor by actor, with or without a stressor applied |
+| `<base>/sections/stressor-generation.md` | running /restack-stressor generate, or extending an existing stressor set with a new class |
+| `<base>/sections/matrix-construction.md` | running /restack-stressor analyze or /restack-stressor vulnerabilities - building the matrix, scoring it, or interpreting what it shows |
+| `<base>/sections/residual-identification.md` | running /restack-stressor residues - proposing residuals and ranking them by leverage |
+| `<base>/sections/workshop-facilitation.md` | running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect |
+| `<base>/sections/second-opinion.md` | running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning |
 
 ---
 
@@ -400,8 +465,18 @@ from memory of what it probably says.
 Traverse a path, evaluating each actor as an intention propagates — under
 normal conditions, or under a named stressor.
 
-**Read** `skills/restack-stressor/sections/walk-protocol.md` and follow it. The six
+**Read** `<base>/sections/walk-protocol.md` and follow it. The six
 steps are the method; do not walk from memory.
+
+Before walking, read `Implementation status:` and `Design boundary:` from
+`docs/journey/journey-state.md`. In a design-only engagement there is no code
+to read, so evidence comes from documents and the architect. Do not go looking
+for repositories or work items. An actor beyond the design boundary is walked
+as a black box: record its observable behaviour and turn each question about
+its internals into a handoff ask. Do not investigate it.
+
+Walk every lever a human actor holds with the protocol's **lever template**:
+*actor pulls lever → system effect → the signal that confirms the effect*.
 
 Walking comes before the matrix, always. The matrix columns are the actors on
 your walked paths — not an arbitrary component list — because position in a
@@ -430,16 +505,19 @@ journey state.
 
 Generate stressors for the current path set.
 
-**Read** `skills/restack-stressor/sections/stressor-generation.md` and generate from
+**Read** `<base>/sections/stressor-generation.md` and generate from
 it. The seven categories, the scenario-not-category rule, and the requirement
 for at least one genuinely absurd stressor all live there.
 
 Default 20-30. Organisational stressors are mandatory, not optional — a matrix
 with no organisational rows describes a system that will be built in a vacuum.
+So are the **lever stressors**: for every safety lever, at least one
+*ineffective-lever* row (pulled, no effect) and one *unconfirmable-lever* row
+(effect, but no one can tell), plus the wrong-actor question.
 
 **Offer an outside opinion here.** This is the strongest use of one in the whole
 toolkit: a different model asked for the *complement* of your list attacks the
-comfortable-stressors failure directly. **Read** `scripts/shared/second-opinion.md`
+comfortable-stressors failure directly. **Read** `<base>/sections/second-opinion.md`
 — including the step that decides what may leave, which for a real system
 defaults to sending an anonymised path map rather than the real one. Tag
 anything it returns `external`.
@@ -454,7 +532,7 @@ written to `docs/stressor-analysis/stressors-<date>.md`.
 
 Build the impact matrix.
 
-**Read** `skills/restack-stressor/sections/matrix-construction.md` and build from it.
+**Read** `<base>/sections/matrix-construction.md` and build from it.
 Scoring is binary and the section explains why — do not introduce a severity
 scale, and do not skip the margins.
 
@@ -470,6 +548,11 @@ scale, and do not skip the margins.
    `docs/journey/stressor-iteration-history.md`.
 7. Register every `?` cell as an assumption with the discovery step that would
    settle it.
+8. Record the scoring baseline: the highest `D<n>` in
+   `docs/journey/decisions-log.md` at the time of scoring. When a later gate or
+   ADR adds or removes an actor, the matrix is stale. Mark its entry in the
+   iteration history `scored pre-D<n>` (the decision that changed the actor
+   set). Anything quoting its figures then carries that qualifier.
 
 ---
 
@@ -477,7 +560,7 @@ scale, and do not skip the margins.
 
 Interpret the matrix.
 
-**Read** `skills/restack-stressor/sections/matrix-construction.md` — the "Reading the
+**Read** `<base>/sections/matrix-construction.md` — the "Reading the
 matrix" part — and work through its four checks in order: concentration,
 clusters, flatness, suspicious zeros.
 
@@ -496,7 +579,7 @@ than proceeding to residuals over a matrix that shows nothing.
 
 Propose residuals and rank them by leverage.
 
-**Read** `skills/restack-stressor/sections/residual-identification.md` and follow the
+**Read** `<base>/sections/residual-identification.md` and follow the
 five-step method. Work from the most-vulnerable actor, address the *mechanism*
 behind its cluster rather than the individual stressors, and re-score each
 proposed residual against the **full** stressor set to expose the compound
@@ -513,13 +596,20 @@ mixes them without saying so.
 
 **An outside opinion is worth it on a cluster you are unsure of.** Send the
 cluster and the actor, withhold your own diagnosis, and compare what comes back.
-**Read** `scripts/shared/second-opinion.md`. Sending your diagnosis gets you
+**Read** `<base>/sections/second-opinion.md`. Sending your diagnosis gets you
 agreement, which is the one thing that teaches you nothing.
 
 **Gate:** when two or more residuals address the same cluster with materially
 different tradeoffs — especially when one is a one-way door — that is an
 approach gate. Issue the decision brief. **STOP.** Do not write the chosen
 residual into an ADR or the journey state before the architect has chosen it.
+
+**Knock-on changes travel with the residual.** A chosen residual that changes
+the design invalidates descriptive documents written before it (HLD, LLD,
+deployment guide, runbook, configuration manifest). Record them in the ADR's
+Knock-on changes field via `/restack-adr create`, and update, banner or ticket
+each one in the same step. Four documents left untouched after a single pivot
+produced 84% of one field review's findings.
 
 ---
 
@@ -550,7 +640,7 @@ not decide here whether to loop or proceed.
 
 Facilitate the analysis with a group rather than a single architect.
 
-**Read** `skills/restack-stressor/sections/workshop-facilitation.md` and facilitate
+**Read** `<base>/sections/workshop-facilitation.md` and facilitate
 from it. The room holds system knowledge no document has; the method exists to
 extract it.
 

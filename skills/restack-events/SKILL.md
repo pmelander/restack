@@ -47,6 +47,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -74,8 +98,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -123,6 +150,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -270,13 +306,15 @@ prompt.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-events`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-events/sections/grounding.md` | before the first batch of an engagement, and whenever someone proposes giving the uncoupled track system context or dropping rows that look irrelevant |
-| `skills/restack-events/sections/render-protocol.md` | rendering any batch - the three briefs by grounding, the no-tools rule, and what the subagents may and may not see |
-| `skills/restack-events/sections/handoff.md` | passing a finished batch to /restack-stressor, or generating for a second or later iteration |
+| `<base>/sections/grounding.md` | before the first batch of an engagement, and whenever someone proposes giving the uncoupled track system context or dropping rows that look irrelevant |
+| `<base>/sections/render-protocol.md` | rendering any batch - the three briefs by grounding, the no-tools rule, and what the subagents may and may not see |
+| `<base>/sections/handoff.md` | passing a finished batch to /restack-stressor, or generating for a second or later iteration |
 
 ## Locating the scripts (run this first)
 
@@ -313,7 +351,7 @@ python "$SAMPLE" --n 30 --seed <seed> --out specs.jsonl
 The default `--balance grounding,plausibility` stratifies over the nine cells,
 so roughly three specs per cell and blind draws guaranteed in every batch.
 
-**Step 2 - read `sections/render-protocol.md`.** Do not render from memory of
+**Step 2 - read `<base>/sections/render-protocol.md`.** Do not render from memory of
 what the briefs probably say. The no-tools rule on the blind tracks is the part
 that is easy to lose and impossible to detect afterwards.
 
@@ -355,7 +393,7 @@ Step 5 only, on a batch generated earlier.
 Read `skills/restack-events/reference/taxonomy.json` and adjust weights against
 what the last matrix showed. Weights are relative integers normalised at load;
 a dimension whose values all scored alike is not discriminating. Read
-`sections/handoff.md` first - it covers what to change between iterations and
+`<base>/sections/handoff.md` first - it covers what to change between iterations and
 why reusing a seed is not a second iteration.
 
 The taxonomy is data, not code. Never edit `sample.py` to change a

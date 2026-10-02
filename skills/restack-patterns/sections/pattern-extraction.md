@@ -77,7 +77,7 @@ learns painfully.
    has found yet — say so rather than inventing one.
 5. **Collect the trade-offs**, including the instance where it worked least
    well. A pattern with no recorded downside has not been examined.
-6. **Write it up** using `templates/pattern-template.md`. That file is the
+6. **Write it up** using `<base>/sections/pattern-template.md`. That file is the
    canonical format — do not restate it here or invent a variant.
 7. **Record effectiveness data** from the instances: what it cost, what it
    removed, how long it took to introduce.

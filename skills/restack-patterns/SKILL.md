@@ -47,6 +47,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -74,8 +98,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -123,6 +150,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -277,19 +313,23 @@ asserting a benefit.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-patterns`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-patterns/sections/pattern-extraction.md` | running /restack-patterns extract or suggest - deciding whether something is a pattern and writing it up |
-| `skills/restack-patterns/sections/anti-patterns.md` | running /restack-patterns anti-patterns - capturing what keeps failing and why it keeps being chosen |
-| `skills/restack-patterns/sections/catalog-and-evolution.md` | running /restack-patterns catalog, effectiveness or evolve - maintaining the library over time |
+| `<base>/sections/pattern-extraction.md` | running /restack-patterns extract or suggest - deciding whether something is a pattern and writing it up |
+| `<base>/sections/anti-patterns.md` | running /restack-patterns anti-patterns - capturing what keeps failing and why it keeps being chosen |
+| `<base>/sections/catalog-and-evolution.md` | running /restack-patterns catalog, effectiveness or evolve - maintaining the library over time |
+| `<base>/sections/pattern-template.md` | writing up a pattern from /restack-patterns extract |
+| `<base>/sections/anti-pattern-template.md` | writing up an anti-pattern from /restack-patterns anti-patterns |
 
 ---
 
 ## `/restack-patterns extract`
 
-**Read** `skills/restack-patterns/sections/pattern-extraction.md` and follow
+**Read** `<base>/sections/pattern-extraction.md` and follow
 the seven-step protocol.
 
 Sources, in rough order of value: recurring residuals in the iteration history,
@@ -301,12 +341,12 @@ instances often differ in their surface solution and share a mechanism; the
 mechanism is the pattern, and stopping at the surface produces three narrow
 patterns instead of one useful one.
 
-Write up using `templates/pattern-template.md`. That file is the canonical
+Write up using `<base>/sections/pattern-template.md`. That file is the canonical
 format — use it, do not restate or vary it.
 
 ## `/restack-patterns catalog`
 
-**Read** `skills/restack-patterns/sections/catalog-and-evolution.md`.
+**Read** `<base>/sections/catalog-and-evolution.md`.
 
 Build or refresh `docs/patterns/`, with the index organised **by problem**.
 People arrive with a problem; an index keyed on solution names is browsable
@@ -333,7 +373,7 @@ Match a situation against the catalog.
 ## `/restack-patterns effectiveness`
 
 **Read** the effectiveness part of
-`skills/restack-patterns/sections/catalog-and-evolution.md`.
+`<base>/sections/catalog-and-evolution.md`.
 
 Track adoption, outcomes, cost to introduce, impact removed, and —
 most informatively — **abandonments**. Where a pattern was tried and backed
@@ -345,7 +385,7 @@ outcomes are better evidence than the original instances. Update from them.
 
 ## `/restack-patterns anti-patterns`
 
-**Read** `skills/restack-patterns/sections/anti-patterns.md`.
+**Read** `<base>/sections/anti-patterns.md`.
 
 The essential field is **why people keep choosing it**. Anti-patterns persist
 because they look right at the moment of decision — cheap, familiar, or the
@@ -356,12 +396,12 @@ The most productive source is class B findings from `/restack-design-review`:
 residuals that were implemented and did not work, with the reasoning that
 produced them already written down.
 
-Use `templates/anti-pattern-template.md`.
+Use `<base>/sections/anti-pattern-template.md`.
 
 ## `/restack-patterns evolve`
 
 **Read** the evolution part of
-`skills/restack-patterns/sections/catalog-and-evolution.md`.
+`<base>/sections/catalog-and-evolution.md`.
 
 Quarterly, or when the environment shifts. Promote, amend, deprecate, split or
 merge — and **never delete**. A deprecated pattern with its reason is what
@@ -375,7 +415,7 @@ failure.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`pattern-extraction.md`, `anti-patterns.md`, `catalog-and-evolution.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`pattern-extraction.md`, `anti-patterns.md`, `catalog-and-evolution.md`, `pattern-template.md`, `anti-pattern-template.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

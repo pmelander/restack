@@ -1,6 +1,6 @@
 ---
 name: restack-solution-doc
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 2
 model: opus
 description: |
@@ -91,7 +91,7 @@ Then ask only what is genuinely missing — one question at a time.
 
 ## `/restack-solution-doc hld`
 
-**Read** `skills/restack-solution-doc/sections/hld-structure.md` and write from
+**Read** `<base>/sections/hld-structure.md` and write from
 it.
 
 Two sections carry the value and are the ones most often omitted:
@@ -102,12 +102,16 @@ Two sections carry the value and are the ones most often omitted:
   standard misreading that everything unmentioned is either included or
   forgotten.
 
+Any impact figure quoted from the stressor history carries its scoring baseline
+(`scored pre-D<n>`) when a later decision changed the actor set. Otherwise the
+HLD quotes a forecast for a design that no longer exists.
+
 Write to `docs/architecture/HLD.md`. Close with a reflection prompt about what
 was hardest to articulate — that is reliably where the design is weakest.
 
 ## `/restack-solution-doc lld [component]`
 
-**Read** `skills/restack-solution-doc/sections/lld-structure.md`.
+**Read** `<base>/sections/lld-structure.md`.
 
 Write one per component that needs it, not per component that exists. The
 section names the four cases that justify an LLD; a document written for
@@ -122,7 +126,7 @@ Write to `docs/architecture/LLD-<component>.md`.
 ## `/restack-solution-doc deployment`
 
 **Read** the deployment half of
-`skills/restack-solution-doc/sections/operational-docs.md`.
+`<base>/sections/operational-docs.md`.
 
 Verification steps must be specific enough that two people would agree on
 whether the deploy worked, and the rollback section must name what **cannot**
@@ -131,7 +135,7 @@ be rolled back. Write to `docs/deployment/DEPLOYMENT.md`.
 ## `/restack-solution-doc runbook`
 
 **Read** the runbook half of
-`skills/restack-solution-doc/sections/operational-docs.md`.
+`<base>/sections/operational-docs.md`.
 
 Populate the failure-modes section from the stressor matrix rather than
 inventing it: for each significant stressor, what an operator observes, which
@@ -139,6 +143,10 @@ residual should absorb it, and what to do when the residual is not working.
 
 Include what **not** to do. It is the highest-value content in any runbook and
 is almost never written down. Write to `docs/operations/RUNBOOK.md`.
+
+Every alert the runbook names must exist in an ADR or LLD. If one does not,
+register it as a design gap rather than defining it here. Write every lever
+end to end: who pulls it, what it does, and the signal that confirms it worked.
 
 ## `/restack-solution-doc complete`
 
@@ -154,6 +162,17 @@ documentation just found, and it is worth more than the documents.
 Read the current document, establish what changed and why, then update. Where
 the change reflects a decision, make sure an ADR exists — documentation is not
 a substitute for a decision record.
+
+**Update the body, not just the end.** An amendment that contradicts the body
+goes at the **top as a banner**, and every contradicted passage is struck or
+marked inline. A two-line amendment at the end of an LLD whose body still
+specifies the old grants, endpoints and responses is amendment by footnote. The
+developer reads the body and builds the old design.
+
+When the change comes from an ADR, check its **Knock-on changes** list and work
+through every document it names, not just the one you were asked about. A
+replaced deployment guide or runbook is archived in the same step (see
+`<base>/sections/operational-docs.md`).
 
 Never quietly rewrite a design document to match what was built. If the
 implementation diverged, that divergence is the finding: either the design was

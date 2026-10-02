@@ -48,6 +48,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -75,8 +99,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -124,6 +151,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -265,12 +301,14 @@ confident answer to the wrong question.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-tech-stack`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-tech-stack/sections/evaluation-dimensions.md` | running /restack-tech-stack recommend, evaluate or compare - assessing any technology against a real context |
-| `skills/restack-tech-stack/sections/migration-analysis.md` | running /restack-tech-stack migrate - deciding whether and how to move from one technology to another |
+| `<base>/sections/evaluation-dimensions.md` | running /restack-tech-stack recommend, evaluate or compare - assessing any technology against a real context |
+| `<base>/sections/migration-analysis.md` | running /restack-tech-stack migrate - deciding whether and how to move from one technology to another |
 
 ---
 
@@ -296,7 +334,7 @@ Recommend a stack for a new system.
 2. Establish constraints: team capability, approved lists, budget, timeline,
    what must be integrated with.
 3. Identify the residuals the design needs from the stressor analysis.
-4. **Read** `skills/restack-tech-stack/sections/evaluation-dimensions.md` and
+4. **Read** `<base>/sections/evaluation-dimensions.md` and
    score candidates across all seven dimensions, including the do-nothing
    option.
 5. Run the bias checks from that section, out loud.
@@ -334,7 +372,7 @@ context beats yours.
 
 ## `/restack-tech-stack migrate from <old> to <new>`
 
-**Read** `skills/restack-tech-stack/sections/migration-analysis.md` and follow
+**Read** `<base>/sections/migration-analysis.md` and follow
 the five steps.
 
 Start from the position that the migration should not happen and make the case

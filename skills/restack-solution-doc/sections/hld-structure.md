@@ -78,6 +78,15 @@ new team does with unexplained complexity is remove it.
 Also state what each residual **created**: the new actors and paths it
 introduced, which are themselves walkable and stressable.
 
+**Every impact figure carries its scoring baseline.** When you quote a total,
+a reduction or a forecast from the stressor history, copy its qualifier with it:
+`iteration 5 forecast, scored pre-D14`. A decision that added or removed an
+actor after the matrix was scored makes the number describe a design that no
+longer exists. Check `docs/journey/decisions-log.md` for any such decision
+dated after the iteration. If there is one and the matrix carries no `scored
+pre-D<n>` mark, add the qualifier here yourself and register the stale matrix
+in the assumptions register. Do not quote the figure bare.
+
 #### 6. Data
 
 What data exists, which actor owns each piece, what consistency guarantee each

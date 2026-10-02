@@ -16,6 +16,13 @@
 
 **Review Date:** 2027-03-06
 
+> **Amended 2026-10-02.** The consistency pass now runs **seven** checks, not
+> the six listed under Decision: check 7 reports footnote amendments and
+> stale amendments as their own class (`AM-n`). Check 1 now also reads every
+> unamended pre-pivot ADR point by point against the current contracts. The
+> matrix cross-check gained class **S** (lost on supersession) alongside
+> A/B/C/D. The triage decision below is unchanged.
+
 ## Context
 
 This is the first decision in ReStack driven by evidence from a real
@@ -67,7 +74,7 @@ findings into **system** findings, which classify A/B/C/D against the matrix, an
 section of the review.
 
 **Artifact consistency becomes a review dimension**, with its own section and its
-own scoped command, `/restack-design-review consistency`. It runs six checks:
+own scoped command, `/restack-design-review consistency`. It runs ~~six~~ *(seven since 2026-10-02, see banner)* checks:
 ADR against ADR, ADR against design documents, actors against the HLD, residuals
 against their records, placeholders and empty evidence tables, and operational
 documents against the current design.

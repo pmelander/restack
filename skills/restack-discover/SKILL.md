@@ -1,6 +1,6 @@
 ---
 name: restack-discover
-version: 2.0.0
+version: 2.1.0
 preamble-tier: 3
 model: opus
 description: |
@@ -47,6 +47,30 @@ competence; supply the discipline they do not have time to hold in their head.
   make it for them and present the conclusion.
 - **Every session ends with a reflection prompt.** Not optional. The prompt is
   what converts one analysis into transferable thinking.
+
+---
+
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
 
 ---
 
@@ -117,8 +141,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -166,6 +193,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -299,6 +335,14 @@ If `journey-state.md` is absent and the work is clearly mid-journey, say so and
 reconstruct it retrospectively from what exists in the repo before proceeding.
 Do not start a fresh journey over the top of an in-flight one.
 
+**Two fields bound every probe.** Read `Implementation status:` and `Design
+boundary:` from `journey-state.md` before investigating anything. In a
+design-only engagement, do not search for repositories or work items. Past the
+design boundary, record what the neighbour's system visibly does and turn
+every question about its internals into a handoff ask. Do not investigate
+there. If either field is missing, ask before probing (a one-line confirm is
+enough) and write the answer in.
+
 ### Write last
 
 Update state **at the end of every command**, not only `/restack-journey` commands.
@@ -308,6 +352,25 @@ registered an assumption and did not write it down has lost that work.
 Writes are append-only in spirit: never delete iteration history, never
 overwrite a prior decision — supersede it with a new dated entry that references
 the one it replaces. The trail is the point, especially in minefield terrain.
+
+### Canonical shapes (so any agent can append in one line)
+
+- **Assumptions register:** one table, for the whole journey:
+  `ID | Assumption | Source | Validates it | Depends on it | Status | Status date`.
+  Status is exactly one of `Open`, `Partly resolved`, `Resolved`,
+  `Resolved by design (test pending)`, `Withdrawn`, `Superseded by D<n>`. A
+  status change appends `- A-<n> · <status> · <date> · <why>` under
+  `## Status lines` and updates the row's two status cells. Never start a
+  second table, and never add an "Update" heading.
+- **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
+  brief, appended at the end. It records whether the decision changed the actor
+  set, because that makes earlier matrices `scored pre-D<n>`.
+- **Journey history** in `journey-state.md`: an append-only list at the **end**
+  of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
+
+`/restack-journey` carries the full templates. When an existing file uses
+another shape, append in its shape and register the drift once. Do not
+restructure someone's register in the middle of a journey without asking.
 
 ### Timestamps
 
@@ -392,20 +455,22 @@ rigorous about the wrong system.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-discover`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-discover/sections/anti-patterns.md` | starting any discovery session, and again whenever discovery feels finished or feels stuck |
-| `skills/restack-discover/sections/actor-investigation.md` | running /restack-discover actor - probing what a specific actor actually does |
-| `skills/restack-discover/sections/intention-tracing.md` | running /restack-discover intentions - following one intention end to end through the system |
-| `skills/restack-discover/sections/organisational-stressors.md` | running /restack-discover organisation - mapping stakeholders and translating resistance into stressors |
-| `skills/restack-discover/sections/confidence-model.md` | running /restack-discover gaps or /restack-discover confidence - rating what you know and deciding whether discovery is done |
+| `<base>/sections/anti-patterns.md` | starting any discovery session, and again whenever discovery feels finished or feels stuck |
+| `<base>/sections/actor-investigation.md` | running /restack-discover actor - probing what a specific actor actually does |
+| `<base>/sections/intention-tracing.md` | running /restack-discover intentions - following one intention end to end through the system |
+| `<base>/sections/organisational-stressors.md` | running /restack-discover organisation - mapping stakeholders and translating resistance into stressors |
+| `<base>/sections/confidence-model.md` | running /restack-discover gaps or /restack-discover confidence - rating what you know and deciding whether discovery is done |
 
 ---
 
 Before starting any discovery session, **Read**
-`skills/restack-discover/sections/anti-patterns.md`. Most discovery failures are one of
+`<base>/sections/anti-patterns.md`. Most discovery failures are one of
 those eight, and they are much cheaper to avoid than to detect afterwards.
 
 ---
@@ -419,7 +484,15 @@ Map the significant paths through an existing system.
 2. **Settle the boundary — explicitly.** What is in scope, and what is a
    neighbouring system you will treat as one opaque actor with a known
    contract? Do this now. A boundary that is never agreed is the single most
-   common reason discovery fails to converge.
+   common reason discovery fails to converge. Ask two things, each as a
+   one-line confirm, and write the answers into `journey-state.md` as
+   `Implementation status:` and `Design boundary:` (skip any already there):
+   - **Is anything implemented, or is this design-only?** If it is design-only,
+     evidence is documents and people. Do not search for repositories or work
+     items.
+   - **Which team boundary does the design stop at?** Anything past it becomes
+     a handoff ask. Do not analyse it. Discovery that creeps into neighbour
+     teams' systems costs iterations, and the architect has to pull it back.
 3. **Find the entry points.** Where do intentions enter? Include the ones that
    are not the front door: scheduled jobs, admin tools, partner callbacks,
    support scripts, manual processes.
@@ -458,8 +531,9 @@ Applicant -> [Web Portal] -> ??? -> [Core Banking?] -> ??? -> Underwriting
 
 Investigate what a specific actor actually does.
 
-**Read** `skills/restack-discover/sections/actor-investigation.md` and follow the
-seven-step protocol. Rate confidence per claim, not per actor — mixed
+**Read** `<base>/sections/actor-investigation.md` and follow the
+seven-step protocol, including the hosting, network and identity probe (6b)
+for any actor on a shared platform. Rate confidence per claim, not per actor — mixed
 confidence within one actor is normal and hides risk when averaged away.
 
 Prioritise actors that are **critical** (on a path serving the aspiration) or
@@ -472,7 +546,7 @@ to start.
 
 Trace how one intention actually propagates.
 
-**Read** `skills/restack-discover/sections/intention-tracing.md` and follow it.
+**Read** `<base>/sections/intention-tracing.md` and follow it.
 Classify every hop as propagate / transform / fork / absorb, name what each
 transformation loses, and answer the question the protocol insists on: **where
 does the intention die?**
@@ -487,7 +561,7 @@ only one of them was designed on purpose.
 Identify and prioritise what you still do not know.
 
 **Read** the "Prioritising gaps" part of
-`skills/restack-discover/sections/confidence-model.md`.
+`<base>/sections/confidence-model.md`.
 
 1. Inventory every gap and assumption across the path maps and actor profiles.
 2. Score each: impact if wrong, likelihood of being wrong, cost to close.
@@ -505,7 +579,7 @@ rather than carrying it as unfinished work.
 
 Map the organisational landscape as a source of stressors.
 
-**Read** `skills/restack-discover/sections/organisational-stressors.md` and work from
+**Read** `<base>/sections/organisational-stressors.md` and work from
 it. Map who is connected — including the adjacent-system owner who gains
 nothing and absorbs the risk — establish each one's concern, position and
 **resistance mechanism**, then translate each mechanism into a walkable
@@ -526,7 +600,7 @@ those rather than recording resistance as a wall.
 **The confidence gate.** Decide whether the system is understood well enough to
 stress.
 
-**Read** `skills/restack-discover/sections/confidence-model.md` and run the gate from
+**Read** `<base>/sections/confidence-model.md` and run the gate from
 it. Thresholds are terrain-dependent and the difference is the point: in
 brownfield an unknown becomes a registered assumption, in a minefield an
 unknown on a critical path blocks.

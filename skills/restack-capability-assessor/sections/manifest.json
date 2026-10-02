@@ -20,6 +20,13 @@
       "file": "development-planning.md",
       "title": "Gaps, roadmap and deliberate practice",
       "trigger": "running /restack-capability-assessor gaps, roadmap or exercises - turning an assessment into development that happens"
+    },
+    {
+      "id": "capability-assessment-template",
+      "file": "capability-assessment-template.md",
+      "source": "templates/capability-assessment-template.md",
+      "title": "Capability assessment template",
+      "trigger": "writing up an assessment - the canonical report format"
     }
   ]
 }

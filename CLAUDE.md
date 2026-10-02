@@ -18,10 +18,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── scripts/
 │   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
 │   ├── check_skills.py                 # validates frontmatter, banners, sections
-│   ├── shared/                         # method shared by several skills, read on demand
+│   ├── shared/                         # method shared by several skills, vendored into each
 │   └── preamble/                       # shared behaviour, composed by tier
 │       ├── manifest.json               # tier -> fragment composition
 │       ├── voice.md                    # tier 1
+│       ├── paths-and-shell.md          # tier 1
 │       ├── completion-status.md        # tier 1
 │       ├── decision-brief.md           # tier 2
 │       ├── evidence.md                 # tier 2
@@ -63,12 +64,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-excel/                          # generated, tier 1
 │   │   └── read_spreadsheet.py                #   runtime helper, ships with the skill
 │   └── restack-upgrade/                        # generated, tier 1
-├── templates/                          # Document templates
+├── templates/                          # Document templates, vendored into the skills that write them
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-014
+    ├── adr/                            # ADR-001 .. ADR-015
     └── ...                             # Generated documentation location
 ```
 
@@ -106,7 +107,7 @@ Fragments live in `scripts/preamble/`, composed per `manifest.json`.
 
 | Tier | For | Adds |
 |---|---|---|
-| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, completion status |
+| 1 | utilities with no architectural judgement (`/restack-excel`) | voice, paths and shell, completion status |
 | 2 | skills that shape architectural decisions | decision briefs, evidence rules, completeness, confusion protocol |
 | 3 | the residuality core (`/restack-journey`, `/restack-stressor`, `/restack-discover`) | vocabulary, stop gates, journey state contract |
 
@@ -120,13 +121,24 @@ human-readable `trigger`. The manifest is a passive registry — the skeleton's
 prose decides when a section is read. This is what lets a skill carry deep
 method without paying for it on every invocation.
 
+**Every section path is written `<base>/sections/<file>.md`**, where `<base>` is
+the skill's base directory as Claude Code prints it at load. Never write
+`skills/<name>/sections/...`, `scripts/shared/...` or `templates/...` in a
+skill: those resolve from this checkout and nowhere else, and
+`check_skills.py` fails on them
+([ADR-015](docs/adr/ADR-015-vendored-sections-and-base-relative-paths.md)).
+
 **Shared sections.** Method used by several skills lives once in
 `scripts/shared/` and is registered with `"shared": true` in each consuming
-manifest. The section index renders the real path and it is still read on
-demand. First use: `scripts/shared/second-opinion.md`
+manifest. `gen_skills.py` **vendors** a generated copy into each consuming
+skill's `sections/`, because `setup` installs `skills/restack-*/` and nothing
+else. First use: `scripts/shared/second-opinion.md`
 ([ADR-013](docs/adr/ADR-013-outside-opinion.md)). Prefer a shared section over
 duplicating method into two skills; prefer an owned section when only one skill
-needs it.
+needs it. Edit the source, never the vendored copy; its banner says so.
+
+**Canonical templates** a skill writes against (`templates/*.md`) are vendored
+the same way, with `"source": "templates/<file>"` in the manifest.
 
 **A shared section is prose, read by Claude. Executable code never goes in
 `scripts/shared/`** — `setup` installs `skills/restack-*/` and nothing else, so

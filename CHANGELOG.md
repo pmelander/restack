@@ -3,6 +3,85 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.4.0] — 2026-10-02
+
+Twenty improvements from one long brownfield journey: discovery, three stressor
+iterations, ADRs, HLD/LLD/runbook, a consistency review and an ADR amendment
+batch. Ordered by the damage each gap did.
+
+### Fixed
+
+- **Shared sections and templates were never installed.** `setup` installs
+  `skills/restack-*/` only, so `second-opinion.md` (indexed by
+  `/restack-stressor` and `/restack-design-review`) and nine `templates/*.md`
+  references existed only in a checkout. The outside opinion silently never
+  ran for a copy install. Both are now vendored into each consuming skill by
+  `gen_skills.py` ([ADR-015](docs/adr/ADR-015-vendored-sections-and-base-relative-paths.md)).
+- **Section paths resolved against the wrong root.** Every section path is now
+  written `<base>/sections/<file>`, against the skill's base directory as Claude
+  Code prints it. `check_skills.py` fails on any repo-only path, which is the
+  class that CI passed for months because it ran from the repository root.
+- **Copy installs missed section-only edits.** `setup` compared only `SKILL.md`.
+  It now compares the whole skill directory, and both setup scripts verify
+  after installing that every indexed section exists. `/restack-upgrade check`
+  runs the same verification against the live install.
+
+### Added — supersession discipline
+
+- **Decision-point accounting** (`/restack-adr update`). Before an amend,
+  supersede or deprecate, every decision point of the old ADR is marked *holds
+  / replaced / withdrawn*. Each withdrawn point answers "what failure did this
+  prevent, and what prevents it now?" An answer of "nothing" is a STOP and a
+  brief. In the field batch, three supersessions each removed a protection
+  nobody had written down.
+- **Knock-on changes**, a mandatory ADR field: every descriptive document the
+  decision invalidates, updated, bannered or ticketed in the same step.
+  Repeated in `/restack-stressor residues` and checked at the iterate gate and
+  in `/restack-journey review`. In the field, 84% of consistency findings came
+  from one pivot whose ADRs touched none of the four pre-pivot documents.
+- **Amendments go at the top, as a banner**, with contradicted passages struck
+  inline (`/restack-adr`, `/restack-solution-doc update`). Consistency check 7
+  reports footnote amendments and stale amendments as their own class (`AM-n`).
+- **Class S, lost on supersession**, in the design-review matrix cross-check,
+  separate from C (missed by the analysis).
+
+### Added — analysis gaps
+
+- **Unwalked human operators block the route to documentation.** The iterate
+  gate cannot pass while an on-call, approver or break-glass holder is
+  unwalked, unless the architect explicitly accepts it. `/restack-stressor walk`
+  gains a lever template: *actor pulls lever → system effect → confirming
+  signal*.
+- **Lever stressors are mandatory.** For every safety lever, generation must
+  cover pulled-with-no-effect and effect-but-unconfirmable, plus the wrong-actor
+  question.
+- **Stale matrices are marked.** A decision that adds or removes an actor after
+  scoring marks the matrix `scored pre-D<n>`, and the HLD copies that qualifier
+  next to any impact figure.
+- **Platform IaC as a standard discovery probe**, including shared modules,
+  plus an *inherited platform defaults* anti-pattern. A hosted actor's profile
+  carries a sourced *Hosting, network and identity* block.
+- **Implementation status and design boundary** are asked up front, persisted
+  in `journey-state.md`, and read by every tier-3 skill before probing.
+
+### Added — protocol and format
+
+- Brief numbers continue the journey's decisions log instead of restarting at
+  `D1` in every command.
+- A rejected or interrupted brief is not an answer. It is re-issued unchanged
+  on resumption, and no decision is logged without a recorded answer.
+- **Derived details** in ADRs (*detail · derived from · overturnable*). A
+  one-way-door or Low-confidence detail becomes a brief, and
+  `/restack-journey review` lists the unconfirmed ones.
+- Canonical journey files: one assumptions-register schema with a fixed status
+  vocabulary and appended status lines; a decisions-log template; journey
+  history as an append-only list at the end of the file.
+- A tier-1 *Paths and shell* fragment: the `<base>` rule, plus Windows-safe
+  scripting (scratch files, not heredocs; `PYTHONIOENCODING=utf-8`).
+- Traceability promises in ADRs name their artifacts, location and retention.
+  Runbook alerts must be defined in an ADR or LLD. Replaced operational
+  documents are archived with a banner in the same step.
+
 ## [Unreleased]
 
 ### Added

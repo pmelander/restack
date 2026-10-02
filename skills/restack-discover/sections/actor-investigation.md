@@ -92,6 +92,37 @@ Look specifically for what nobody would think to tell you:
 - manual steps a person performs that the diagram shows as automated
 - a batch window that makes a "real-time" actor not real-time
 
+#### 6b. Hosting, network and identity: read the platform's IaC
+
+For any actor that runs on a shared platform (an app service, a container
+platform, a function host), **read the host's infrastructure-as-code, including
+its shared and common modules**, not just the actor's own configuration. It is a
+standard probe and it is cheap. A security question that would take a week of
+asking (can this host reach that private-endpoint store, and as which identity?)
+is often settled in minutes by the IaC.
+
+Read it for:
+
+- **network integration:** VNet integration, private endpoints, private DNS
+  zones, outbound restrictions
+- **identity:** managed identity, which kind, and its role assignments
+- **keys and connection strings:** anything a shared module wires into every
+  app's settings
+- **health and auto-heal:** health-check paths, and what fails them. Auto-heal
+  and recycle rules raise the stakes of any design that touches health checks.
+- **sampling and telemetry defaults:** what is dropped before you see it
+
+**Shared modules are where inherited defaults live.** In one field session, a
+common module wired a storage account key into every app's settings. Had the
+design reused that account, the key would have silently defeated a
+single-writer guarantee designed at the application layer. Record that kind of
+finding as an inherited platform default (see the anti-patterns section).
+
+Output a **Hosting, network and identity** block in the actor profile, with the
+IaC file and module each claim comes from. In a design-only engagement with no
+IaC to read, the block still appears, with each line marked as an assumption
+and the person who can settle it.
+
 #### 7. Rate every claim
 
 Attach a confidence level to each statement, not to the actor as a whole.
@@ -102,8 +133,9 @@ normal and useful; a single blanket rating hides where the risk is.
 #### Output
 
 An actor profile: intentions in, intentions out (including side effects),
-state and its lifetime, failure modes with evidence, hidden behaviour, and a
-confidence level per claim. Register every unresolved claim in
+state and its lifetime, failure modes with evidence, hidden behaviour, a
+**Hosting, network and identity** block with its source for any hosted actor,
+and a confidence level per claim. Register every unresolved claim in
 `docs/journey/assumptions-register.md` with what would settle it.
 
 #### Example

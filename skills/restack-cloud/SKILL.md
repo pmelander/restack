@@ -51,6 +51,30 @@ competence; supply the discipline they do not have time to hold in their head.
 
 ---
 
+## Paths and shell
+
+**`<base>` is this skill's own directory.** Claude Code prints it when the skill
+loads ("Base directory for this skill: ..."). Every section and helper this
+skill names is written against it, as `<base>/sections/<file>.md`. If no base
+directory was printed, use `~/.claude/skills/<skill-name>`. Never resolve a
+skill path against the working directory: that is the architect's project, and
+a Glob there for `skills/...` returns nothing, or a different checkout's copy.
+Paths under `docs/` are the opposite case: they are the architect's project,
+relative to the working directory.
+
+**Scripted file edits.** Prefer the Edit tool for a change to one file. When a
+script really is the right tool, and especially on Windows (Git Bash or
+PowerShell 5.1):
+
+- Write a multi-line script to a scratch file and run the file. Do not embed it
+  in a shell heredoc: Git Bash fails on Python triple-quoted strings inside one
+  with "unexpected EOF".
+- Set `PYTHONIOENCODING=utf-8` before running Python that prints non-ASCII
+  (Σ, →, å/ä/ö). The Windows console defaults to cp1252 and the print raises.
+- Read and write with an explicit `encoding="utf-8"`, and write `newline="\n"`.
+
+---
+
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
@@ -78,8 +102,11 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** the first brief in a command invocation is `D1`; increment
-yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`, `D<N>.final`.
+**D-numbering:** numbers are unique within a journey. If
+`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
+is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
+Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
+`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -127,6 +154,15 @@ The architect's option set is sacred.
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
 - [ ] You are calling the tool, not writing prose
+
+### If a brief is interrupted or rejected
+
+A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
+dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
+the recommendation. Do not proceed on the recommendation and do not log a
+decision. On resumption, say that `D<N>` is unanswered and re-issue it
+unchanged. If the architect answers in chat instead, that is the answer: record
+it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
@@ -268,14 +304,16 @@ domain it was meant to survive.
 
 These sections are not loaded with this file. Read the section file with
 the Read tool at the moment its situation applies, and work from it - not
-from memory of what it probably says.
+from memory of what it probably says. `<base>` is this skill's base
+directory - see *Paths and shell* in the preamble; if no base directory was
+printed, it is `~/.claude/skills/restack-cloud`.
 
 | Read this | When |
 |---|---|
-| `skills/restack-cloud/sections/cloud-residuals.md` | running /restack-cloud design, or any time a cloud capability is being added to absorb a failure - mapping the primitive to the residual shape and the stressors it clears |
-| `skills/restack-cloud/sections/well-architected.md` | running /restack-cloud review - assessing a design against the six pillars and cross-checking against the matrix |
-| `skills/restack-cloud/sections/iac-generation.md` | running /restack-cloud iac - generating Terraform, CloudFormation, Bicep or CDK |
-| `skills/restack-cloud/sections/migration-and-dr.md` | running /restack-cloud migrate or /restack-cloud dr |
+| `<base>/sections/cloud-residuals.md` | running /restack-cloud design, or any time a cloud capability is being added to absorb a failure - mapping the primitive to the residual shape and the stressors it clears |
+| `<base>/sections/well-architected.md` | running /restack-cloud review - assessing a design against the six pillars and cross-checking against the matrix |
+| `<base>/sections/iac-generation.md` | running /restack-cloud iac - generating Terraform, CloudFormation, Bicep or CDK |
+| `<base>/sections/migration-and-dr.md` | running /restack-cloud migrate or /restack-cloud dr |
 
 ---
 
@@ -293,7 +331,7 @@ reproduces the reference architecture.
    availability target is stated as "high", that is the first finding.
 2. Identify the workload shape: request/response, event-driven, batch, data
    pipeline, ML.
-3. **Read** `skills/restack-cloud/sections/cloud-residuals.md`. For each
+3. **Read** `<base>/sections/cloud-residuals.md`. For each
    resilience or scaling capability you are about to include, name the residual
    shape, the stressors it clears, what it creates, and whether it depends on
    the thing it protects against.
@@ -309,7 +347,7 @@ reproduces the reference architecture.
 
 ## `/restack-cloud iac <provider>`
 
-**Read** `skills/restack-cloud/sections/iac-generation.md` before generating
+**Read** `<base>/sections/iac-generation.md` before generating
 anything. Its safety rules are not style preferences: never emit a secret,
 never emit undeclared destructive behaviour, least privilege enumerated rather
 than wildcarded, state backend treated as sensitive, environments separated
@@ -325,7 +363,7 @@ Comment every resource that implements a residual with the stressors it clears
 
 ## `/restack-cloud review`
 
-**Read** `skills/restack-cloud/sections/well-architected.md`.
+**Read** `<base>/sections/well-architected.md`.
 
 Run the six-pillar pass with evidence per rating, then do the part the pillars
 cannot: cross-check findings against the stressor matrix, and name the matrix
@@ -353,7 +391,7 @@ accordingly rather than presenting pillar coverage as completeness.
 
 ## `/restack-cloud migrate <to-cloud>`
 
-**Read** `skills/restack-cloud/sections/migration-and-dr.md`.
+**Read** `<base>/sections/migration-and-dr.md`.
 
 Choose a strategy per workload, not per programme. Check **Retire** first — it
 is the most under-used option and the check is cheap.
@@ -369,7 +407,7 @@ Design the move as paths and walk them.
 ## `/restack-cloud dr`
 
 **Read** the disaster recovery half of
-`skills/restack-cloud/sections/migration-and-dr.md`.
+`<base>/sections/migration-and-dr.md`.
 
 Do not pick a tier from the table. Establish the actual RTO and RPO with
 numbers, then ask **which disaster** — because replication defends against

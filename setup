@@ -130,7 +130,9 @@ for src in "$REPO_DIR"/skills/restack-*/; do
     action="install"; n_new=$((n_new + 1))
   elif [ "$METHOD" = "symlink" ] && [ -L "$dest" ] && [ "$(readlink "$dest")" = "${src%/}" ]; then
     action="unchanged"; n_same=$((n_same + 1))
-  elif [ "$METHOD" = "copy" ] && [ ! -L "$dest" ] && cmp -s "$src/SKILL.md" "$dest/SKILL.md" 2>/dev/null; then
+  # The whole directory, not just SKILL.md: a section edited on its own would
+  # otherwise never reach a copy install.
+  elif [ "$METHOD" = "copy" ] && [ ! -L "$dest" ] && diff -r "${src%/}" "$dest" >/dev/null 2>&1; then
     action="unchanged"; n_same=$((n_same + 1))
   else
     action="update"; n_upd=$((n_upd + 1))
@@ -170,6 +172,30 @@ for dest in "$SKILLS_DIR"/restack-*/; do
   n_del=$((n_del + 1))
   [ -n "$DRY_RUN" ] || rm -rf "$dest"
 done
+
+# --- verify every section path resolves --------------------------------------
+# A skill names its sections as <base>/sections/<file>. If one is missing from
+# the install, the step that reads it silently does not run - which is how the
+# outside opinion went missing for every copy install. Check the tree that was
+# actually installed (the source tree in a dry run), and fail loudly.
+
+missing=0
+for skill in "$REPO_DIR"/skills/restack-*/; do
+  name=$(basename "$skill")
+  root="$SKILLS_DIR/$name"
+  [ -n "$DRY_RUN" ] && root="${skill%/}"
+  [ -f "$root/SKILL.md" ] || continue
+  for rel in $(grep -o '<base>/sections/[A-Za-z0-9_.-]*\.md' "$root/SKILL.md" | sort -u); do
+    file="$root/${rel#<base>/}"
+    [ -f "$file" ] && continue
+    echo "Error: /$name names ${rel} but $file is missing." >&2
+    missing=$((missing + 1))
+  done
+done
+if [ "$missing" -gt 0 ]; then
+  echo "$missing section file(s) missing - the install is incomplete. Re-run ./setup; if it persists, report it." >&2
+  exit 1
+fi
 
 # --- record the install ------------------------------------------------------
 

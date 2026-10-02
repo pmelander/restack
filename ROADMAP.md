@@ -109,7 +109,60 @@ auto-resolved. Terrain classification and the confidence gate probably qualify:
 both are judgements about what you do not know, and a model auto-answering them
 is precisely the false confidence this toolkit exists to avoid.
 
-### 6. ~~Cross-model second opinion~~ — done
+### 6. Update awareness
+
+Today an install only learns it is stale when someone remembers to run
+`/restack-upgrade`. The skills should notice for themselves, at the right
+moments and no others.
+
+The shape worth building:
+
+- **When:** at session-opening commands only (`/restack-journey start` and
+  `where`, `/restack-discover paths`), and at most once a day, using a timestamp
+  in `~/.restack/`. Never inside a stop gate or while a brief is open, because
+  an upgrade notice there competes with the decision.
+- **How:** read `repo` from `~/.restack/install.json` and compare the local
+  `VERSION` against `origin/main:VERSION`. Being offline or having no git
+  checkout is silent, never an error.
+- **What it does:** one line, "ReStack v2.4.0 available (installed v2.3.0):
+  `/restack-upgrade`", plus a snooze. It never upgrades itself. A skill set that
+  changes under an in-flight journey breaks the journey's audit trail.
+- **Opt-out:** a setting in `~/.restack/` turns it off, for environments where
+  an outbound fetch from a skill is not acceptable.
+
+gstack's update check is the reference for the throttle and snooze. Open
+question: should a symlinked development install report "local behind remote"?
+It cannot be upgraded by copy, so the notice would need different wording.
+
+### 7. Next step as a button
+
+Most commands end by naming the next move as a command, such as
+`/restack-design-review consistency`. Where the host can render inline widgets
+(the Claude desktop app and claude.ai expose `show_widget`, with a
+`sendPrompt()` that submits text as if the architect typed it), render the next
+move as a button instead. One click, with no copying and no typos in the
+subcommand.
+
+The shape worth building:
+
+- **Where:** in the tier-1 preamble's close-out, so every skill gets it once and
+  identically. The text line stays above the button, always.
+- **Degrade silently:** if the widget tool is not in the session (terminal
+  Claude Code, other hosts), print the command as today. The skill never
+  mentions that a button could have been there.
+- **One to three buttons, never more:** the recommended next move, and at most
+  the alternative the skill rejected. A menu of every command is a
+  table of contents, not a recommendation.
+- **Never for a gate.** A decision brief is answered through `AskUserQuestion`
+  so the answer is recorded. A button that sends "proceed" bypasses the brief
+  and the decisions log. Buttons only launch the *next command*, after any gate
+  has been answered.
+
+Open question: should the button carry the arguments the skill would pass,
+such as the path name for `walk`? That is more useful, and it is also where a
+stale suggestion would do the most damage.
+
+### 8. ~~Cross-model second opinion~~ — done
 
 Shipped in 2.2.0 as an outside opinion in three places, behind a data gate that
 defaults to anonymised. See

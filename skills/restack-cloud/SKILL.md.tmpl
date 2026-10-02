@@ -89,7 +89,7 @@ reproduces the reference architecture.
    availability target is stated as "high", that is the first finding.
 2. Identify the workload shape: request/response, event-driven, batch, data
    pipeline, ML.
-3. **Read** `skills/restack-cloud/sections/cloud-residuals.md`. For each
+3. **Read** `<base>/sections/cloud-residuals.md`. For each
    resilience or scaling capability you are about to include, name the residual
    shape, the stressors it clears, what it creates, and whether it depends on
    the thing it protects against.
@@ -105,7 +105,7 @@ reproduces the reference architecture.
 
 ## `/restack-cloud iac <provider>`
 
-**Read** `skills/restack-cloud/sections/iac-generation.md` before generating
+**Read** `<base>/sections/iac-generation.md` before generating
 anything. Its safety rules are not style preferences: never emit a secret,
 never emit undeclared destructive behaviour, least privilege enumerated rather
 than wildcarded, state backend treated as sensitive, environments separated
@@ -121,7 +121,7 @@ Comment every resource that implements a residual with the stressors it clears
 
 ## `/restack-cloud review`
 
-**Read** `skills/restack-cloud/sections/well-architected.md`.
+**Read** `<base>/sections/well-architected.md`.
 
 Run the six-pillar pass with evidence per rating, then do the part the pillars
 cannot: cross-check findings against the stressor matrix, and name the matrix
@@ -149,7 +149,7 @@ accordingly rather than presenting pillar coverage as completeness.
 
 ## `/restack-cloud migrate <to-cloud>`
 
-**Read** `skills/restack-cloud/sections/migration-and-dr.md`.
+**Read** `<base>/sections/migration-and-dr.md`.
 
 Choose a strategy per workload, not per programme. Check **Retire** first — it
 is the most under-used option and the check is cheap.
@@ -165,7 +165,7 @@ Design the move as paths and walk them.
 ## `/restack-cloud dr`
 
 **Read** the disaster recovery half of
-`skills/restack-cloud/sections/migration-and-dr.md`.
+`<base>/sections/migration-and-dr.md`.
 
 Do not pick a tier from the table. Establish the actual RTO and RPO with
 numbers, then ask **which disaster** — because replication defends against

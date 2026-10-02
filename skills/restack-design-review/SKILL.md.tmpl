@@ -1,6 +1,6 @@
 ---
 name: restack-design-review
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 2
 model: opus
 description: |
@@ -88,21 +88,21 @@ Whatever the scope, the sequence is the same:
    time and damages the review's credibility.
 4. **Run the dimension passes** for the scope requested (below).
 5. **Triage, then cross-check.** **Read**
-   `skills/restack-design-review/sections/matrix-crosscheck.md`. First split
+   `<base>/sections/matrix-crosscheck.md`. First split
    findings into **system** findings and **artifact** findings — documents
    disagreeing with each other do not classify against the matrix, and forcing
-   them to produces nonsense. Classify the system findings A/B/C/D; send the
+   them to produces nonsense. Classify the system findings A/B/C/D/S; send the
    artifact findings to
-   `skills/restack-design-review/sections/artifact-consistency.md`. Do this
+   `<base>/sections/artifact-consistency.md`. Do this
    before writing up — the distribution often changes what the findings mean.
 6. **Write the report.** **Read**
-   `skills/restack-design-review/sections/findings-and-report.md` for severity
+   `<base>/sections/findings-and-report.md` for severity
    definitions, the evidence standard, and the report format.
 7. **Gate:** where a finding implies a materially different design and the
    alternatives are close, issue a decision brief rather than asserting the fix.
    **STOP.**
    Where the design is a **one-way door**, an adversarial outside read is worth
-   its cost first — **read** `scripts/shared/second-opinion.md`. Not on a routine
+   its cost first — **read** `<base>/sections/second-opinion.md`. Not on a routine
    review: review findings are checkable against the design and the matrix, so
    the marginal value is low and the data leaving is not.
 8. Log the review as an artifact in the journey state, and register every
@@ -112,12 +112,12 @@ Whatever the scope, the sequence is the same:
 
 | Command | Read | Covers |
 |---|---|---|
-| `/restack-design-review architecture` | `sections/dimension-architecture.md` | boundaries, coupling, cohesion, state, failure containment, evolvability |
-| `/restack-design-review data` | `sections/dimension-architecture.md` (data half) | ownership, consistency, dual writes, schema evolution, retention, recovery |
-| `/restack-design-review api` | `sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
-| `/restack-design-review security` | `sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
-| `/restack-design-review performance` | `sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
-| `/restack-design-review consistency` | `sections/artifact-consistency.md` | ADRs against each other and against the design docs, actors, residuals, placeholders, operational docs |
+| `/restack-design-review architecture` | `<base>/sections/dimension-architecture.md` | boundaries, coupling, cohesion, state, failure containment, evolvability |
+| `/restack-design-review data` | `<base>/sections/dimension-architecture.md` (data half) | ownership, consistency, dual writes, schema evolution, retention, recovery |
+| `/restack-design-review api` | `<base>/sections/dimension-api-security.md` | contract clarity, evolution, error semantics, idempotency, backpressure |
+| `/restack-design-review security` | `<base>/sections/dimension-api-security.md` (security half) | threat model, authn/authz, trust boundaries, secrets, blast radius |
+| `/restack-design-review performance` | `<base>/sections/dimension-performance.md` | requirement, latency budget, bottleneck, scaling shape, overload behaviour |
+| `/restack-design-review consistency` | `<base>/sections/artifact-consistency.md` | ADRs against each other and against the design docs, actors, residuals, placeholders, operational docs |
 
 Each is the full sequence above, narrowed. A scoped review still does the
 matrix cross-check and still produces a verdict.
@@ -146,10 +146,11 @@ verdict.
 
 ## `/restack-design-review consistency`
 
-**Read** `skills/restack-design-review/sections/artifact-consistency.md` and run
-the six checks: ADR against ADR, ADR against design docs, actors against the
-HLD, residuals against their records, placeholders and empty evidence, and
-operational documents against the current design.
+**Read** `<base>/sections/artifact-consistency.md` and run
+the seven checks: ADR against ADR, ADR against design docs, actors against the
+HLD, residuals against their records, placeholders and empty evidence,
+operational documents against the current design, and amendments against their
+own bodies (footnote amendments and stale amendments, reported as `AM-n`).
 
 Worth running on its own, more often than a full review — it is cheap, and drift
 compounds. Any design past a handful of ADRs is a candidate.

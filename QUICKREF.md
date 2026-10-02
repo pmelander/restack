@@ -57,7 +57,7 @@ backwards to discovery, not forwards to a choice.
 /restack-journey start           # classify terrain, map the route, name the first move
 /restack-journey where           # mid-journey: where am I, what was skipped, what next
 /restack-journey iterate         # THE ITERATE GATE — loop or proceed
-/restack-journey review          # health check against the seven journey failures
+/restack-journey review          # health check against the eleven journey failures
 /restack-journey cadence         # ongoing rhythm for a live system
 ```
 
@@ -128,7 +128,7 @@ less about your system than you do.
 ```bash
 /restack-adr create <title>      # with reversibility + the residual it implements
 /restack-adr list                # flags ADRs past their review date
-/restack-adr update <number>     # supersede rather than rewrite
+/restack-adr update <number>     # account point by point, then supersede rather than rewrite
 /restack-adr review <number>     # outcome review: predicted vs happened
 /restack-adr search <term>       # searches alternatives too — finds what you rejected
 /restack-adr template
@@ -220,6 +220,7 @@ mostly artifact means the analysis is sound and the docs are not keeping up.
 ```bash
 /restack-upgrade                         # pull, reinstall, show what changed
                                          #   also repairs a broken install
+/restack-upgrade check                   # verify every indexed section is installed
 
 /restack-excel read <file> [sheet]       # to a markdown table
 /restack-excel preview <file> [rows]     # check the shape first

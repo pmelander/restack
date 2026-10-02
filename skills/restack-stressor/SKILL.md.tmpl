@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 3
 model: opus
 description: |
@@ -84,8 +84,18 @@ imagined; it gets structurally better at absorbing ones you did not.
 Traverse a path, evaluating each actor as an intention propagates — under
 normal conditions, or under a named stressor.
 
-**Read** `skills/restack-stressor/sections/walk-protocol.md` and follow it. The six
+**Read** `<base>/sections/walk-protocol.md` and follow it. The six
 steps are the method; do not walk from memory.
+
+Before walking, read `Implementation status:` and `Design boundary:` from
+`docs/journey/journey-state.md`. In a design-only engagement there is no code
+to read, so evidence comes from documents and the architect. Do not go looking
+for repositories or work items. An actor beyond the design boundary is walked
+as a black box: record its observable behaviour and turn each question about
+its internals into a handoff ask. Do not investigate it.
+
+Walk every lever a human actor holds with the protocol's **lever template**:
+*actor pulls lever → system effect → the signal that confirms the effect*.
 
 Walking comes before the matrix, always. The matrix columns are the actors on
 your walked paths — not an arbitrary component list — because position in a
@@ -114,16 +124,19 @@ journey state.
 
 Generate stressors for the current path set.
 
-**Read** `skills/restack-stressor/sections/stressor-generation.md` and generate from
+**Read** `<base>/sections/stressor-generation.md` and generate from
 it. The seven categories, the scenario-not-category rule, and the requirement
 for at least one genuinely absurd stressor all live there.
 
 Default 20-30. Organisational stressors are mandatory, not optional — a matrix
 with no organisational rows describes a system that will be built in a vacuum.
+So are the **lever stressors**: for every safety lever, at least one
+*ineffective-lever* row (pulled, no effect) and one *unconfirmable-lever* row
+(effect, but no one can tell), plus the wrong-actor question.
 
 **Offer an outside opinion here.** This is the strongest use of one in the whole
 toolkit: a different model asked for the *complement* of your list attacks the
-comfortable-stressors failure directly. **Read** `scripts/shared/second-opinion.md`
+comfortable-stressors failure directly. **Read** `<base>/sections/second-opinion.md`
 — including the step that decides what may leave, which for a real system
 defaults to sending an anonymised path map rather than the real one. Tag
 anything it returns `external`.
@@ -138,7 +151,7 @@ written to `docs/stressor-analysis/stressors-<date>.md`.
 
 Build the impact matrix.
 
-**Read** `skills/restack-stressor/sections/matrix-construction.md` and build from it.
+**Read** `<base>/sections/matrix-construction.md` and build from it.
 Scoring is binary and the section explains why — do not introduce a severity
 scale, and do not skip the margins.
 
@@ -154,6 +167,11 @@ scale, and do not skip the margins.
    `docs/journey/stressor-iteration-history.md`.
 7. Register every `?` cell as an assumption with the discovery step that would
    settle it.
+8. Record the scoring baseline: the highest `D<n>` in
+   `docs/journey/decisions-log.md` at the time of scoring. When a later gate or
+   ADR adds or removes an actor, the matrix is stale. Mark its entry in the
+   iteration history `scored pre-D<n>` (the decision that changed the actor
+   set). Anything quoting its figures then carries that qualifier.
 
 ---
 
@@ -161,7 +179,7 @@ scale, and do not skip the margins.
 
 Interpret the matrix.
 
-**Read** `skills/restack-stressor/sections/matrix-construction.md` — the "Reading the
+**Read** `<base>/sections/matrix-construction.md` — the "Reading the
 matrix" part — and work through its four checks in order: concentration,
 clusters, flatness, suspicious zeros.
 
@@ -180,7 +198,7 @@ than proceeding to residuals over a matrix that shows nothing.
 
 Propose residuals and rank them by leverage.
 
-**Read** `skills/restack-stressor/sections/residual-identification.md` and follow the
+**Read** `<base>/sections/residual-identification.md` and follow the
 five-step method. Work from the most-vulnerable actor, address the *mechanism*
 behind its cluster rather than the individual stressors, and re-score each
 proposed residual against the **full** stressor set to expose the compound
@@ -197,13 +215,20 @@ mixes them without saying so.
 
 **An outside opinion is worth it on a cluster you are unsure of.** Send the
 cluster and the actor, withhold your own diagnosis, and compare what comes back.
-**Read** `scripts/shared/second-opinion.md`. Sending your diagnosis gets you
+**Read** `<base>/sections/second-opinion.md`. Sending your diagnosis gets you
 agreement, which is the one thing that teaches you nothing.
 
 **Gate:** when two or more residuals address the same cluster with materially
 different tradeoffs — especially when one is a one-way door — that is an
 approach gate. Issue the decision brief. **STOP.** Do not write the chosen
 residual into an ADR or the journey state before the architect has chosen it.
+
+**Knock-on changes travel with the residual.** A chosen residual that changes
+the design invalidates descriptive documents written before it (HLD, LLD,
+deployment guide, runbook, configuration manifest). Record them in the ADR's
+Knock-on changes field via `/restack-adr create`, and update, banner or ticket
+each one in the same step. Four documents left untouched after a single pivot
+produced 84% of one field review's findings.
 
 ---
 
@@ -234,7 +259,7 @@ not decide here whether to loop or proceed.
 
 Facilitate the analysis with a group rather than a single architect.
 
-**Read** `skills/restack-stressor/sections/workshop-facilitation.md` and facilitate
+**Read** `<base>/sections/workshop-facilitation.md` and facilitate
 from it. The room holds system knowledge no document has; the method exists to
 extract it.
 

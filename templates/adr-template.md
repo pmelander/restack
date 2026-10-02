@@ -24,6 +24,22 @@
 
 [Describe the decision that was made. Use active voice: "We will..."]
 
+### Derived details
+
+[Details decided while writing that the brief never settled. A one-way door or Low-confidence detail is a decision brief, not a row here.]
+
+| Detail | Derived from | Overturnable |
+|---|---|---|
+| [detail] | [aspiration, constraint or ADR-NNN] | yes / no |
+
+### Decision-point accounting
+
+[Only when this ADR supersedes, amends or deprecates another. One row per decision point in the old ADR.]
+
+| # | Decision point in ADR-NNN | Now | What failure did it prevent? | What prevents it now? |
+|---|---|---|---|---|
+| 1 | [point] | holds / replaced by ADR-x / withdrawn | [failure] | [mechanism, or a link to the decision brief] |
+
 ## Consequences
 
 ### Positive
@@ -34,6 +50,14 @@
 
 ### Neutral
 - [List neutral consequences that are neither good nor bad]
+
+## Knock-on changes
+
+[Every descriptive document this decision invalidates, handled in the same step. "None" only after grepping docs/ for the mechanism this changes.]
+
+| Document | What this decision invalidates | Done in the same step |
+|---|---|---|
+| [HLD / LLD / deployment guide / runbook / config manifest / test strategy] | [section and claim] | updated / bannered / ticketed [ref] |
 
 ## Alternatives Considered
 

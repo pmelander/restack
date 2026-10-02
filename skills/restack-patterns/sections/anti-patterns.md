@@ -39,7 +39,7 @@ come with the reasoning that produced them already written down.
 
 #### Write it up
 
-Use `templates/anti-pattern-template.md` — the canonical format.
+Use `<base>/sections/anti-pattern-template.md` — the canonical format.
 
 Three things to get right in the writing:
 

@@ -22,11 +22,23 @@ of a stressor analysis, state which actor was vulnerable and to what.]
 
 We will [decision, active voice].
 
+### Derived details
+
+| Detail | Derived from | Overturnable |
+|---|---|---|
+| [an implementation detail the brief never decided] | [aspiration, constraint or ADR-NNN] | yes / no |
+
 ## Consequences
 
 ### Positive
 ### Negative
 ### Neutral
+
+## Knock-on changes
+
+| Document | What this decision invalidates | Done in the same step |
+|---|---|---|
+| [HLD / LLD / deployment guide / runbook / config manifest / test strategy] | [the section and the claim] | updated / bannered / ticketed [ref] |
 
 ## Alternatives considered
 
@@ -40,9 +52,10 @@ We will [decision, active voice].
 
 ### The fields that are not standard ADR
 
-Three fields exist because this toolkit produces decisions from stressor
-analysis, and a decision that loses its link to the analysis loses the reason
-it was made.
+The first three fields exist because this toolkit produces decisions from
+stressor analysis, and a decision that loses its link to the analysis loses the
+reason it was made. The last three exist because decisions change, and each
+change leaves gaps in documents the ADR never touched.
 
 **Reversibility.** Ask: if this turns out wrong in six months, what does undoing
 it cost? *Reversible* — a config change, a swapped library behind an interface.
@@ -68,6 +81,33 @@ An empty field is ambiguous; an explicit "none" is information.
 
 **Review date.** A decision with no review date is never revisited, and
 unrevisited decisions are how architectures rot while everyone follows them.
+
+**Knock-on changes.** Mandatory, on `create` and on every `update`. List every
+descriptive document the decision invalidates (HLD, LLD, deployment guide,
+runbook, configuration manifest, test strategy) and what happened to each **in
+the same step**: updated, bannered as stale, or ticketed with a reference.
+"None" is a valid answer only after you have looked: grep `docs/` for the
+mechanism the decision changes. ADRs are read when someone asks why; the
+deployment guide is read by whoever deploys, and a guide written before a
+pivot will be followed to the letter. In one field session, 84% of a
+consistency review's findings dated from a single pivot whose ADR touched none
+of the four operational documents written before it.
+
+**Derived details.** Writing an ADR precisely surfaces details the brief never
+decided: tear down only on an explicit OFF and not on staleness, jitter the
+re-enable, break-glass may only move towards *less* of the feature. Record each
+one as *detail · derived from · overturnable*, so the architect can see what
+was decided on their behalf and overturn it. **A derived detail that is a
+one-way door, or that you hold at Low confidence, is not a derived detail. It
+is a decision brief: issue it and STOP.** `/restack-journey review` lists the
+overturnable rows still awaiting the architect's confirmation.
+
+**Traceability claims.** Any promise of replay, audit or reconstruction ("we
+can replay against the exact bytes", "every change is traceable") names its
+mechanism: which artifacts, where they live, and **how long they are kept**.
+Then check the retention against the promise. An inherited retention rule that
+deletes the bytes after five days defeats a replay promise silently, and
+nothing fails until the day someone needs the replay.
 
 ### Writing the sections well
 
@@ -104,3 +144,42 @@ Context explain what changed — a new stressor, a failed assumption, an
 environment that moved. The pair together is the useful artifact: it shows the
 thinking evolving, which is the thing a single up-to-date document can never
 show.
+
+### Decision-point accounting (before any amend, supersede or deprecate)
+
+An old ADR usually protects against more than its title says, and the extra
+protection was never written down as its purpose. Retire it whole and you
+retire that too. So before choosing a mechanism, account for it point by point,
+and write the table into the new ADR, or into the dated note when deprecating:
+
+| # | Decision point in ADR-NNN | Now | What failure did it prevent? | What prevents it now? |
+|---|---|---|---|---|
+| 1 | [one decision, as the old ADR states it] | holds / replaced by ADR-x / withdrawn | [the failure, concretely] | [ADR, mechanism or test] |
+
+1. List the old ADR's decision points one by one. Read the body, not only the
+   Decision heading: constraints stated in Context or Consequences are decision
+   points too.
+2. Mark each one *holds*, *replaced by ADR-x* or *withdrawn*.
+3. **For every withdrawn row, answer: what failure did this prevent, and what
+   prevents it now?** Read the point against the *current* contracts, not
+   against the old ADR's own framing.
+
+If the answer for any row is "nothing", **STOP**. Issue a decision brief, with
+options to keep that point, replace it, or accept the gap and register it,
+before superseding. Three supersessions in one field batch each removed a
+protection nobody had recorded: an alert for "applying against the business's
+off", a response field that now contradicted a byte-identical contract, and a
+gate before a customer-affecting mode a neighbour depended on. All three were
+visible only point by point.
+
+### Amendments that contradict the body
+
+An amendment that changes behaviour the body still specifies goes **at the top,
+as a banner**, not at the end. Then strike or mark each contradicted passage
+inline (`~~old~~ — superseded by amendment YYYY-MM-DD, see banner`). A developer
+reads the body. Amendment by footnote leaves the old specification looking
+current.
+
+Before writing an amendment, grep later ADRs for the mechanism it describes. An
+amendment that describes a mechanism a later ADR already superseded is stale on
+arrival.
