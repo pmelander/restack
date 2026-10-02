@@ -3,7 +3,7 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [2.5.2] — 2026-10-02
+## [2.5.3] — 2026-10-02
 
 ### Fixed
 
@@ -27,6 +27,28 @@ individual skills carry their own `version:` in frontmatter.
   `CLAUDE_SKILLS_DIR` to a backslash path on Windows and checks the record
   parses and names that directory. Elsewhere the directory name carries a `\`
   and a `"`, so CI on Linux covers the escaping too.
+
+## [2.5.2] — 2026-10-02
+
+### Removed
+
+- **Next step as a button, withdrawn the day it shipped**
+  ([ADR-017](docs/adr/ADR-017-next-step-as-a-button.md)). In the desktop app's
+  Code tab, a button often needed several clicks before its command appeared in
+  the message box. Even then it only filled the box, and the architect still
+  pressed send. The cause sits in the host, where ReStack can neither test nor
+  fix it, and a button less reliable than the text line above it adds nothing.
+- **The `Next:` / `Alternative:` line format and the bare-command rule went
+  with it.** Both existed to support the button. The tier-1 preamble is back to
+  voice, paths and shell, and completion status, and the generated skills match
+  2.4.0 apart from the changes 2.5.0 and 2.5.1 made to them. Skills name their
+  next move as they did before.
+
+Kept: ADR-017, marked withdrawn. It records what the click test established
+(the box is filled rather than sent, a leading `/` is dropped, clicks are
+unreliable), what it did not (why), and what any second attempt would need. The
+update check's rule that `/restack-upgrade` is never the session's next move is
+reworded so it no longer names the removed format.
 
 ## [2.5.1] — 2026-10-02
 

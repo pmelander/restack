@@ -127,24 +127,19 @@ What is still unknown: whether once a day is the right cadence, or whether
 architects snooze it every time. If the snooze is the normal response, the
 notice is noise and the cadence should drop to weekly.
 
-### 7. ~~Next step as a button~~ — done
+### 7. ~~Next step as a button~~ — built and withdrawn
 
-Shipped as a tier-1 preamble fragment, `next-step.md`, so all sixteen skills
-end the same way. A `Next:` line names the full command, and where the host has
-a widget tool with `sendPrompt()`, a button sits below it. The skill degrades
-silently to the line alone, renders one to three buttons, and never renders one
-for a gate.
+Shipped in 2.5.0 and withdrawn in 2.5.2 the same day. In the desktop app's Code
+tab a button fills the message box rather than sending, text starting with `/`
+never arrives, and a button often needed several clicks before its command
+appeared at all. Those are host behaviours ReStack can neither test nor fix,
+and a button less reliable than the text line above it adds nothing.
 
-The open question is settled: **a button carries the command, never its
-arguments.** The `Next:` line keeps the arguments. A command that arrives bare
-resolves its target from the journey state at click time, so a stale button
-cannot send a stale target, and no text from a file reaches `sendPrompt()`. See
-[ADR-017](docs/adr/ADR-017-next-step-as-a-button.md).
-
-What is still unknown: whether the one line a bare command spends naming its
-target is friction people notice, or the confirmation they wanted anyway. Also
-unknown: whether claude.ai sends a button's text directly, as documented, or
-fills the message box the way the desktop app's Code tab does.
+The open question was settled and the reasoning still stands for any future
+attempt: **carry the command, never its arguments,** and resolve the target
+when the command runs. See
+[ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) for what was established,
+what was not, and what would justify trying again.
 
 ### 8. ~~Cross-model second opinion~~ — done
 
