@@ -54,8 +54,8 @@ by hand. Never block the command on it.
 | `BASE` | a matrix scored before a decision that changed the actor set, or a document quoting it without `scored pre-D<n>` | journey review, *Stale figures quoted* |
 | `MX` | a row or column total that does not match its cells; a cell scored above 1 | the matrix, before anyone quotes it |
 | `ALERT` | a runbook alert that no ADR or design document defines | consistency check 6 |
-| `PH` | TBD, TODO or a template placeholder outside code blocks | consistency check 5 |
-| `PDF` | an export older than the Markdown it was made from | consistency check 6 |
+| `PH` | TBD, TODO or a template placeholder outside code blocks. A TBD that names a registered assumption (`TBD (A-12)`) is a tracked gap and is not listed | consistency check 5 |
+| `PDF` | an export older than the Markdown it was made from, including a renamed export (`HLD.md` → `HLD-high-level-design.pdf`, `[heuristic]`) | consistency check 6 |
 
 #### Reading the output
 
