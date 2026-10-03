@@ -3,6 +3,45 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.13.0] — 2026-10-03
+
+The impact matrix's arithmetic is done by a script; scoring stays with the
+architect ([ADR-025](docs/adr/ADR-025-matrix-arithmetic-by-script.md)). On the
+reference engagement the model checked 67 claimed cells with one-off scripts
+that vanished with the session.
+
+### Added
+
+- **`matrix.py`** in `/restack-stressor` (standard library, no network):
+  - `totals`: row, column and grand totals checked, or filled with `--write`
+    (which changes no score and refuses a non-binary matrix); cells that are
+    not 0, 1 or `?`; the unknown cells; and the four reading checks as
+    numbers: concentration, identical-actor-set clusters, flatness, zero
+    columns.
+  - `compare`: the per-actor before/after table, the total against the shared
+    stressor set (split into actors in both, removed and added) and against
+    the expanded set, cells cleared, cells newly 1, and cells that left with a
+    removed actor.
+  - `claims`: each residual's `**Clears N cells:**` list checked: 1 before,
+    0 after (or its actor removed), the stated count, overlaps, the distinct
+    total, and cells cleared that no residual claims.
+- `tests/test_matrix.py` (14 cases) against `tests/fixtures/matrix/`.
+
+### Changed
+
+- `/restack-stressor` `analyze`, `vulnerabilities`, `residues` and `iterate`
+  use it; `residual-identification.md` fixes the checkable cell-list format
+  the field already used.
+- **trace 1.0.3: a bare `?` counts as 1**, as the method says (unknown
+  exposure is exposure). It counted 0 before.
+
+### Notes
+
+- Run read-only on the reference engagement's iterations 6 → 7: 195 → 133 on
+  the shared stressor set, 244 on the expanded one; 66 cells cleared on shared
+  actors plus one claimed cell whose actor was removed, which are exactly the
+  67 the residuals claimed, with none cleared unclaimed.
+
 ## [2.12.0] — 2026-10-03
 
 Old ReStack skill copies in a project or the profile are reported, and

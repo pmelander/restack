@@ -73,6 +73,12 @@ R2  Idempotency keys on the order intention
     Leverage:    MEDIUM - real gain, but a one-way door on the contract
 ```
 
+Behind each summary, give the residual its own `## R<n>` section that lists
+the cells themselves: `**Clears N cells:**`, then one `- S-<n>: <actor>,
+<actor>` line per stressor, and the cells outside the cluster on a line that
+starts `**Outside the cluster:**`. A count nobody can check is a forecast
+nobody can trust; `matrix.py claims` checks this list against the matrix.
+
 Rank by leverage, then re-rank by reversibility when terrain is minefield: there,
 a reversible residual with 70% of the benefit beats a one-way door with 100%.
 

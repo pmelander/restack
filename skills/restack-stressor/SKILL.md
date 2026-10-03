@@ -605,6 +605,30 @@ printed, it is `~/.claude/skills/restack-stressor`.
 
 ---
 
+## The matrix's arithmetic: `matrix.py`
+
+The margins, the iteration comparison and the residual claims are arithmetic
+over a table that reaches 150 rows. Done by hand they drift, so a script does
+them (ADR-025). It never scores a cell: scoring is the walk's judgement.
+Resolve it once per session, installed path first:
+
+```bash
+MX="$HOME/.claude/skills/restack-stressor/scripts/matrix.py"
+[ -f "$MX" ] || MX="skills/restack-stressor/scripts/matrix.py"
+[ -f "$MX" ] || echo "matrix.py not found: do the arithmetic by hand and say so"
+```
+
+| Command | Gives |
+|---|---|
+| `python "$MX" totals <matrix> [--write]` | row and column totals checked (filled with `--write`), non-binary cells, the `?` cells, and the four reading aids as numbers |
+| `python "$MX" compare <before> <after>` | the per-actor before/after table, cells cleared and newly 1, and both totals: against the shared stressor set and the expanded one |
+| `python "$MX" claims <residuals> <before> [--after <after>]` | each residual's claimed cells checked: 1 before, 0 after, the stated count, overlaps, the distinct total, and cells cleared that no residual claims |
+
+A `?` counts as 1. The reading aids are numbers, not findings: naming the
+mechanism behind a cluster stays with you.
+
+---
+
 ## `/restack-stressor walk [path-name] ["stressor"]`
 
 Traverse a path, evaluating each actor as an intention propagates — under
@@ -686,7 +710,8 @@ scale, and do not skip the margins.
 2. Confirm the stressor set.
 3. Score every cell, marking genuine unknowns as `1` with a `?`.
 4. Compute row totals (stressor impact), column totals (actor vulnerability),
-   and total system impact.
+   and total system impact: `python "$MX" totals <matrix> --write` fills
+   them, and refuses while any cell is not 0, 1 or `?`.
 5. Report which stressor set the total is measured against — if the set changed
    since the last iteration, report both totals.
 6. Write to `docs/stressor-analysis/matrix-<date>.md` and append to
@@ -707,7 +732,10 @@ Interpret the matrix.
 
 **Read** `<base>/sections/matrix-construction.md` — the "Reading the
 matrix" part — and work through its four checks in order: concentration,
-clusters, flatness, suspicious zeros.
+clusters, flatness, suspicious zeros. `python "$MX" totals <matrix>` gives
+each as a number (top actors' share, stressors hitting the identical actor
+set, the spread of the column totals, zero columns). Start from those; the
+near-identical clusters and the mechanism behind each are still yours to find.
 
 Report the most-hit actors, the widest-reaching stressors, and — most
 importantly — the **clusters**: groups of stressors hitting the same actor set,
@@ -739,6 +767,12 @@ introduces are walkable, stressable, and go into the next iteration.
 Mark every residual `proposed` or `implemented`. Never report a total that
 mixes them without saying so.
 
+List each residual's cells as `**Clears N cells:**` followed by
+`- S-<n>: <actor>, <actor>` lines (a `**Outside the cluster:**` line for the
+rest), then run `python "$MX" claims <residuals> <matrix>`. Every claimed
+cell must be a 1 in the matrix, the stated count must match the list, and a
+compound forecast counts a cell claimed by two residuals once.
+
 **An outside opinion is worth it on a cluster you are unsure of.** Send the
 cluster and the actor, withhold your own diagnosis, and compare what comes back.
 **Read** `<base>/sections/second-opinion.md`. Sending your diagnosis gets you
@@ -769,11 +803,15 @@ Re-run the analysis after residuals have been **implemented**, and compare.
 3. Re-score the matrix against the same stressor set as the previous iteration,
    then separately against any stressors added since.
 4. Produce the per-actor before/after table from the matrix-construction
-   section. The per-actor view is what makes the compound effect visible; a
+   section: `python "$MX" compare <previous> <new>` writes it, with both
+   totals. The per-actor view is what makes the compound effect visible; a
    headline total hides it.
 5. Name explicitly which residual removed which cells, and call out any cell it
    cleared that was **outside** the cluster it was designed for — that is the
    antifragility mechanism working, and it is the thing worth pointing at.
+   `python "$MX" claims <residuals> <previous> --after <new>` checks every
+   claimed cell went to 0 and lists cells that cleared with no residual
+   claiming them; each of those needs its reason.
 6. Append to `docs/journey/stressor-iteration-history.md`.
 
 Then hand the decision to `/restack-journey iterate`, which owns the iterate gate. Do
