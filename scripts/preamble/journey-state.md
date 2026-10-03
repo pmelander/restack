@@ -53,9 +53,11 @@ the one it replaces. The trail is the point, especially in minefield terrain.
 - **Journey history** in `journey-state.md`: an append-only list at the **end**
   of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
 
-`/restack-journey` carries the full templates. When an existing file uses
-another shape, append in its shape and register the drift once. Do not
-restructure someone's register in the middle of a journey without asking.
+`/restack-journey` carries the full templates, and `journey.py` writes all
+three (see *Journey Files*). When an existing file uses another shape, the
+helper refuses it: append in its shape by hand, and offer `journey.py migrate`,
+which converts structure only and proves nothing material changed. Do not
+restructure someone's journey files without asking.
 
 ### Timestamps
 

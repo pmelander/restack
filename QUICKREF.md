@@ -68,10 +68,22 @@ moves), each asked as a choice. Interrupt to redirect.
 /restack-journey iterate         # THE ITERATE GATE — loop or proceed
 /restack-journey review          # health check against the eleven journey failures
 /restack-journey cadence         # ongoing rhythm for a live system
+/restack-journey migrate         # old-shape journey files to the canonical one (dry run first)
 ```
 
 State lives in `docs/journey/` — position, iteration history, decisions,
-assumptions. Read at the start of every command, written at the end.
+assumptions. Read at the start of every command, written at the end, through
+`journey.py` (ships in `/restack-journey`), which keeps each file in its one
+canonical shape:
+
+```bash
+journey.py decision open "<question>"     # a brief takes its number when issued
+journey.py decision answer D7 --answer "..." --rationale "..." --actors no
+journey.py assume add "<belief>" --source S --validates V --depends D
+journey.py assume status A-12 "Partly resolved" --why "..."
+journey.py history add --command "/restack-journey iterate" --outcome "..."
+journey.py check | migrate [--write]     # is it canonical; convert an old shape
+```
 
 ## Discovery — brownfield and minefield
 

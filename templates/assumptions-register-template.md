@@ -16,7 +16,9 @@ and never add an "Update" heading. Both make the file impossible to append to.
   and updates the `Status` and `Status date` cells.
 - The table is the last table in the file, and nothing but status lines follows
   it. Scripts append rows by inserting before the first status line, or at the
-  end of the file when there are none.
+  end of the file when there are none. `journey.py assume add` and
+  `assume status` do both; `journey.py migrate register` converts a register
+  in an older shape.
 
 | ID | Assumption | Source | Validates it | Depends on it | Status | Status date |
 |---|---|---|---|---|---|---|

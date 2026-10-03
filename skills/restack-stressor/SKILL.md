@@ -164,11 +164,13 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** numbers are unique within a journey. If
-`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
-is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
-Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
-`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
+**D-numbering:** numbers are unique within a journey, and a brief takes its
+number when it is issued, not when it is answered. Get it from
+`journey.py decision open` (see *Journey Files*), which writes the open entry
+to `docs/journey/decisions-log.md`; without the helper, the next brief is one
+past the highest `D<N>` in the log, or `D1`. Sub-briefs in a split chain are
+`D<N>.1`, `D<N>.2`, `D<N>.final`, recorded in the parent's entry. A brief that
+was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
@@ -340,6 +342,51 @@ wrong system.
 
 ---
 
+## Journey Files (write them with the helper)
+
+The decisions log, the assumptions register and the journey history have one
+canonical shape each. `journey.py`, shipped in `/restack-journey`, writes them
+in that shape: it takes the next `D<n>` and `A-<n>`, puts the row or entry in
+the right place, keeps a register row and its status lines in step, and
+refuses a file that is not canonical rather than guessing (ADR-023 in the
+ReStack repository). Use it for every write to these three files.
+
+Run it with the Bash tool, from the project root:
+
+```bash
+JY="$HOME/.claude/skills/restack-journey/scripts/journey.py"
+[ -f "$JY" ] || JY="skills/restack-journey/scripts/journey.py"
+PY=""; for p in python3 python; do "$p" -c "" 2>/dev/null && { PY="$p"; break; }; done
+if [ -f "$JY" ] && [ -n "$PY" ]; then "$PY" "$JY" check; else echo "journey helper unavailable: write the journey files by hand in their canonical shape"; fi
+```
+
+For another command, replace `check` in the last line:
+
+| When | Command |
+|---|---|
+| **before** issuing a decision brief | `decision open "<question>" --gate <terrain\|confidence\|iterate\|approach\|brief>` prints the brief's number, `D<n>` |
+| the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no` (or `--actors "yes: added <actor>"`; `--supersedes D<m>` when it reverses one) |
+| a belief the design relies on is unverified | `assume add "<belief>" --source "..." --validates "..." --depends "..."` prints `A-<n>` |
+| something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
+| a `/restack-journey` command finishes | `history add --command "/restack-journey <cmd>" --outcome "..." [--decision D<n>]` |
+
+**Number a brief before you ask it.** `decision open` writes the entry with
+`Answer: (open)`. If the session is interrupted, the open entry is the record:
+on resumption, re-issue that brief under the same number, unchanged. Never
+infer an answer from an open entry, and never reuse its number.
+
+**If the helper refuses**, it says why. "Not canonical" means the file is in
+an older shape. Do not restructure it by hand. Append in the file's own shape
+for now, and offer the migration: run `migrate` (a dry run, writing nothing),
+show the architect what it would do and what it leaves for their judgement, and
+write with `migrate --write` only after they agree. Restructuring someone's
+journey files is their call.
+
+**If the helper is unavailable**, the snippet says so: write the files by hand,
+in the canonical shapes the templates define.
+
+---
+
 ## Journey State (read at start, write at end)
 
 Architectural journeys span weeks, survive breaks, change hands, and need an
@@ -395,9 +442,11 @@ the one it replaces. The trail is the point, especially in minefield terrain.
 - **Journey history** in `journey-state.md`: an append-only list at the **end**
   of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
 
-`/restack-journey` carries the full templates. When an existing file uses
-another shape, append in its shape and register the drift once. Do not
-restructure someone's register in the middle of a journey without asking.
+`/restack-journey` carries the full templates, and `journey.py` writes all
+three (see *Journey Files*). When an existing file uses another shape, the
+helper refuses it: append in its shape by hand, and offer `journey.py migrate`,
+which converts structure only and proves nothing material changed. Do not
+restructure someone's journey files without asking.
 
 ### Timestamps
 

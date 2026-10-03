@@ -2,13 +2,17 @@
 <!-- Edit templates/decisions-log-template.md, then: python scripts/gen_skills.py -->
 # Decisions Log
 
-Every gate passed and every brief answered, numbered journey-wide. The next
-brief takes the number one past the highest `D<n>` here. Numbers are never
-reused, including for briefs that were never answered.
+Every gate and every brief, numbered journey-wide. A brief takes its number
+when it is issued: `journey.py decision open` writes its entry with
+`**Answer:** (open)`, and `journey.py decision answer` fills it in when the
+architect answers. An entry still `(open)` is a brief that was interrupted: it
+is re-issued unchanged under the same number, never answered on the
+architect's behalf. Numbers are never reused.
 
-Append-only. Each entry is a level-2 heading, newest at the end. A decision that
-reverses an earlier one is a new entry that names the one it supersedes. The
-earlier entry is not edited.
+Append-only. Each entry is a level-2 heading, newest at the end. Once
+answered, an entry is not edited: a decision that reverses it is a new entry
+that names the one it supersedes. Entries without a `D<n>` (events that were
+not briefs) are allowed and are not numbered.
 
 ## D1 · YYYY-MM-DD · [one-line question]
 

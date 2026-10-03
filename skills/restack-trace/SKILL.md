@@ -1,6 +1,6 @@
 ---
 name: restack-trace
-version: 1.0.1
+version: 1.0.2
 preamble-tier: 1
 model: sonnet
 description: |

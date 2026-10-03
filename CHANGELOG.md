@@ -3,6 +3,54 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.11.0] — 2026-10-03
+
+The journey files are written by a helper, and old shapes migrate without
+material change ([ADR-023](docs/adr/ADR-023-journey-files-written-by-a-helper.md)).
+This is the writing half of ROADMAP item 3; trace (2.9.0) was the reading half.
+
+### Added
+
+- **`journey.py`** in `/restack-journey` (standard library, no network):
+  `assume add | status`, `decision next | open | answer`, `history add`,
+  `check` and `migrate`. It takes the next `A-<n>` and `D<n>`, puts each row
+  and entry in its canonical place, keeps a register row and its status lines
+  in step, writes atomically, and keeps a file's line endings.
+- **A brief takes its number when it is issued.** `decision open` writes the
+  entry with `Answer: (open)`; `decision answer` fills it once, and refuses to
+  answer twice. An open entry is the record of an interrupted brief.
+- **`migrate`** converts old-shape journey files: register rows from every
+  table into one, notes kept verbatim above it; date-first decision headings;
+  a history table into list lines at the end. Structure only, never a status,
+  a decision or a date. It refuses to write if any word, row or decision
+  reference would be lost, reports what needs judgement, is a dry run unless
+  `--write`, and backs up outside git.
+- **`/restack-journey migrate`**: dry run, report, a brief, then the write and
+  the judgement items one at a time.
+- **`journey-files.md`**, a tier-2 preamble fragment, so every skill that
+  writes decisions or assumptions uses the helper.
+- `tests/test_journey.py` (35 cases) against `tests/fixtures/journey/`, a
+  synthetic canonical journey and a legacy one.
+
+### Changed
+
+- `decision-brief.md`: numbers come from `decision open`. `journey-state.md`:
+  a refused file is appended by hand and offered `migrate`.
+- Decisions-log template: open entries and unnumbered event entries are part
+  of the contract.
+- **trace 1.0.2** reads a migrated register: notes in its "Earlier notes"
+  section count as later than the rows, so the status-drift heuristic keeps
+  working. Both scripts now write UTF-8 to stderr as well as stdout; a
+  refusal quoting `·` failed on a cp1252 console.
+
+### Notes
+
+- Run read-only on a copy of the 2.4.0 reference engagement's journey files:
+  123 rows from 18 tables and 12 stray groups, 18 decision headings and 151
+  history rows converted, every word kept. trace's structural `REG` items
+  disappeared; the content items (A-40, A-88, the falsified-but-Open rows)
+  remained for the architect.
+
 ## [2.10.0] — 2026-10-03
 
 ReStack is a working toolkit, not a training pack

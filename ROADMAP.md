@@ -76,7 +76,7 @@ access queries a customer record out of curiosity, six months before anyone
 reviews the audit log" is a stressor. See
 `skills/restack-stressor/compliance-packs/README.md`.
 
-### 3. Journey state as tooling rather than prose
+### 3. ~~Journey state as tooling rather than prose~~ — done
 
 The journey-state contract is currently instructions the model follows, and
 over a long session that degrades. It is the last open follow-up from
@@ -91,10 +91,12 @@ remembering to take it.
 **The reading half shipped in 2.9.0** as `/restack-trace`
 ([ADR-021](docs/adr/ADR-021-trace-checks-as-a-worklist.md)): a read-only
 script that finds where the journey files and the documents drift, and hands
-the reviewer a worklist. The writing half is still open: a helper that appends
-a register row, a status line or a decision in the canonical shape, and takes
-the next `D<n>` from the log. trace reports the damage that the missing helper
-lets in, which is the case for building it.
+the reviewer a worklist. **The writing half shipped in 2.11.0** as
+`journey.py` in `/restack-journey`
+([ADR-023](docs/adr/ADR-023-journey-files-written-by-a-helper.md)): every tier
+2 and 3 skill writes the decisions log, the register and the journey history
+through it, a brief takes its `D<n>` when it is issued, and a non-canonical
+file is refused rather than guessed at. `migrate` converts the old shapes.
 
 ### 4. A worked end-to-end example
 
@@ -197,6 +199,12 @@ decision", so the mode needs a guard that proves it changed only wording:
 trace already parses most of the material content, which makes it the
 natural home for the before-and-after comparison. Write the user story when
 the work reaches it.
+
+**The journey files are done** (2.11.0, `journey.py migrate`): structure only,
+with a material check that refuses to write if any word, ID or status would be
+lost, and everything that needs judgement left to the architect. What remains
+is the descriptive documents and the ADRs, where restyling means rewording,
+and "no word lost" is no longer the right guard.
 
 ---
 
