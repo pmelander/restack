@@ -52,6 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── SKILL.md.tmpl
 │   │   ├── SKILL.md
 │   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
+│   │   ├── scripts/matrix.py                   #   matrix arithmetic: totals, compare, residual claims
 │   │   └── compliance-packs/                   #   regulatory stressor packs
 │   ├── restack-events/                         # generated, tier 2
 │   │   ├── SKILL.md.tmpl
@@ -81,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-024
+    ├── adr/                            # ADR-001 .. ADR-025
     └── ...                             # Generated documentation location
 ```
 
@@ -254,8 +255,8 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 
 ### Skills that ship executable scripts
 
-`/restack-excel`, `/restack-events`, `/restack-journey`, `/restack-trace` and
-`/restack-upgrade` ship Python alongside their SKILL.md.
+`/restack-excel`, `/restack-events`, `/restack-journey`, `/restack-stressor`,
+`/restack-trace` and `/restack-upgrade` ship Python alongside their SKILL.md.
 Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
@@ -277,7 +278,9 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    planted defect and a clean neighbour per check. `tests/test_journey.py`
    runs every write and the migration against `tests/fixtures/journey/`, a
    canonical journey and a legacy one, and checks that migration loses no
-   word. `tests/test_local_copies.py` builds scratch projects with old copies
+   word. `tests/test_matrix.py` runs the matrix arithmetic against
+   `tests/fixtures/matrix/`, two iterations and their residuals with the
+   numbers known. `tests/test_local_copies.py` builds scratch projects with old copies
    and look-alikes. **Anything that runs `update_check.py check` points
    `HOME`, `USERPROFILE` and the working directory at scratch**: the check
    also reads the project's and the profile's `.claude` folders. **Fixtures

@@ -784,7 +784,7 @@ def score(cell: str) -> tuple[int, bool] | None:
     if text in ("", "·", ".", "-", "–", "0"):
         return 0, False
     if text == "?":
-        return 0, True
+        return 1, True                      # unknown exposure is exposure: scored 1, marked ?
     m = re.fullmatch(r"(\d+)(\?)?", text)
     if m:
         return int(m.group(1)), bool(m.group(2))

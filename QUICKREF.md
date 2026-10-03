@@ -115,6 +115,15 @@ registered assumption; in a **minefield an unknown on a critical path blocks**.
 /restack-stressor import <file> [sheet]      # import an existing matrix
 ```
 
+The arithmetic is `matrix.py` (ships in `/restack-stressor`); the skill runs it,
+and it never scores a cell. A `?` counts as 1.
+
+```bash
+matrix.py totals <matrix> [--write]                # margins, unknowns, reading aids
+matrix.py compare <before> <after>                 # per-actor table, both totals
+matrix.py claims <residuals> <before> [--after <after>]   # each claimed cell checked
+```
+
 ## Event statements as stressors
 
 ```bash
