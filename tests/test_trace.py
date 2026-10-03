@@ -271,6 +271,17 @@ class Commands(TraceCase):
         self.assertIn("A worklist, not a verdict", out)
         self.assertIn("file modification times", out)
 
+    def test_header_names_the_skill_version(self):
+        # Two runs over unchanged documents differ only if the script did.
+        wanted = re.search(r"^version:\s*(\S+)",
+                           (ROOT / "skills" / "restack-trace" / "SKILL.md").read_text(encoding="utf-8"),
+                           re.MULTILINE).group(1)
+        for args in (("scan", str(self.docs)), ("terms", "poll", "--docs", str(self.docs)),
+                     ("refs", "D3", "--docs", str(self.docs))):
+            with self.subTest(command=args[0]):
+                code, out = run(*args, "--json")
+                self.assertTrue(json.loads(out)["header"][0].startswith(f"trace {wanted}"), out[:200])
+
     def test_clean_tree_exits_zero(self):
         empty = self.tmp / "empty"
         (empty / "adr").mkdir(parents=True)
@@ -353,7 +364,7 @@ class SharedSnippet(TraceCase):
         shutil.copytree(ROOT / "skills" / "restack-trace", installed)
         code, out = self.run_snippet(home)
         self.assertEqual(code, 1, out)                    # the fixture has items
-        self.assertIn("trace: docs", out)
+        self.assertRegex(out, r"trace \d+\.\d+\.\d+: docs")
         self.assertIn("A worklist, not a verdict", out)
 
     def test_snippet_without_the_script_says_so(self):

@@ -82,6 +82,23 @@ STATUS_VOCAB = re.compile(
 CLOSE_WORDS = re.compile(r"FALSIFIED|resolved|withdrawn|closed|superseded|confirmed", re.IGNORECASE)
 
 
+def skill_version() -> str:
+    """The version in this skill's SKILL.md frontmatter, the one place it is set.
+
+    Printed in every report header, so two runs over unchanged documents can be
+    told apart by the script that produced them.
+    """
+    try:
+        text = (Path(__file__).resolve().parent.parent / "SKILL.md").read_text(encoding="utf-8")
+    except OSError:
+        return "unknown"
+    m = re.search(r"^version:\s*(\S+)", text, re.MULTILINE)
+    return m.group(1) if m else "unknown"
+
+
+VERSION = skill_version()
+
+
 class UsageError(Exception):
     """Bad arguments: reported on stderr with exit status 2."""
 
@@ -1045,21 +1062,21 @@ def main(argv: list[str]) -> int:
             print(exc, file=sys.stderr)
             return 2
         corpus, findings = scan(root, only, dates)
-        header = [f"trace: {root.as_posix()}  {len(corpus.adrs)} ADRs, "
+        header = [f"trace {VERSION}: {root.as_posix()}  {len(corpus.adrs)} ADRs, "
                   f"{len(corpus.assumptions)} assumptions, {len(corpus.decisions)} decisions, "
                   f"{len(corpus.by_kind('matrix'))} matrices, "
                   f"{len(corpus.by_kind('descriptive'))} descriptive documents",
                   f"dates: {'git commit times' if corpus.dates.source == 'git' else 'file modification times (not a git work tree)'}"]
     elif args.command == "terms":
         findings = terms(root, args.words, paths)
-        header = [f"trace terms: {', '.join(args.words)}"]
+        header = [f"trace {VERSION} terms: {', '.join(args.words)}"]
     else:
         try:
             findings = refs(root, args.ident)
         except UsageError as exc:
             print(exc, file=sys.stderr)
             return 2
-        header = [f"trace refs: {args.ident}"]
+        header = [f"trace {VERSION} refs: {args.ident}"]
 
     print(render(findings, header, args.json))
     return 1 if findings else 0

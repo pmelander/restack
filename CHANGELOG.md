@@ -9,7 +9,7 @@ The first field run of `/restack-trace`, on the 2.4.0 reference engagement,
 confirmed most of the items it opened and named four kinds of noise: three
 false-positive classes and one miss. All are fixed in `trace.py`, each with a
 fixture case and a decoy that must still be reported. `tests/test_trace.py`
-goes from 35 to 40 cases.
+goes from 35 to 41 cases.
 
 ### Fixed
 
@@ -27,6 +27,14 @@ goes from 35 to 40 cases.
   Markdown file's name plus `-` is now paired with it, marked `[heuristic]`.
 
 The shared section's `PH` and `PDF` rows say so.
+
+### Added
+
+- **The report header names the trace version** (`trace 1.0.1: docs ...`),
+  read from the skill's frontmatter. The second field run dropped from 65 to
+  56 items over unchanged documents, and the agent had to compare file times
+  to establish that the script, not the documents, had changed. The shared
+  section now says to compare runs only at the same version.
 
 ## [2.9.0] — 2026-10-02
 
