@@ -15,6 +15,11 @@ ADR-016.
 The check never upgrades anything. A skill set that changes under an in-flight
 journey breaks the journey's audit trail.
 
+`check` also prints one line when the current project carries old copies of
+ReStack skills in its .claude folder (local_copies.py, ADR-024). That part is
+local: it needs no install record and no network, and keeps its own
+once-a-day throttle per project.
+
 It also never fails loudly. It prints nothing and exits 0 when it is opted out,
 when install.json is missing or names no source, when git is missing, when the
 machine is offline or the network is slow, and when a version cannot be parsed. A session-opening command must not start with an error about
@@ -337,6 +342,57 @@ def check(now: float) -> str | None:
     return notice(installed, remote)
 
 
+def local_copies_module():
+    """local_copies.py, beside this script, or None. No bytecode in the install."""
+    previous, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+    here = str(Path(os.path.abspath(__file__)).parent)
+    try:
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import local_copies
+        return local_copies
+    except Exception:
+        return None
+    finally:
+        sys.dont_write_bytecode = previous
+
+
+def local_notice(now: float, project: Path | None = None) -> str | None:
+    """One line when the current project carries old ReStack skill copies (ADR-024).
+
+    Local only: no install record, git or network needed. The same opt-out as
+    the update check, and the same once-a-day promise, kept per project.
+    """
+    sdir = state_dir()
+    if opted_out(sdir):
+        return None
+    module = local_copies_module()
+    if module is None:
+        return None
+    project = (project or Path.cwd()).resolve()
+    state = load_state(sdir)
+    shown = state.get("local_copies_shown")
+    shown = dict(shown) if isinstance(shown, dict) else {}
+    lines = []
+    # The project's copies, then the profile's (an install from before the
+    # restack- prefix, ADR-009). Each has its own once-a-day key.
+    for key, root, profile in ((str(project), project, False), ("~profile", Path.home(), True)):
+        if profile and root.resolve() == project:
+            continue
+        line = module.session_line(root, profile)
+        if line and not throttled(shown.get(key), now):
+            shown[key] = int(now)
+            lines.append(line)
+    if not lines:
+        return None
+    state["local_copies_shown"] = shown
+    try:
+        save_json(sdir / STATE_FILE, state)
+    except OSError:
+        return None                     # cannot keep "once a day", so stay quiet
+    return "\n".join(lines)
+
+
 def record_failure(exc: BaseException) -> None:
     try:
         sdir = state_dir()
@@ -428,6 +484,20 @@ def status(now: float) -> int:
         print(f"  next check: at the first session open after {when(checked + THROTTLE)}")
     if state.get("snoozed_version") and snoozed(state, str(state["snoozed_version"]), now):
         print(f"  snoozed:    v{state['snoozed_version']} until {when(state.get('snoozed_until'))}")
+
+    module = local_copies_module()
+    if module is not None:
+        for label, root, profile, fix in (
+                ("local:  ", Path.cwd().resolve(), False, "/restack-upgrade retire-local"),
+                ("profile:", Path.home().resolve(), True, "/restack-upgrade retire-local --profile")):
+            copies = module.find(root, profile)
+            if copies:
+                print(f"  {label}    {len(copies)} old ReStack skill cop{'y' if len(copies) == 1 else 'ies'} "
+                      f"in {root / '.claude'} - {fix}")
+                for c in copies:
+                    print(f"              {c['rel']} ({c['why']})")
+            else:
+                print(f"  {label}    no old ReStack skill copies in {root / '.claude'}")
     return 0
 
 
@@ -443,13 +513,14 @@ def main(argv: list[str]) -> int:
     command = argv[0] if argv else "check"
 
     if command == "check":
-        try:
-            line = check(now)
-        except Exception as exc:        # silent at session open, visible in status
-            record_failure(exc)
-            return 0
-        if line:
-            print(line)
+        for step in (check, local_notice):
+            try:
+                line = step(now)
+            except Exception as exc:    # silent at session open, visible in status
+                record_failure(exc)
+                continue
+            if line:
+                print(line)
         return 0
     if command == "snooze":
         days = DEFAULT_SNOOZE_DAYS

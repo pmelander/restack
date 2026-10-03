@@ -1,7 +1,9 @@
 ### Update check: one line at session open
 
-This tells the architect that a newer ReStack exists. It prints at most one
-line, at most once a day, and it never asks a question or upgrades anything. A
+This tells the architect that a newer ReStack exists, and that the current
+project still carries old ReStack skill copies in its `.claude` folder, if it
+does. It prints at most one line for each, at most once a day, and it never
+asks a question, upgrades or moves anything. A
 skill set that changes under an in-flight journey breaks the journey's audit
 trail, so upgrading is the architect's call, made between sessions.
 
@@ -26,8 +28,11 @@ $uc = "$HOME/.claude/skills/restack-upgrade/scripts/update_check.py"
 if ((Test-Path $uc) -and (Get-Command python -ErrorAction SilentlyContinue)) { python $uc }
 ```
 
-**If it prints a line**, show that line verbatim, once, at the top of your
-reply, then go straight on with the command. Do not ask about it, explain it,
+**If it prints a line** (or two), show it verbatim, once, at the top of your
+reply, then go straight on with the command. The second kind,
+`ReStack: this project has N old ReStack skill copies ...`, means skills from
+an older ReStack load beside the installed ones in this project; the
+architect retires them with `/restack-upgrade retire-local` when they choose. Do not ask about it, explain it,
 or run `/restack-upgrade`. It is not the session's next move either: never
 recommend `/restack-upgrade` as the command to run next.
 

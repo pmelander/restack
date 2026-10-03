@@ -74,13 +74,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-trace/                          # generated, tier 1
 │   │   └── scripts/trace.py                    #   document drift, run by review, journey, adr, solution-doc
 │   └── restack-upgrade/                        # generated, tier 1
-│       └── scripts/update_check.py             #   update check, run by journey + discover
+│       ├── scripts/update_check.py             #   update check, run by journey + discover
+│       └── scripts/local_copies.py             #   old ReStack copies in a project or profile (retire-local)
 ├── templates/                          # Document templates, vendored into the skills that write them
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-023
+    ├── adr/                            # ADR-001 .. ADR-024
     └── ...                             # Generated documentation location
 ```
 
@@ -276,8 +277,12 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    planted defect and a clean neighbour per check. `tests/test_journey.py`
    runs every write and the migration against `tests/fixtures/journey/`, a
    canonical journey and a legacy one, and checks that migration loses no
-   word. **Fixtures are invented, never taken from a real engagement**: this
-   repository is public.
+   word. `tests/test_local_copies.py` builds scratch projects with old copies
+   and look-alikes. **Anything that runs `update_check.py check` points
+   `HOME`, `USERPROFILE` and the working directory at scratch**: the check
+   also reads the project's and the profile's `.claude` folders. **Fixtures
+   are invented, never taken from a real engagement**: this repository is
+   public.
 
 Three scripts are called by other skills, and every dependency is optional
 by construction. `journey.py` is run by every tier 2 and 3 skill through the
