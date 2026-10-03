@@ -34,6 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── evidence.md                 # tier 2
 │       ├── completeness.md             # tier 2
 │       ├── confusion-protocol.md       # tier 2
+│       ├── journey-files.md            # tier 2: write the journey files with journey.py
 │       ├── glossary.md                 # tier 3
 │       ├── stop-gates.md               # tier 3
 │       └── journey-state.md            # tier 3
@@ -41,6 +42,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-journey/                        # generated, tier 3
 │   │   ├── SKILL.md.tmpl                       #   source of truth
 │   │   ├── SKILL.md                            #   generated - do not edit
+│   │   ├── scripts/journey.py                  #   writes + migrates the journey files, run by every tier 2-3 skill
 │   │   └── sections/                           #   route maps + terrain classification
 │   ├── restack-discover/                       # generated, tier 3
 │   │   ├── SKILL.md.tmpl
@@ -78,7 +80,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-022
+    ├── adr/                            # ADR-001 .. ADR-023
     └── ...                             # Generated documentation location
 ```
 
@@ -251,8 +253,8 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 
 ### Skills that ship executable scripts
 
-`/restack-excel`, `/restack-events`, `/restack-trace` and `/restack-upgrade`
-ship Python alongside their SKILL.md.
+`/restack-excel`, `/restack-events`, `/restack-journey`, `/restack-trace` and
+`/restack-upgrade` ship Python alongside their SKILL.md.
 Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
@@ -271,11 +273,20 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    (`RESTACK_STATE_DIR`) and a local bare repository. Never test against the
    real `~/.restack` or the live skills directory. `tests/test_trace.py` runs
    every check against `tests/fixtures/trace/`, a synthetic engagement with a
-   planted defect and a clean neighbour per check. **Fixtures are invented,
-   never taken from a real engagement**: this repository is public.
+   planted defect and a clean neighbour per check. `tests/test_journey.py`
+   runs every write and the migration against `tests/fixtures/journey/`, a
+   canonical journey and a legacy one, and checks that migration loses no
+   word. **Fixtures are invented, never taken from a real engagement**: this
+   repository is public.
 
-Two scripts are called by other skills, and both dependencies are optional
-by construction. `update_check.py` is run by `/restack-journey` and
+Three scripts are called by other skills, and every dependency is optional
+by construction. `journey.py` is run by every tier 2 and 3 skill through the
+`journey-files.md` preamble fragment; if it is missing, the snippet says so
+and the files are written by hand in their canonical shape
+([ADR-023](docs/adr/ADR-023-journey-files-written-by-a-helper.md)). **It
+writes only canonical files, and `migrate` changes structure only**: a change
+to it must never let a write or a migration alter a status, a decision or a
+date on the architect's behalf. `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by

@@ -512,9 +512,15 @@ def check_reg(c: Corpus) -> list[Finding]:
             out.append(Finding("REG", reg.rel, row["line"],
                                f"{row['id']} row says '{row['status'][:40]}', but its last "
                                f"status line (line {n}) says '{status}'"))
+    # A migrated register keeps its old updates verbatim in an "Earlier notes"
+    # section above the table (journey.py migrate, ADR-023). They are later
+    # than the rows they talk about whatever their position in the file.
+    earlier = section(reg.lines, re.compile(r"earlier notes", re.IGNORECASE))
     for key, (n, text) in sorted(legacy.items()):
         row = c.assumptions.get(key)
-        if (not row or row["status"] is None or key in last or n < row["line"]
+        in_earlier = earlier is not None and earlier[0] < n - 1 < earlier[1]
+        if (not row or row["status"] is None
+                or (not in_earlier and (key in last or n < row["line"]))
                 or not row["status"].lower().startswith("open")):
             continue
         out.append(Finding("REG", reg.rel, row["line"],
@@ -1013,6 +1019,7 @@ def render(findings: list[Finding], header: list[str], as_json: bool) -> str:
 def main(argv: list[str]) -> int:
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")    # cp1252 consoles
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
     if not argv or argv[0] not in ("scan", "terms", "refs", "-h", "--help"):

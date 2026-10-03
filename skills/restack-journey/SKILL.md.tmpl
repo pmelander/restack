@@ -287,6 +287,31 @@ Establish an ongoing rhythm for a live system.
    to leave.
 4. Write `docs/journey/cadence-schedule.md`.
 
+## `/restack-journey migrate`
+
+Convert journey files written in an older shape to the canonical one, so the
+helper can write to them. Use it when `journey.py` refuses a file as "not
+canonical". *Journey Files* in the preamble has the snippet.
+
+1. Run `check`, then `migrate` (a dry run: it writes nothing). Show the
+   architect the report: what it will restructure, and the judgement items it
+   leaves alone.
+2. The migration changes structure only. It never changes a status, a
+   decision or a date, and it refuses to write if any word, ID or status would
+   be lost. Say so, then **STOP** on a brief: migrate now, or keep appending
+   by hand in the old shape. Restructuring the journey files is the
+   architect's call.
+3. On yes, run `migrate --write`, then `check` again. Outside a clean git work
+   tree it leaves a `*.pre-migration-<date>.md` backup beside each file; say
+   where.
+4. Work through the judgement items with the architect, one write per item:
+   a status the notes say changed is `assume status`; an assumption defined
+   only in a note is `assume add --id A-<n>`; a decision that does not say
+   whether it changed the actor set is answered in the log. Never resolve one
+   on the architect's behalf.
+5. Run `/restack-trace` afterwards. The structural `REG` items should be gone;
+   what remains is content to confirm.
+
 ---
 
 {{SECTION_SELF_CHECK}}

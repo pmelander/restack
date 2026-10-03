@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/restack-lockup-on-dark.svg">
+  <img src="assets/restack-lockup-on-light.svg" alt="ReStack" height="64">
+</picture>
+
 # ReStack
 
 **Architecture skills for Claude Code, built on Residuality Theory.**
@@ -310,7 +315,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.10.0**. All seventeen skills are generated from templates with
+ReStack is at **v2.11.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

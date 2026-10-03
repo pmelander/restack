@@ -172,7 +172,8 @@
 
 Append-only, and always the last section in the file. One line per command or
 decision, newest at the end. Never rewrite an earlier line and never turn this
-into a table. A new entry is one line appended to the end of the file:
+into a table. A new entry is one line appended to the end of the file
+(`journey.py history add` writes it):
 
 `- YYYY-MM-DD · <command> · <outcome in one line> · <D<n> if a gate was passed>`
 

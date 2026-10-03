@@ -25,11 +25,13 @@ B) <option label>
 Net: <one-line synthesis of what is actually being traded off>
 ```
 
-**D-numbering:** numbers are unique within a journey. If
-`docs/journey/decisions-log.md` exists, continue its numbering: the next brief
-is one past the highest `D<N>` in the log. Otherwise the first brief is `D1`.
-Increment yourself. Sub-briefs in a split chain are `D<N>.1`, `D<N>.2`,
-`D<N>.final`. A brief that was never answered keeps its number; do not reuse it.
+**D-numbering:** numbers are unique within a journey, and a brief takes its
+number when it is issued, not when it is answered. Get it from
+`journey.py decision open` (see *Journey Files*), which writes the open entry
+to `docs/journey/decisions-log.md`; without the helper, the next brief is one
+past the highest `D<N>` in the log, or `D1`. Sub-briefs in a split chain are
+`D<N>.1`, `D<N>.2`, `D<N>.final`, recorded in the parent's entry. A brief that
+was never answered keeps its number; do not reuse it.
 
 **Aspiration line.** Every architectural decision either serves the stated
 aspiration or it is scope creep. If you cannot name the aspiration the decision
