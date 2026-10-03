@@ -234,7 +234,7 @@ are called — plus three utilities.
 
 | | |
 |---|---|
-| [`/restack-journey`](skills/restack-journey/SKILL.md) | classify terrain, map the route, run the iterate gate, keep state |
+| [`/restack-journey`](skills/restack-journey/SKILL.md) | classify terrain, map the route, run the iterate gate, keep state, write the asks to other teams |
 
 **Understand what is there** — brownfield and minefield
 

@@ -154,6 +154,16 @@ Write an ADR for **every implemented residual**. Without one, the queue you
 added looks like unnecessary complexity to whoever inherits the system — and
 the first thing anyone does with unexplained complexity is remove it.
 
+By now some of the register's open assumptions can only be settled by
+other teams. Those asks were routed to a recipient when they were registered.
+
+```
+/restack-journey asks                           # one send-ready section per recipient
+```
+
+It writes the pack, and asks you which sections went out. Only those are
+recorded as asked.
+
 ---
 
 ## What to expect from these skills
@@ -203,7 +213,7 @@ every six months, `/restack-adr` continuously.
 ## Where files are written
 
 ```
-docs/journey/            state, iteration history, decisions log, assumptions
+docs/journey/            state, iteration history, decisions log, assumptions, asks packs
 docs/discovery/          path maps, actor profiles
 docs/stressor-analysis/  stressor sets, matrices, residuals
 docs/adr/                decisions

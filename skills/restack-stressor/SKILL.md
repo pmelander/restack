@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.3.0
+version: 2.3.1
 preamble-tier: 3
 model: opus
 description: |
@@ -372,6 +372,9 @@ path is no longer translated for a Windows Python.
 | **before** issuing a decision brief | `decision open "<question>" --gate <terrain\|confidence\|iterate\|approach\|brief>` prints the brief's number, `D<n>` |
 | the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no` (or `--actors "yes: added <actor>"`; `--supersedes D<m>` when it reverses one) |
 | a belief the design relies on is unverified | `assume add "<belief>" --source "..." --validates "..." --depends "..."` prints `A-<n>` |
+| only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
+| an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
+| the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
@@ -380,6 +383,11 @@ path is no longer translated for a Windows Python.
 **A `--why` comes from the record.** Quote or point at what settled it: the
 discovery note, the code read, the architect's answer, the line that already
 says so. If the record holds no reason, ask; never write a plausible one.
+
+**An ask is recorded as sent only when the architect says it went.** Writing
+an asks pack is not sending it, and neither is the architect reading it.
+`journey.py asks` lists what is open, by recipient, with when each was last
+asked.
 
 **Number a brief before you ask it.** `decision open` writes the entry with
 `Answer: (open)`. If the session is interrupted, the open entry is the record:
@@ -424,9 +432,10 @@ Do not start a fresh journey over the top of an in-flight one.
 boundary:` from `journey-state.md` before investigating anything. In a
 design-only engagement, do not search for repositories or work items. Past the
 design boundary, record what the neighbour's system visibly does and turn
-every question about its internals into a handoff ask. Do not investigate
-there. If either field is missing, ask before probing (a one-line confirm is
-enough) and write the answer in.
+every question about its internals into a handoff ask: an assumption routed
+to the team that owns the answer (`assume add ... --ask "<recipient>"`, see
+*Journey Files*). Do not investigate there. If either field is missing, ask
+before probing (a one-line confirm is enough) and write the answer in.
 
 ### Write last
 
@@ -446,7 +455,9 @@ the one it replaces. The trail is the point, especially in minefield terrain.
   `Resolved by design (test pending)`, `Withdrawn`, `Superseded by D<n>`. A
   status change appends `- A-<n> · <status> · <date> · <why>` under
   `## Status lines` and updates the row's two status cells. Never start a
-  second table, and never add an "Update" heading.
+  second table, and never add an "Update" heading. An ask's `Validates it`
+  starts `Ask <recipient>:`, and a send is a status line that repeats the
+  status with `asked <recipient>` as its reason.
 - **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
   brief, appended at the end. It records whether the decision changed the actor
   set, because that makes earlier matrices `scored pre-D<n>`.
@@ -642,7 +653,8 @@ Before walking, read `Implementation status:` and `Design boundary:` from
 to read, so evidence comes from documents and the architect. Do not go looking
 for repositories or work items. An actor beyond the design boundary is walked
 as a black box: record its observable behaviour and turn each question about
-its internals into a handoff ask. Do not investigate it.
+its internals into a handoff ask, registered with
+`assume add ... --ask "<the team that owns it>"`. Do not investigate it.
 
 Walk every lever a human actor holds with the protocol's **lever template**:
 *actor pulls lever → system effect → the signal that confirms the effect*.

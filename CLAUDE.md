@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-025
+    ├── adr/                            # ADR-001 .. ADR-026
     └── ...                             # Generated documentation location
 ```
 
@@ -277,8 +277,9 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    every check against `tests/fixtures/trace/`, a synthetic engagement with a
    planted defect and a clean neighbour per check. `tests/test_journey.py`
    runs every write and the migration against `tests/fixtures/journey/`, a
-   canonical journey and a legacy one, and checks that migration loses no
-   word. `tests/test_matrix.py` runs the matrix arithmetic against
+   canonical journey, a legacy one and one with asks, and checks that
+   migration loses no word and that recording a sent ask changes no status.
+   `tests/test_matrix.py` runs the matrix arithmetic against
    `tests/fixtures/matrix/`, two iterations and their residuals with the
    numbers known. `tests/test_local_copies.py` builds scratch projects with old copies
    and look-alikes. **Anything that runs `update_check.py check` points
@@ -294,7 +295,9 @@ and the files are written by hand in their canonical shape
 ([ADR-023](docs/adr/ADR-023-journey-files-written-by-a-helper.md)). **It
 writes only canonical files, and `migrate` changes structure only**: a change
 to it must never let a write or a migration alter a status, a decision or a
-date on the architect's behalf. `update_check.py` is run by `/restack-journey` and
+date on the architect's behalf. Recording a sent ask repeats the row's
+status rather than taking one, for the same reason
+([ADR-026](docs/adr/ADR-026-asks-routed-in-the-register.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by
@@ -330,6 +333,7 @@ git push origin feature/new-skill-name
 /restack-journey iterate         # Iterate stressor loop or proceed?
 /restack-journey review          # Journey health check
 /restack-journey cadence         # Establish an ongoing rhythm
+/restack-journey asks [who]      # Send-ready asks to people outside the design
 
 /restack-discover paths                  # Map paths through an existing system
 /restack-discover actor <name>           # Investigate what an actor actually does

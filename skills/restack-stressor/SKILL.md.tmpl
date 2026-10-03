@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.3.0
+version: 2.3.1
 preamble-tier: 3
 model: opus
 description: |
@@ -123,7 +123,8 @@ Before walking, read `Implementation status:` and `Design boundary:` from
 to read, so evidence comes from documents and the architect. Do not go looking
 for repositories or work items. An actor beyond the design boundary is walked
 as a black box: record its observable behaviour and turn each question about
-its internals into a handoff ask. Do not investigate it.
+its internals into a handoff ask, registered with
+`assume add ... --ask "<the team that owns it>"`. Do not investigate it.
 
 Walk every lever a human actor holds with the protocol's **lever template**:
 *actor pulls lever → system effect → the signal that confirms the effect*.
