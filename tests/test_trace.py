@@ -146,6 +146,15 @@ class Checks(TraceCase):
         self.assertNotIn("ADR-0006", found)                    # "None", after a grep
         self.assertNotIn("ADR-0007", found)                    # ticketed
 
+    def test_ko_tbd_handed_to_a_registered_assumption_is_not_pending(self):
+        # ADR-0007's LLD-02 row reads "struck; ... TBD (A-3)": the knock-on was
+        # made, and the open question has an owner in the register.
+        self.assertNotIn("ADR-0007", self.text(self.of("KO")))
+        adr = self.docs / "adr" / "ADR-0007-notification-channel.md"
+        adr.write_text(adr.read_text(encoding="utf-8").replace("TBD (A-3)", "TBD (A-99)"),
+                       encoding="utf-8")
+        self.assertIn("ADR-0007: 'LLD-02' is recorded as", self.text(self.of("KO")))
+
     def test_ko_banner_counts_once_written(self):
         runbook = self.docs / "operations" / "RUNBOOK.md"
         text = runbook.read_text(encoding="utf-8").replace(
@@ -169,6 +178,17 @@ class Checks(TraceCase):
 
     def test_am_leaves_inline_marked_sections_alone(self):
         self.assertNotIn("HLD.md", self.text(self.of("AM")))
+
+    def test_am_accepts_other_banner_wording(self):
+        # ADR-0006's banner says "Current state", not "AMENDED".
+        self.assertNotIn("ADR-0006", self.text(self.of("AM")))
+
+    def test_am_metadata_line_is_not_a_banner(self):
+        adr = self.docs / "adr" / "ADR-0002-reservation-expiry.md"
+        adr.write_text(adr.read_text(encoding="utf-8").replace(
+            "**Date:** 2026-03-10\n", "**Date:** 2026-03-10\n\n**Updated:** 2026-04-25\n"),
+            encoding="utf-8")
+        self.assertIn("adr/ADR-0002-reservation-expiry.md", self.text(self.of("AM")))
 
     def test_sup_finds_unmarked_citation_of_superseded_adr(self):
         found = self.of("SUP")
@@ -213,9 +233,16 @@ class Checks(TraceCase):
         self.assertIn("LOCKER-GHOST", found[0]["message"])
         self.assertTrue(found[0]["heuristic"])
 
-    def test_ph_skips_fenced_blocks(self):
+    def test_ph_skips_fenced_blocks_and_registered_gaps(self):
+        # DEPLOYMENT's TBD is in a code block; the HLD's names A-1.
         found = self.of("PH")
         self.assertEqual([f["path"] for f in found], ["adr/ADR-0002-reservation-expiry.md"])
+
+    def test_ph_tbd_naming_an_unregistered_assumption_still_counts(self):
+        hld = self.docs / "architecture" / "HLD.md"
+        hld.write_text(hld.read_text(encoding="utf-8").replace("TBD (A-1)", "TBD (A-99)"),
+                       encoding="utf-8")
+        self.assertIn("architecture/HLD.md", self.text(self.of("PH")))
 
     def test_pdf_older_than_its_source(self):
         pdf = self.docs / "deployment" / "DEPLOYMENT.pdf"
@@ -227,6 +254,14 @@ class Checks(TraceCase):
         found = self.of("PDF")
         self.assertEqual([f["path"] for f in found], ["deployment/DEPLOYMENT.pdf"])
 
+    def test_pdf_renamed_export_is_paired_with_its_source(self):
+        pdf = self.docs / "architecture" / "HLD-high-level-design.pdf"
+        pdf.write_bytes(b"%PDF-1.4\n%%EOF\n")
+        os.utime(pdf, (stamp("2026-03-01"),) * 2)
+        found = self.of("PDF")
+        self.assertEqual([(f["path"], f["heuristic"]) for f in found],
+                         [("architecture/HLD-high-level-design.pdf", True)])
+
 
 class Commands(TraceCase):
 
@@ -235,6 +270,17 @@ class Commands(TraceCase):
         self.assertEqual(code, 1)
         self.assertIn("A worklist, not a verdict", out)
         self.assertIn("file modification times", out)
+
+    def test_header_names_the_skill_version(self):
+        # Two runs over unchanged documents differ only if the script did.
+        wanted = re.search(r"^version:\s*(\S+)",
+                           (ROOT / "skills" / "restack-trace" / "SKILL.md").read_text(encoding="utf-8"),
+                           re.MULTILINE).group(1)
+        for args in (("scan", str(self.docs)), ("terms", "poll", "--docs", str(self.docs)),
+                     ("refs", "D3", "--docs", str(self.docs))):
+            with self.subTest(command=args[0]):
+                code, out = run(*args, "--json")
+                self.assertTrue(json.loads(out)["header"][0].startswith(f"trace {wanted}"), out[:200])
 
     def test_clean_tree_exits_zero(self):
         empty = self.tmp / "empty"
@@ -318,7 +364,7 @@ class SharedSnippet(TraceCase):
         shutil.copytree(ROOT / "skills" / "restack-trace", installed)
         code, out = self.run_snippet(home)
         self.assertEqual(code, 1, out)                    # the fixture has items
-        self.assertIn("trace: docs", out)
+        self.assertRegex(out, r"trace \d+\.\d+\.\d+: docs")
         self.assertIn("A worklist, not a verdict", out)
 
     def test_snippet_without_the_script_says_so(self):

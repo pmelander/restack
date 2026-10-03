@@ -17,7 +17,7 @@ ADR-0001 (superseded by ADR-0003) kept one row per reservation.
 
 ### 3.1 Expiry (amended 2026-04-02)
 
-Held reservations expire 30 minutes after they were made.
+Held reservations expire 30 minutes after they were made. The grace period is TBD (A-1).
 
 ## 4. Impact
 

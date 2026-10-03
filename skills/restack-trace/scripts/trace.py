@@ -82,6 +82,23 @@ STATUS_VOCAB = re.compile(
 CLOSE_WORDS = re.compile(r"FALSIFIED|resolved|withdrawn|closed|superseded|confirmed", re.IGNORECASE)
 
 
+def skill_version() -> str:
+    """The version in this skill's SKILL.md frontmatter, the one place it is set.
+
+    Printed in every report header, so two runs over unchanged documents can be
+    told apart by the script that produced them.
+    """
+    try:
+        text = (Path(__file__).resolve().parent.parent / "SKILL.md").read_text(encoding="utf-8")
+    except OSError:
+        return "unknown"
+    m = re.search(r"^version:\s*(\S+)", text, re.MULTILINE)
+    return m.group(1) if m else "unknown"
+
+
+VERSION = skill_version()
+
+
 class UsageError(Exception):
     """Bad arguments: reported on stderr with exit status 2."""
 
@@ -532,7 +549,7 @@ def check_ko(c: Corpus) -> list[Finding]:
                                    f"{adr.label}: no outcome recorded for "
                                    f"'{strip_md(target_text)[:50]}'"))
                 continue
-            if re.search(r"\b(todo|pending|not done|later|tbd)\b", outcome):
+            if re.search(r"\b(todo|pending|not done|later|tbd)\b", untracked(outcome, c)):
                 out.append(Finding("KO", adr.doc.rel, i + 1,
                                    f"{adr.label}: '{strip_md(target_text)[:50]}' is recorded as "
                                    f"'{outcome[:70]}'; knock-on changes are made in the same step"))
@@ -636,7 +653,13 @@ def resolve_target(c: Corpus, adr_doc: Doc, cell: str) -> tuple[Doc | None, str 
 
 
 AMEND_HEADING = re.compile(r"^#{1,6}\s.*\bamend(?:ed|ment)s?\b", re.IGNORECASE)
-AMEND_BANNER = re.compile(r"^\s*>\s*\**\s*amended\b|^\s*\**amended\b", re.IGNORECASE)
+# A banner says the body has changed, in whatever words the project uses:
+# "AMENDED", "UPDATED", "Current state", "Revised". Only above the body. The
+# wider wording counts only in a blockquote, so a `**Updated:** <date>`
+# metadata line is not mistaken for one.
+AMEND_BANNER = re.compile(
+    r"^\s*>\s*\**\s*(?:amended|updated|revised|current state|changed)\b"
+    r"|^\s*\**\s*(?:amended|current state)\b", re.IGNORECASE)
 
 
 def check_am(c: Corpus) -> list[Finding]:
@@ -843,12 +866,23 @@ def check_alert(c: Corpus) -> list[Finding]:
 
 
 PLACEHOLDER = re.compile(r"\bTBD\b|\bTODO\b|\bFIXME\b|YYYY-MM-DD|\bXXX\b")
+TRACKED = re.compile(r"\b(?:tbd|todo|pending|open)\b[^.;|]{0,25}?\bA-(\d+)\b\)?", re.IGNORECASE)
+
+
+def untracked(text: str, c: Corpus) -> str:
+    """`text` without the gaps it hands to a registered assumption.
+
+    "TBD (A-137)" is an acknowledged gap with an owner in the register, which
+    is what check 5 asks for. A bare "TBD" is not.
+    """
+    return TRACKED.sub(lambda m: "" if int(m.group(1)) in c.assumptions else m.group(0), text)
 
 
 def check_ph(c: Corpus) -> list[Finding]:
     out: list[Finding] = []
     for doc in c.by_kind("adr", "descriptive"):
-        where = [i + 1 for i, line in outside_fences(doc.lines) if PLACEHOLDER.search(line)]
+        where = [i + 1 for i, line in outside_fences(doc.lines)
+                 if PLACEHOLDER.search(untracked(line, c))]
         if where:
             out.append(Finding("PH", doc.rel, where[0],
                                f"{len(where)} line(s) with TBD, TODO or a template placeholder",
@@ -859,14 +893,22 @@ def check_ph(c: Corpus) -> list[Finding]:
 def check_pdf(c: Corpus) -> list[Finding]:
     out: list[Finding] = []
     for pdf in sorted(c.root.rglob("*.pdf")):
-        md = pdf.with_suffix(".md")
-        if not md.exists() or "archive" in pdf.relative_to(c.root).parts:
+        if "archive" in pdf.relative_to(c.root).parts:
             continue
+        md, inferred = pdf.with_suffix(".md"), False
+        if not md.exists():
+            # An export renamed on the way out: HLD.md -> HLD-high-level-design.pdf.
+            stem = pdf.stem.lower()
+            hits = [m for m in pdf.parent.glob("*.md") if stem.startswith(m.stem.lower() + "-")]
+            if len(hits) != 1:
+                continue
+            md, inferred = hits[0], True
         if c.dates.stamp(md) > c.dates.stamp(pdf) + 60:
             rel = pdf.relative_to(c.root).as_posix()
             out.append(Finding("PDF", rel, None,
                                f"older than {md.name} (source {c.dates.day(md)}, export "
-                               f"{c.dates.day(pdf)}); whoever is sent the PDF reads the old version"))
+                               f"{c.dates.day(pdf)}); whoever is sent the PDF reads the old version",
+                               heuristic=inferred))
     return out
 
 
@@ -1020,21 +1062,21 @@ def main(argv: list[str]) -> int:
             print(exc, file=sys.stderr)
             return 2
         corpus, findings = scan(root, only, dates)
-        header = [f"trace: {root.as_posix()}  {len(corpus.adrs)} ADRs, "
+        header = [f"trace {VERSION}: {root.as_posix()}  {len(corpus.adrs)} ADRs, "
                   f"{len(corpus.assumptions)} assumptions, {len(corpus.decisions)} decisions, "
                   f"{len(corpus.by_kind('matrix'))} matrices, "
                   f"{len(corpus.by_kind('descriptive'))} descriptive documents",
                   f"dates: {'git commit times' if corpus.dates.source == 'git' else 'file modification times (not a git work tree)'}"]
     elif args.command == "terms":
         findings = terms(root, args.words, paths)
-        header = [f"trace terms: {', '.join(args.words)}"]
+        header = [f"trace {VERSION} terms: {', '.join(args.words)}"]
     else:
         try:
             findings = refs(root, args.ident)
         except UsageError as exc:
             print(exc, file=sys.stderr)
             return 2
-        header = [f"trace refs: {args.ident}"]
+        header = [f"trace {VERSION} refs: {args.ident}"]
 
     print(render(findings, header, args.json))
     return 1 if findings else 0

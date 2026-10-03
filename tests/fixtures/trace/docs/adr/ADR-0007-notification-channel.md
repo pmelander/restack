@@ -20,3 +20,4 @@ We will send the pickup code by SMS when the fill event is recorded.
 | Document | What this decision invalidates | Done in the same step |
 |---|---|---|
 | RUNBOOK | §4, resending a pickup code | ticketed LL-112 |
+| LLD-02 | §2, the grace period | struck; the new grace period is TBD (A-3) |
