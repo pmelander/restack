@@ -384,6 +384,166 @@ class Legacy(JourneyCase):
         self.assertNotIn(b"\n", data.replace(b"\r\n", b""))
 
 
+class Asks(JourneyCase):
+    """ADR-026: asks routed in the register's Validates it cell, sends as status lines."""
+
+    fixture = "asks"
+
+    def row(self, ident: str) -> str:
+        return next(l for l in self.text("assumptions-register.md").splitlines()
+                    if l.startswith(f"| {ident} "))
+
+    def test_fixture_is_canonical(self):
+        self.assertEqual(self.j("check")[0], 0)
+
+    def test_asks_lists_open_routed_rows_by_recipient(self):
+        code, out = self.j("asks")
+        self.assertEqual(code, 0, out)
+        self.assertIn("3 open for 3 recipient(s), 1 never asked", out)
+        for heading in ("## Depot operations (1)", "## Locker vendor (1)", "## Locker vendor team (1)"):
+            self.assertIn(heading, out)
+        self.assertIn("need: the opening-hours list per depot", out)    # the prefix is not the need
+        self.assertIn("depends on it: ADR-0004, S-12", out)
+        for settled in ("A-4 ·", "A-6", "A-7"):           # resolved, inside the design, test pending
+            self.assertNotIn(settled, out)
+
+    def test_asks_says_when_each_was_last_asked(self):
+        out = self.j("asks")[1]
+        self.assertIn("- A-1 · Open · never asked", out)
+        self.assertIn("- A-2 · Open · asked Locker vendor 2026-04-02, 18 days ago", out)
+        self.assertIn("- A-3 · Partly resolved · asked Locker vendor team 2026-04-15, 5 days ago, 2 times", out)
+
+    def test_asks_lists_unrouted_rows_that_read_like_asks(self):
+        out = self.j("asks")[1]
+        unrouted = out.split("## Not routed")[1].split("\n## ")[0]
+        self.assertIn("- A-5: confirm with the courier partner's integration owner", unrouted)
+        self.assertNotIn("A-6", unrouted)
+
+    def test_asks_names_recipients_that_may_be_one_and_does_not_merge_them(self):
+        out = self.j("asks")[1]
+        self.assertIn("- Locker vendor / Locker vendor team", out)
+        self.assertIn("## Locker vendor team (1)", out)
+
+    def test_asks_for_one_recipient_ignores_case(self):
+        code, out = self.j("asks", "locker VENDOR")
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Locker vendor (1)", out)
+        self.assertNotIn("Depot operations", out)
+        self.assertNotIn("Not routed", out)
+
+    def test_asks_for_an_unknown_recipient_names_the_known_ones(self):
+        code, out = self.j("asks", "Finance")
+        self.assertEqual(code, 1, out)
+        self.assertIn("Depot operations, Locker vendor, Locker vendor team", out)
+
+    def test_asks_writes_nothing(self):
+        path = self.docs / "journey" / "assumptions-register.md"
+        before = path.read_bytes()
+        self.j("asks")
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_add_with_ask_writes_the_prefix(self):
+        code, out = self.j("assume", "add", "Lockers take parcels up to 20 kg", "--source", "spec",
+                           "--validates", "the load rating", "--depends", "ADR-0007",
+                           "--ask", " Locker   vendor ")
+        self.assertEqual((code, out.strip()), (0, "A-8"))
+        self.assertIn("| Ask Locker vendor: the load rating |", self.row("A-8"))
+        self.assertIn("- A-8 · Open · never asked", self.j("asks", "Locker vendor")[1])
+
+    def test_add_with_a_conflicting_prefix_is_a_usage_error(self):
+        code, out = self.j("assume", "add", "x", "--source", "s", "--validates", "Ask Security: v",
+                           "--depends", "d", "--ask", "BI")
+        self.assertEqual(code, 2, out)
+
+    def test_a_recipient_name_with_a_colon_is_a_usage_error(self):
+        code, _ = self.j("assume", "add", "x", "--source", "s", "--validates", "v",
+                         "--depends", "d", "--ask", "BI: data")
+        self.assertEqual(code, 2)
+        self.assertEqual(self.j("assume", "route", "A-5", "")[0], 2)
+
+    def test_route_changes_only_the_validates_cell(self):
+        before = self.text("assumptions-register.md").splitlines()
+        code, out = self.j("assume", "route", "A-5", "Courier partner")
+        self.assertEqual((code, out.strip()), (0, "A-5 · routed to Courier partner"))
+        after = self.text("assumptions-register.md").splitlines()
+        changed = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
+        self.assertEqual(len(before), len(after))
+        self.assertEqual(len(changed), 1)
+        old, new = split_cells(before[changed[0]]), split_cells(after[changed[0]])
+        self.assertEqual(new[3], "Ask Courier partner: confirm with the courier partner's integration owner")
+        self.assertEqual(old[:3] + old[4:], new[:3] + new[4:])     # status and date untouched
+
+    def test_route_merges_a_spelling(self):
+        code, out = self.j("assume", "route", "A-3", "Locker vendor")
+        self.assertEqual(out.strip(), "A-3 · routed to Locker vendor (was Locker vendor team)")
+        self.assertIn("## Locker vendor (2)", self.j("asks")[1])
+        self.assertNotIn("may be one recipient", self.j("asks")[1])
+
+    def test_route_to_the_same_recipient_writes_nothing(self):
+        path = self.docs / "journey" / "assumptions-register.md"
+        before = path.read_bytes()
+        self.assertIn("already routed", self.j("assume", "route", "A-1", "Depot operations")[1])
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_route_of_an_unknown_id_is_refused(self):
+        self.assertEqual(self.j("assume", "route", "A-99", "BI")[0], 1)
+
+    def test_asked_keeps_each_status_and_date(self):
+        row3 = self.row("A-3")
+        code, out = self.j("assume", "asked", "A-2", "A-3", "--to", "Locker vendor")
+        self.assertEqual(code, 1, out)                       # A-3 is routed to the team spelling
+        self.assertEqual(self.row("A-3"), row3)
+        code, out = self.j("assume", "asked", "A-3", "--to", "locker vendor TEAM")
+        self.assertEqual(code, 0, out)
+        reg = self.text("assumptions-register.md")
+        self.assertTrue(reg.rstrip().endswith(
+            "- A-3 · Partly resolved · 2026-04-20 · asked Locker vendor team"))  # the route's spelling
+        self.assertEqual(self.row("A-3"), row3)              # row status and date unchanged
+        self.assertIn("asked Locker vendor team 2026-04-20, 0 days ago, 3 times", self.j("asks")[1])
+
+    def test_asked_records_several_at_once(self):
+        self.j("assume", "route", "A-5", "Depot operations")
+        code, out = self.j("assume", "asked", "A-1", "A-5", "--to", "Depot operations")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(len(out.strip().splitlines()), 2)
+        self.assertIn("4 open for 3 recipient(s), 0 never asked", self.j("asks")[1])
+
+    def test_asked_refuses_and_writes_nothing_for_a_bad_row(self):
+        path = self.docs / "journey" / "assumptions-register.md"
+        before = path.read_bytes()
+        for args, why in ((["A-1", "A-5"], "not routed"),          # one good, one unrouted
+                          (["A-4"], "nothing left to ask"),         # resolved
+                          (["A-1"], "routed to Depot operations")):  # someone else's
+            to = "Security" if why.startswith("routed") else "Depot operations"
+            code, out = self.j("assume", "asked", *args, "--to", to)
+            self.assertEqual(code, 1, out)
+            self.assertIn(why, out)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_sync_does_not_take_a_date_from_an_asked_line(self):
+        self.j("assume", "asked", "A-1", "--to", "Depot operations")
+        self.assertIn("already in step", self.j("assume", "sync", "--all")[1])
+        self.assertTrue(self.row("A-1").endswith("| Open | 2026-03-10 |"))
+
+    def test_trace_agrees_after_asks_are_recorded(self):
+        self.j("assume", "route", "A-5", "Courier partner")
+        self.j("assume", "asked", "A-5", "--to", "Courier partner")
+        code, out = run(str(self.docs), "--only", "REG", script=TRACE)
+        self.assertEqual(code, 0, out)
+
+    def test_ask_commands_refuse_a_legacy_register(self):
+        shutil.rmtree(self.docs)
+        shutil.copytree(FIXTURES / "legacy", self.docs)
+        for args in (["asks"], ["assume", "route", "A-1", "BI"], ["assume", "asked", "A-1", "--to", "BI"]):
+            code, out = self.j(*args)
+            self.assertEqual(code, 1, out)
+            self.assertIn("migrate register", out)
+
+
+def split_cells(line: str) -> list[str]:
+    return [c.strip() for c in line.strip().strip("|").split(" | ")]
+
+
 class Usage(JourneyCase):
 
     def test_bad_arguments_exit_two(self):

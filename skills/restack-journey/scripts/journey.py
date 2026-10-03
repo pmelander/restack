@@ -8,9 +8,12 @@ the next A-<n> and D<n>, where a row or an entry goes, the status vocabulary,
 and keeping a register row and its status lines in step.
 
     journey.py check                         is each file canonical?
-    journey.py assume add "<belief>" --source S --validates V --depends D
+    journey.py assume add "<belief>" --source S --validates V --depends D [--ask R]
     journey.py assume status A-12 "Partly resolved" --why "..."
     journey.py assume sync A-12 | --all        row cells from the last status line
+    journey.py assume route A-12 "<recipient>"  `Ask <recipient>:` on Validates it
+    journey.py assume asked A-12 A-14 --to R    the asks went out; statuses unchanged
+    journey.py asks [recipient]               open asks by recipient (read-only)
     journey.py decision next                 the number the next brief takes
     journey.py decision open "<question>" [--gate brief]
     journey.py decision answer D7 --answer "..." --rationale "..." --actors no
@@ -59,6 +62,11 @@ STATUS_LINE = re.compile(r"^\s*-\s*A-(\d+)\s*·\s*([^·]+?)\s*·\s*(\d{4}-\d{2}-
 D_HEADING = re.compile(r"^## D(\d+) · (\d{4}-\d{2}-\d{2}) · (.*)$")
 LEGACY_D_HEADING = re.compile(r"^## (\d{4}-\d{2}-\d{2}):\s*D(\d+)\b\s*[,:]?\s*(.*)$")
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
+ASK_PREFIX = re.compile(r"^Ask ([^:|*`]{1,40}?):\s*(.*)$", re.DOTALL)
+ASK_OPEN = ("Open", "Partly resolved")
+LOOKS_LIKE_ASK = re.compile(
+    r"\b(ask|asking|confirm(?:s|ed)? (?:with|by)|check(?:s|ed)? with|answer(?:ed)? (?:from|by)|"
+    r"sign[- ]?off|owner|vendor|supplier|team)\b", re.IGNORECASE)
 
 
 class Refused(Exception):
@@ -188,7 +196,8 @@ def id_width(lines: list[str]) -> int:
 
 
 def assume_add(root: Path, text: str, source: str, validates: str, depends: str,
-               date: str, ident: str | None) -> str:
+               date: str, ident: str | None, ask: str | None = None) -> str:
+    validates = with_ask(validates, recipient_name(ask) if ask is not None else None)
     path = root / REGISTER
     if path.exists():
         lines, newline = read(path)
@@ -279,7 +288,8 @@ def assume_sync(root: Path, ident: str | None) -> list[str]:
     last: dict[int, tuple[str, str]] = {}
     for line in lines:
         m = STATUS_LINE.match(line)
-        if m and STATUS_TERM.fullmatch(m.group(2).strip()):
+        # an `asked` line repeats the status; the row's date stays the date it changed
+        if m and STATUS_TERM.fullmatch(m.group(2).strip()) and not m.group(4).startswith("asked "):
             last[int(m.group(1))] = (canonical_term(m.group(2).strip()), m.group(3))
     if ident:
         m = re.fullmatch(r"A-(\d+)", ident.strip())
@@ -314,6 +324,172 @@ def canonical_term(term: str) -> str:
             return word
     m = re.fullmatch(r"superseded by d(\d+)", term, re.IGNORECASE)
     return f"Superseded by D{m.group(1)}" if m else term
+
+
+# --------------------------------------------------------------------------
+# Asks: assumptions only someone outside the design can settle (ADR-026)
+
+
+def recipient_name(text: str) -> str:
+    name = " ".join(text.split())
+    if not name or len(name) > 40 or any(ch in name for ch in ":|*`"):
+        raise UsageError(f"'{text}' is not a recipient: 1-40 characters, no ':', '|', '*' or '`'")
+    return name
+
+
+def split_ask(validates: str) -> tuple[str | None, str]:
+    """`Ask BI: row counts` -> ("BI", "row counts"); a cell with no prefix -> (None, cell)."""
+    m = ASK_PREFIX.match(validates.strip())
+    return (m.group(1).strip(), m.group(2).strip()) if m else (None, validates.strip())
+
+
+def with_ask(validates: str, recipient: str | None) -> str:
+    current, rest = split_ask(validates)
+    if recipient is None:
+        return validates
+    if current is not None and current != recipient:
+        raise UsageError(f"--validates already says 'Ask {current}:', and --ask says {recipient}")
+    return f"Ask {recipient}: {rest}"
+
+
+def same_recipient(a: str, b: str) -> bool:
+    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
+
+
+def open_register(root: Path) -> tuple[Path, list[str], str, dict[int, int]]:
+    """The canonical register, read for an ask command; refused if it is not canonical."""
+    path = root / REGISTER
+    if not path.exists():
+        raise Refused(f"{REGISTER} does not exist")
+    lines, newline = read(path)
+    shape = register_shape(lines)
+    if shape["problems"]:
+        raise Refused(f"{REGISTER} is not canonical: " + "; ".join(shape["problems"]) +
+                      ". Run `journey.py migrate register` (a dry run) to see the conversion.")
+    return path, lines, newline, register_rows(lines, shape["tables"][0])
+
+
+def row_for(ident: str, rows: dict[int, int]) -> int:
+    m = re.fullmatch(r"A-(\d+)", ident.strip())
+    if not m:
+        raise UsageError(f"'{ident}' is not an assumption ID (A-12)")
+    if int(m.group(1)) not in rows:
+        raise Refused(f"{ident} has no row in the register")
+    return int(m.group(1))
+
+
+def assume_route(root: Path, ident: str, recipient: str) -> str:
+    """Put `Ask <recipient>:` at the start of one row's Validates it cell. Nothing else changes."""
+    recipient = recipient_name(recipient)
+    path, lines, newline, rows = open_register(root)
+    k = rows[row_for(ident, rows)]
+    cells = split_row(lines[k])
+    current, rest = split_ask(cells[3])
+    label = strip_md(cells[0])
+    if current == recipient:
+        return f"{label} is already routed to {recipient}"
+    cells[3] = f"Ask {recipient}: {rest}"
+    lines[k] = "| " + " | ".join(cells) + " |"
+    write(path, lines, newline)
+    return f"{label} · routed to {recipient}" + (f" (was {current})" if current else "")
+
+
+def assume_asked(root: Path, idents: list[str], recipient: str, date: str) -> list[str]:
+    """Record that each ask was sent: a status line that repeats the row's own status."""
+    recipient = recipient_name(recipient)
+    path, lines, newline, rows = open_register(root)
+    todo, problems = [], []
+    for ident in idents:
+        cells = split_row(lines[rows[row_for(ident, rows)]])
+        label, status = strip_md(cells[0]), canonical_term(strip_md(cells[5]))
+        routed, _ = split_ask(cells[3])
+        if routed is None:
+            problems.append(f"{label} is not routed to anyone; `assume route {label} <recipient>` first")
+        elif not same_recipient(routed, recipient):
+            problems.append(f"{label} is routed to {routed}, not {recipient}")
+        elif status not in ASK_OPEN:
+            problems.append(f"{label} is {status}; there is nothing left to ask")
+        else:
+            todo.append((label, status, routed))
+    if problems:
+        raise Refused("nothing recorded: " + "; ".join(problems))
+    for label, status, routed in todo:
+        lines = append_status_line(lines, label, status, date, f"asked {routed}")
+    write(path, lines, newline)
+    return [f"{label} · {status} · {date} · asked {routed}" for label, status, routed in todo]
+
+
+def asks(root: Path, only: str | None, today: str) -> list[str]:
+    """The open asks grouped by recipient: a worklist to write the pack from, never a verdict."""
+    path, lines, _, rows = open_register(root)
+    asked: dict[int, list[tuple[str, str]]] = collections.defaultdict(list)
+    for line in lines:
+        m = STATUS_LINE.match(line)
+        if m and m.group(4).startswith("asked "):
+            asked[int(m.group(1))].append((m.group(3), m.group(4)[len("asked "):].strip()))
+    groups: dict[str, list[list[str]]] = collections.defaultdict(list)
+    spelling: dict[str, str] = {}
+    unrouted = []
+    for n, k in sorted(rows.items()):
+        cells = split_row(lines[k])
+        status = canonical_term(strip_md(cells[5]))
+        if status not in ASK_OPEN:
+            continue
+        recipient, check_text = split_ask(cells[3])
+        if recipient is None:
+            if LOOKS_LIKE_ASK.search(cells[3]):
+                unrouted.append(f"- {strip_md(cells[0])}: {cells[3]}")
+            continue
+        key = " ".join(recipient.split()).casefold()
+        spelling.setdefault(key, recipient)
+        history = asked.get(n, [])
+        if history:
+            when, whom = history[-1]
+            ago = (dt.date.fromisoformat(today) - dt.date.fromisoformat(when)).days \
+                if DATE.fullmatch(when) else None
+            sent = f"asked {whom} {when}" + (f", {ago} days ago" if ago is not None else "") + \
+                   (f", {len(history)} times" if len(history) > 1 else "")
+        else:
+            sent = "never asked"
+        groups[key].append([
+            f"- {strip_md(cells[0])} · {status} · {sent}",
+            f"  need: {check_text}",
+            f"  belief: {cells[1]}",
+            f"  depends on it: {cells[4]}",
+            f"  source: {cells[2]}",
+        ])
+    if only is not None:
+        key = " ".join(only.split()).casefold()
+        if key not in groups:
+            known = ", ".join(spelling[k] for k in sorted(groups)) or "none"
+            raise Refused(f"no open asks for '{only}'. Recipients with open asks: {known}")
+        groups = {key: groups[key]}
+    total = sum(len(v) for v in groups.values())
+    never = sum(1 for v in groups.values() for item in v if item[0].endswith("never asked"))
+    out = [f"Asks in {REGISTER} on {today}: {total} open for {len(groups)} recipient(s), "
+           f"{never} never asked. A worklist: the pack, and the wording, are yours."]
+    for key in sorted(groups):
+        out += ["", f"## {spelling[key]} ({len(groups[key])})"]
+        for item in groups[key]:
+            out += item
+    if only is None:
+        if unrouted:
+            out += ["", "## Not routed, but the check reads like an ask",
+                    "Route with `assume route A-<n> <recipient>` once the architect confirms who; "
+                    "leave it if it is settled inside the design."] + unrouted
+        names = sorted(groups)
+        alike = [(a, b) for i, a in enumerate(names) for b in names[i + 1:]
+                 if recipient_stem(a) == recipient_stem(b)]
+        if alike:
+            out += ["", "## Recipient names that may be one recipient",
+                    "Merge with `assume route` if they are; the script does not guess."]
+            out += [f"- {spelling[a]} / {spelling[b]}" for a, b in alike]
+    return out
+
+
+def recipient_stem(key: str) -> str:
+    words = [w for w in re.findall(r"[a-z0-9]+", key) if w not in {"the", "team", "teams"}]
+    return " ".join(words)
 
 
 # --------------------------------------------------------------------------
@@ -940,6 +1116,13 @@ def main(argv: list[str]) -> int:
     a_add.add_argument("--validates", required=True)
     a_add.add_argument("--depends", required=True)
     a_add.add_argument("--id", dest="ident")
+    a_add.add_argument("--ask")
+    a_route = p_assume.add_parser("route", parents=[common])
+    a_route.add_argument("ident")
+    a_route.add_argument("recipient")
+    a_asked = p_assume.add_parser("asked", parents=[common])
+    a_asked.add_argument("idents", nargs="+")
+    a_asked.add_argument("--to", required=True)
     a_status = p_assume.add_parser("status", parents=[common])
     a_status.add_argument("ident")
     a_status.add_argument("status")
@@ -973,6 +1156,9 @@ def main(argv: list[str]) -> int:
     p_mig.add_argument("which", nargs="?", default="all", choices=["all", *MIGRATORS])
     p_mig.add_argument("--write", action="store_true")
 
+    p_asks = sub.add_parser("asks", parents=[common])
+    p_asks.add_argument("recipient", nargs="?")
+
     try:
         args = parser.parse_args(argv)
     except SystemExit as exc:
@@ -991,9 +1177,15 @@ def main(argv: list[str]) -> int:
             report, ok = migrate(root, args.which, args.write, args.date)
             print("\n".join(report))
             return 0 if ok else 1
-        if args.command == "assume" and args.action == "add":
+        if args.command == "asks":
+            print("\n".join(asks(root, args.recipient, args.date)))
+        elif args.command == "assume" and args.action == "add":
             print(assume_add(root, args.text, args.source, args.validates, args.depends,
-                             args.date, args.ident))
+                             args.date, args.ident, args.ask))
+        elif args.command == "assume" and args.action == "route":
+            print(assume_route(root, args.ident, args.recipient))
+        elif args.command == "assume" and args.action == "asked":
+            print("\n".join(assume_asked(root, args.idents, args.to, args.date)))
         elif args.command == "assume" and args.action == "sync":
             if bool(args.ident) == bool(args.all):
                 raise UsageError("give one assumption ID, or --all")
