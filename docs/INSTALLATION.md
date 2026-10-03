@@ -90,8 +90,12 @@ is no install-time renaming to remember. See
 **Upgrading from an unprefixed install?** Versions before the rename installed
 as `~/.claude/skills/adr/`, `~/.claude/skills/stressor/` and so on. `setup`
 cannot remove those — it only touches `restack-*`, deliberately, since an
-unprefixed `design-review` may belong to a suite you still want. Inspect them
-before deleting anything:
+unprefixed `design-review` may belong to a suite you still want.
+`/restack-upgrade retire-local --profile` finds the ones that are ReStack's
+(by title and content, not by name alone), shows them, and after you say yes
+moves them to `~/.claude/skills-retired-<date>/`; nothing is deleted. The
+same command without `--profile` does it for copies inside a project's
+`.claude/` folder. To inspect them by hand instead:
 
 ```bash
 for s in adr arch-learning capability-assessor capacity cloud design-review discover evolve excel journey patterns solution-doc stressor tech-stack; do

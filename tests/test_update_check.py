@@ -120,8 +120,11 @@ class UpdateCheck(unittest.TestCase):
     def run_uc(self, *args, env=None, script=None):
         environment = {k: v for k, v in os.environ.items() if k != "RESTACK_UPDATE_CHECK"}
         environment["RESTACK_STATE_DIR"] = str(self.state)
+        # Scratch home and working directory: `check` also looks for old skill
+        # copies in the project and the profile (ADR-024), never the real ones.
+        environment["HOME"] = environment["USERPROFILE"] = str(self.home)
         environment.update(env or {})
-        done = subprocess.run([sys.executable, str(script or self.script), *args],
+        done = subprocess.run([sys.executable, str(script or self.script), *args], cwd=self.tmp,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment, timeout=60)
         if not args or args[0] == "check":
             self.assertEqual(done.returncode, 0, "the check must always exit 0")
@@ -429,7 +432,7 @@ class UpdateCheck(unittest.TestCase):
             with self.subTest(shell=shell):
                 if (self.state / "update-check.json").exists():
                     self.age_last_check(25 * 3600)
-                env = dict(os.environ, HOME=self.home.as_posix(), RESTACK_STATE_DIR=str(self.state))
+                env = dict(os.environ, HOME=self.home.as_posix(), USERPROFILE=str(self.home), RESTACK_STATE_DIR=str(self.state))
                 env.pop("RESTACK_UPDATE_CHECK", None)
                 done = subprocess.run([path, "-c", self.snippet("bash")], cwd=self.tmp,
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -443,7 +446,7 @@ class UpdateCheck(unittest.TestCase):
         shell = posix_shell("sh") or posix_shell("bash")
         if not shell:
             self.skipTest("no POSIX shell")
-        env = dict(os.environ, HOME=self.home.as_posix(), RESTACK_STATE_DIR=str(self.state))
+        env = dict(os.environ, HOME=self.home.as_posix(), USERPROFILE=str(self.home), RESTACK_STATE_DIR=str(self.state))
         done = subprocess.run([shell, "-c", self.snippet("bash")], cwd=self.tmp,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               env=posix_env(shell, env), timeout=60)
@@ -457,7 +460,7 @@ class UpdateCheck(unittest.TestCase):
         self.publish("2.5.0")
         # $HOME is read-only in PowerShell, so point the snippet at the scratch home.
         code = self.snippet("powershell").replace("$HOME/", self.home.as_posix() + "/")
-        env = dict(os.environ, RESTACK_STATE_DIR=str(self.state))
+        env = dict(os.environ, RESTACK_STATE_DIR=str(self.state), HOME=str(self.home), USERPROFILE=str(self.home))
         env.pop("RESTACK_UPDATE_CHECK", None)
         done = subprocess.run([shell, "-NoProfile", "-NonInteractive", "-Command", code],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, timeout=120)

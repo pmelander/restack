@@ -7,10 +7,12 @@ description: |
   Upgrade ReStack to the latest version. Fetches the latest release into a
   temporary directory, installs it into the user profile with setup, shows what
   changed, and deletes the temporary directory. Also repairs a broken or partial
-  install, and snoozes or turns off the once-a-day update notice.
+  install, snoozes or turns off the once-a-day update notice, and retires old
+  ReStack skill copies that a project still carries in its .claude folder.
   Use when asked to "upgrade restack", "update restack", "get the latest
   restack", "is restack up to date", "reinstall restack", "snooze the restack
-  update", or "turn off the restack update check".
+  update", "turn off the restack update check", or "retire the old restack
+  skills in this project".
 allowed-tools:
   - Bash
   - Read
@@ -24,6 +26,7 @@ triggers:
   - reinstall restack
   - snooze restack update
   - turn off restack update check
+  - retire old restack skills
 ---
 
 {{PREAMBLE}}
@@ -45,7 +48,8 @@ stashed or switched.
 
 **`/restack-upgrade check`** runs only the verification in step 4 against the
 current install, plus `"$UC" status` from *The update notice* below, and
-reports. It fetches nothing and writes nothing.
+reports. It fetches nothing and writes nothing. `status` also lists any old
+ReStack skill copies in the current project (see *Old copies in a project*).
 
 ## The update notice — `snooze`, `off`, `on`
 
@@ -80,6 +84,46 @@ stays silent. `RESTACK_UPDATE_CHECK=off` in the environment also turns it off
 and wins over the file, which suits machines where an outbound fetch from a
 skill is not acceptable. If `config.json` exists but is not valid JSON, the
 check counts as off.
+
+## Old copies in a project — `retire-local`
+
+Projects set up before ReStack installed into the user profile carry their own
+copies in `.claude/skills/` (`journey`, `adr`, ...) or `.claude/commands/`.
+Claude Code loads them beside the installed `restack-*` skills, so an old
+`journey` can answer a request meant for `/restack-journey`, with method
+releases out of date, and nothing says so. The session-open check prints one
+line when the current project has them, at most once a day per project.
+
+`local_copies.py` sits beside `update_check.py`:
+
+```bash
+LC="$HOME/.claude/skills/restack-upgrade/scripts/local_copies.py"
+[ -f "$LC" ] || LC="skills/restack-upgrade/scripts/local_copies.py"
+```
+
+**`/restack-upgrade retire-local`**:
+
+1. Run `python "$LC" list`. Show it verbatim: each copy, why it counts (the
+   same title as the installed skill, or a ReStack name with residuality
+   vocabulary, or a `restack-*` copy inside the project), and what replaces
+   it. A folder that only shares a name with a ReStack skill is not listed.
+2. Run `python "$LC" retire` (a dry run) to show where each would move:
+   `.claude/skills-retired-<date>/`, which Claude Code does not load. Nothing
+   is deleted.
+3. **STOP** on a brief: retire them, or keep them. They are the architect's
+   files, and a project may keep a copy on purpose.
+4. On yes, run `python "$LC" retire --yes`. Report what moved, that the
+   retired folder's `README.md` says how to move one back, and that a **new
+   session** is needed: the current one may still hold the old skills' text.
+
+**`/restack-upgrade retire-local --profile`** does the same for the user
+profile: the unprefixed copies (`~/.claude/skills/adr`, ...) that an install
+from before the `restack-` prefix left behind. Run the three commands with
+`--profile`. The installed `restack-*` skills are never counted.
+
+It looks only in `.claude/skills/` and `.claude/commands/`, where Claude Code
+loads from. Other tools' folders (an OpenCode `commands/` folder, say) are
+not ReStack's business.
 
 ## Step 1 — read the install record
 
@@ -248,6 +292,7 @@ with the release.
 | A step silently does not run (e.g. the outside opinion) | a section the skill names is not installed | `/restack-upgrade check`, then steps 2–6 |
 | `/restack-excel` fails to find its helper | pre-v2 install | upgrade; the helper now ships inside the skill |
 | The update notice never appears | no `source` in the record, or the check is off | `/restack-upgrade check` names which |
+| A skill answers with method you already upgraded away from (reflection prompts, old wording) | an old copy in the project's `.claude/skills/`, or a session started before the upgrade | `/restack-upgrade retire-local`, then a new session |
 
 Before any repair, show what `"<UPGRADE_DIR>/restack/setup" --dry-run` would
 do, after step 2. It writes nothing, and its output is usually enough to
@@ -260,7 +305,9 @@ identify the problem.
 - **Install ReStack from nothing.** A skill cannot run before it is installed;
   see `INSTALL.md` in the repository for a first install.
 - **Touch anything that is not `restack-*`.** `setup` is scoped to that prefix
-  precisely so it cannot damage another skill suite.
+  precisely so it cannot damage another skill suite. The one exception is
+  `retire-local`, which moves (never deletes) ReStack's own old copies out of
+  a project's `.claude` folder, and only after the architect says yes.
 - **Downgrade silently.** An install that is ahead of the latest release stops
   the upgrade and requires an explicit answer.
 - **Upgrade on its own.** The update notice only points here. An upgrade

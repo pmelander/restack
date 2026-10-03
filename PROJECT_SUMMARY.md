@@ -15,7 +15,7 @@ walking paths, stress-testing them against scenarios including deliberately
 absurd ones, and identifying the discrete architectural changes (residuals)
 that reduce whole classes of exposure at once.
 
-**Status:** v2.11.1, October 2026. All seventeen skills generated from
+**Status:** v2.12.0, October 2026. All seventeen skills generated from
 templates with a shared behavioural preamble. CI enforces that generated files
 match their source. Run end to end on one live brownfield engagement.
 

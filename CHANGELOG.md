@@ -3,6 +3,38 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.12.0] — 2026-10-03
+
+Old ReStack skill copies in a project or the profile are reported, and
+retired by moving them aside
+([ADR-024](docs/adr/ADR-024-retire-old-skill-copies.md)). The reference
+engagement still carried 14 pre-prefix copies in `.claude/skills/`, loading
+beside the installed `restack-*` skills: a run under 2.11 closed with the
+reflection prompts 2.10 removed.
+
+### Added
+
+- **`local_copies.py`** in `/restack-upgrade`: finds old copies by name
+  **and** content (the installed skill's title, or the residuality
+  vocabulary), in `.claude/skills/` and `.claude/commands/` only. A project's
+  own skill that shares a name is left alone. `--profile` does the same for
+  `~/.claude/skills`, never counting the `restack-*` install.
+- **A session-open line** through the update check, for the project and for
+  the profile, each at most once a day, local (no install record or network
+  needed), under the existing opt-out. `/restack-upgrade check` lists them.
+- **`/restack-upgrade retire-local [--profile]`**: list, dry run, a brief,
+  then a move to `.claude/skills-retired-<date>/` with a README on how to undo.
+  Nothing is deleted.
+- `tests/test_local_copies.py` (14 cases).
+
+### Changed
+
+- `tests/test_update_check.py` runs `check` with a scratch `HOME`,
+  `USERPROFILE` and working directory, since the check now reads both
+  `.claude` folders.
+- `docs/INSTALLATION.md`: upgrading from an unprefixed install points at
+  `retire-local --profile`.
+
 ## [2.11.1] — 2026-10-03
 
 Fixes from the first real migration: the reference engagement's journey

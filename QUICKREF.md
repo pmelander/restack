@@ -246,6 +246,8 @@ mostly artifact means the analysis is sound and the docs are not keeping up.
 /restack-upgrade check                   # verify every indexed section is installed
 /restack-upgrade snooze [days]           # hide the daily update notice (default 7 days)
 /restack-upgrade off                     # turn the update check off; `on` to undo
+/restack-upgrade retire-local            # move old ReStack copies out of this project's .claude
+/restack-upgrade retire-local --profile  # the same for ~/.claude (pre-prefix installs)
 
 /restack-excel read <file> [sheet]       # to a markdown table
 /restack-excel preview <file> [rows]     # check the shape first

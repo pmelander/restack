@@ -280,7 +280,7 @@ are called — plus three utilities.
 |---|---|
 | [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
 | [`/restack-trace`](skills/restack-trace/SKILL.md) | where the documents drift — undefined IDs, register rows a later line contradicts, Knock-on changes not made, footnote amendments, superseded ADRs still cited, matrix totals. A worklist to confirm, never a verdict |
-| [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install, and snoozes or turns off the daily update notice |
+| [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install, snoozes or turns off the daily update notice, and retires old ReStack copies a project or profile still carries |
 
 ### Where this sits
 
@@ -315,7 +315,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.11.1**. All seventeen skills are generated from templates with
+ReStack is at **v2.12.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 
