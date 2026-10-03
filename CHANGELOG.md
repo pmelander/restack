@@ -3,6 +3,37 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.11.1] — 2026-10-03
+
+Fixes from the first real migration: the reference engagement's journey
+files, migrated and then worked through 43 judgement items with the
+architect. Three steps had to be done by hand or went wrong; each now has a
+command or a guard, and tests.
+
+### Fixed
+
+- **Git Bash rewrote `--command "/restack-journey ..."` into a Windows path**
+  (`C:/Program Files/Git/restack-journey ...`). The snippet in
+  `journey-files.md` now turns MSYS argument conversion off and translates the
+  script's own path with `cygpath`, which the first attempt at the fix broke
+  (a test caught it). `history add` also repairs a rewritten command, and
+  accepts one without its slash.
+
+### Added
+
+- **`assume sync A-<n> | --all`**: a row takes the status and date of its
+  last status line, with no new line. Aligning a row to a status already on
+  record used to need `assume status` and a fresh `--why`, and in the field run
+  that invited a reason the record did not contain.
+- **`decision note D<n> --actors ...`**: records whether an answered decision
+  changed the actor set when it never said, marked `(recorded <date>; not
+  stated when decided)`. Refuses if the entry already says, or is still open.
+  Eighteen field decisions needed this, and the lines were appended by hand.
+- `journey-files.md`: **a `--why` comes from the record**, never a plausible
+  reason; if the record holds none, ask.
+- `tests/test_journey.py`: 44 cases (was 35), including the snippet run in
+  Git Bash with a slash command.
+
 ## [2.11.0] — 2026-10-03
 
 The journey files are written by a helper, and old shapes migrate without

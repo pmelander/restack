@@ -10,9 +10,11 @@ and keeping a register row and its status lines in step.
     journey.py check                         is each file canonical?
     journey.py assume add "<belief>" --source S --validates V --depends D
     journey.py assume status A-12 "Partly resolved" --why "..."
+    journey.py assume sync A-12 | --all        row cells from the last status line
     journey.py decision next                 the number the next brief takes
     journey.py decision open "<question>" [--gate brief]
     journey.py decision answer D7 --answer "..." --rationale "..." --actors no
+    journey.py decision note D7 --actors no    an answered decision that never said
     journey.py history add --command "/restack-x y" --outcome "..." [--decision D7]
     journey.py migrate [register|log|state|all] [--write]
 
@@ -260,6 +262,52 @@ def assume_status(root: Path, ident: str, status: str, why: str, date: str) -> s
     return f"{label} · {status} · {date}"
 
 
+def assume_sync(root: Path, ident: str | None) -> list[str]:
+    """Set row cells from the row's last status line, which already holds the reason.
+
+    For a row that drifted from a status recorded earlier: no new status line,
+    so no new reason to supply. `ident` None syncs every drifted row.
+    """
+    path = root / REGISTER
+    if not path.exists():
+        raise Refused(f"{REGISTER} does not exist")
+    lines, newline = read(path)
+    shape = register_shape(lines)
+    if shape["problems"]:
+        raise Refused(f"{REGISTER} is not canonical: " + "; ".join(shape["problems"]))
+    rows = register_rows(lines, shape["tables"][0])
+    last: dict[int, tuple[str, str]] = {}
+    for line in lines:
+        m = STATUS_LINE.match(line)
+        if m and STATUS_TERM.fullmatch(m.group(2).strip()):
+            last[int(m.group(1))] = (canonical_term(m.group(2).strip()), m.group(3))
+    if ident:
+        m = re.fullmatch(r"A-(\d+)", ident.strip())
+        if not m:
+            raise UsageError(f"'{ident}' is not an assumption ID (A-12)")
+        if int(m.group(1)) not in rows:
+            raise Refused(f"{ident} has no row in the register")
+        if int(m.group(1)) not in last:
+            raise Refused(f"{ident} has no status line to sync from; use `assume status`")
+        targets = [int(m.group(1))]
+    else:
+        targets = sorted(n for n in rows if n in last)
+    changed = []
+    for n in targets:
+        k = rows[n]
+        cells = split_row(lines[k])
+        status, date = last[n]
+        if (strip_md(cells[5]), cells[6].strip()) == (status, date):
+            continue
+        before = strip_md(cells[5])
+        cells[5], cells[6] = status, date
+        lines[k] = "| " + " | ".join(cells) + " |"
+        changed.append(f"{strip_md(cells[0])}: {before} -> {status} ({date})")
+    if changed:
+        write(path, lines, newline)
+    return changed or ["already in step"]
+
+
 def canonical_term(term: str) -> str:
     for word in VOCAB:
         if term.lower() == word.lower():
@@ -347,16 +395,7 @@ def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors:
     n = int(m.group(1))
     if not answer.strip() or not rationale.strip():
         raise UsageError("--answer and --rationale are both required")
-    actors = actors.strip()
-    if actors.lower() == "no":
-        actors_text = "no"
-    elif re.match(r"yes\b", actors, re.IGNORECASE):
-        detail = actors[3:].lstrip(" :").strip()
-        if not detail:
-            raise UsageError("--actors yes needs the change: --actors \"yes: added <actor>\"")
-        actors_text = f"yes: {detail}. Matrices scored before this are `scored pre-D{n}`"
-    else:
-        raise UsageError("--actors is `no` or `yes: <what changed>`")
+    actors_text = actors_field(actors, n)
     lines, newline = read(path)
     shape = log_shape(lines)
     if shape["problems"]:
@@ -382,6 +421,60 @@ def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors:
         raise Refused(f"D{n}'s entry has no `- **Answer:** (open)` line to fill")
     write(path, lines, newline)
     return f"D{n} answered"
+
+
+def actors_field(actors: str, n: int) -> str:
+    actors = actors.strip()
+    if actors.lower() == "no":
+        return "no"
+    if re.match(r"yes\b", actors, re.IGNORECASE):
+        detail = actors[3:].lstrip(" :").strip()
+        if not detail:
+            raise UsageError("--actors yes needs the change: --actors \"yes: added <actor>\"")
+        return f"yes: {detail}. Matrices scored before this are `scored pre-D{n}`"
+    raise UsageError("--actors is `no` or `yes: <what changed>`")
+
+
+def decision_note(root: Path, ident: str, actors: str, date: str) -> str:
+    """Record whether an answered decision changed the actor set, when it never said.
+
+    Completing the record, not changing the decision: it refuses if the entry
+    already states it, and marks the line as recorded later.
+    """
+    path = root / LOG
+    if not path.exists():
+        raise Refused(f"{LOG} does not exist")
+    m = re.fullmatch(r"D(\d+)", ident.strip(), re.IGNORECASE)
+    if not m:
+        raise UsageError(f"'{ident}' is not a decision ID (D7)")
+    n = int(m.group(1))
+    text = f"{actors_field(actors, n)} *(recorded {date}; not stated when decided)*"
+    lines, newline = read(path)
+    shape = log_shape(lines)
+    if shape["problems"]:
+        raise Refused(f"{LOG} is not canonical: " + "; ".join(shape["problems"][:3]))
+    start = shape["entries"].get(n)
+    if start is None:
+        raise Refused(f"D{n} has no entry")
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    insert_at = end
+    for j in range(start + 1, end):
+        f = re.match(r"^- \*\*(Answer|Changes the actor set):\*\*\s*(.*)$", lines[j], re.IGNORECASE)
+        if not f:
+            continue
+        if f.group(1).lower() == "answer" and f.group(2).strip() == "(open)":
+            raise Refused(f"D{n} is still open; `decision answer` records the actor set with the answer")
+        if f.group(1).lower() == "changes the actor set":
+            if f.group(2).strip() not in ("—", "-", ""):
+                raise Refused(f"D{n} already records it: {f.group(2).strip()[:60]}")
+            lines[j] = f"- **Changes the actor set:** {text}"
+            write(path, lines, newline)
+            return f"D{n}: changes the actor set: {actors.strip()}"
+    while insert_at > start + 1 and not lines[insert_at - 1].strip():
+        insert_at -= 1
+    lines.insert(insert_at, f"- **Changes the actor set:** {text}")
+    write(path, lines, newline)
+    return f"D{n}: changes the actor set: {actors.strip()}"
 
 
 # --------------------------------------------------------------------------
@@ -414,6 +507,23 @@ def state_shape(lines: list[str]) -> dict:
     return {"problems": problems, "notes": notes}
 
 
+def slash_command(text: str) -> str:
+    """A ReStack command as it was meant, whatever the shell did to it.
+
+    Git Bash (MSYS) rewrites an argument that starts with `/` into a Windows
+    path: `/restack-journey migrate` arrives as
+    `C:/Program Files/Git/restack-journey migrate`. Put it back, and accept
+    the command without its slash as well.
+    """
+    text = text.strip()
+    m = re.match(r"^[A-Za-z]:[/\\](?:[^/\\]+[/\\])*?(restack-[\w-]+.*)$", text)
+    if m:
+        return "/" + m.group(1)
+    if re.match(r"^restack-[\w-]+", text):
+        return "/" + text
+    return text
+
+
 def history_add(root: Path, command: str, outcome: str, decision: str | None, date: str) -> str:
     path = root / STATE
     if not path.exists():
@@ -425,8 +535,8 @@ def history_add(root: Path, command: str, outcome: str, decision: str | None, da
                       ". Run `journey.py migrate state` (a dry run) to see the conversion.")
     if decision and not re.fullmatch(r"D\d+(\.\w+)?", decision):
         raise UsageError(f"--decision must look like D7, not {decision}")
-    command = command.strip()
-    if command.startswith("/") and not command.startswith("`"):
+    command = slash_command(command)
+    if command.startswith("/"):
         command = f"`{command}`"
     entry = f"- {date} · {command} · {' '.join(outcome.split())}"
     if decision:
@@ -834,6 +944,9 @@ def main(argv: list[str]) -> int:
     a_status.add_argument("ident")
     a_status.add_argument("status")
     a_status.add_argument("--why", required=True)
+    a_sync = p_assume.add_parser("sync", parents=[common])
+    a_sync.add_argument("ident", nargs="?")
+    a_sync.add_argument("--all", action="store_true")
 
     p_dec = sub.add_parser("decision").add_subparsers(dest="action", required=True)
     p_dec.add_parser("next", parents=[common])
@@ -846,6 +959,9 @@ def main(argv: list[str]) -> int:
     d_ans.add_argument("--rationale", required=True)
     d_ans.add_argument("--actors", required=True)
     d_ans.add_argument("--supersedes")
+    d_note = p_dec.add_parser("note", parents=[common])
+    d_note.add_argument("ident")
+    d_note.add_argument("--actors", required=True)
 
     p_hist = sub.add_parser("history").add_subparsers(dest="action", required=True)
     h_add = p_hist.add_parser("add", parents=[common])
@@ -878,6 +994,10 @@ def main(argv: list[str]) -> int:
         if args.command == "assume" and args.action == "add":
             print(assume_add(root, args.text, args.source, args.validates, args.depends,
                              args.date, args.ident))
+        elif args.command == "assume" and args.action == "sync":
+            if bool(args.ident) == bool(args.all):
+                raise UsageError("give one assumption ID, or --all")
+            print("\n".join(assume_sync(root, args.ident)))
         elif args.command == "assume":
             print(assume_status(root, args.ident, args.status, args.why, args.date))
         elif args.command == "decision" and args.action == "next":
@@ -885,6 +1005,8 @@ def main(argv: list[str]) -> int:
             print(f"D{next_decision(read(path)[0]) if path.exists() else 1}")
         elif args.command == "decision" and args.action == "open":
             print(decision_open(root, args.question, args.gate, args.date))
+        elif args.command == "decision" and args.action == "note":
+            print(decision_note(root, args.ident, args.actors, args.date))
         elif args.command == "decision":
             print(decision_answer(root, args.ident, args.answer, args.rationale, args.actors,
                                   args.supersedes))
