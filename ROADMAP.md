@@ -173,6 +173,31 @@ the same-family fallback, whose agreement is weak evidence. If it turns out
 nobody has Codex installed, the honest question is whether the fallback alone
 justifies the step.
 
+### 9. Restyle an existing project
+
+Projects written under an older style keep it. The reference engagement has
+61 ADRs and a full document set written while the pack still closed with
+reflection prompts and spoke of capability transfer
+([ADR-022](docs/adr/ADR-022-working-toolkit-not-training-pack.md)), and earlier
+formats besides (several register tables, footnote amendments).
+
+Wanted: a mode that rewrites the **wording and shape** of existing documents
+to the current style, **ADRs included, as long as nothing material changes**.
+That conflicts on purpose with `/restack-adr`'s rule "never quietly rewrite a
+decision", so the mode needs a guard that proves it changed only wording:
+
+- the material content is compared before and after: IDs, statuses, dates,
+  decision points, alternatives, figures, Knock-on rows, cited stressors and
+  residuals. Any difference stops the rewrite for that document;
+- every restyled document gets an editorial note (date, "wording only", what
+  was reshaped), so the history stays honest;
+- a change that *would* be material goes to `/restack-adr update` as a
+  decision, never through restyle.
+
+trace already parses most of the material content, which makes it the
+natural home for the before-and-after comparison. Write the user story when
+the work reaches it.
+
 ---
 
 ## Deliberately not doing
@@ -196,9 +221,15 @@ and a matrix that stops being rebuilt is worse than none.
 **Telemetry, analytics, or usage tracking.** This is a fourteen-skill toolkit,
 not a platform. That machinery would cost more in ceremony than it returns.
 
-Any new skill has to pass one test: **does it build thinking the architect
-carries forward, or does it create dependency?** A skill that trains people to
-work from checklists will be turned down however useful it looks.
+**A training pack.** ReStack is a working toolkit: it does the method and the
+bookkeeping, and the architect makes the calls. Skills are not designed to
+teach, or measured by how rarely they are needed
+([ADR-022](docs/adr/ADR-022-working-toolkit-not-training-pack.md)).
+
+Any new skill has to pass one test: **does it produce something the engagement
+uses, to a bar someone can check, while leaving the decisions with the
+architect?** A skill that reduces the method to a checklist will be turned down
+however useful it looks.
 
 ---
 
@@ -217,7 +248,7 @@ Open an issue. The most valuable contributions, in order:
 
 1. **What happened when you used it.** Especially where it got in the way.
 2. **A compliance pack**, meeting the scenario bar above.
-3. **A skill idea that fits the theory** — with an argument for why it builds
-   capability rather than dependency.
+3. **A skill idea that fits the theory** — with what it produces and the bar
+   that output must meet.
 
 See [Contributing](CONTRIBUTING.md).

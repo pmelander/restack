@@ -46,24 +46,27 @@ what people remember. What exists, how it behaves, and what each actor actually
 does — mapped confidently enough to act on, and rated honestly enough that
 everyone knows which parts are solid.
 
-## Capability being built
+## What it produces
 
-1. **Discovery thinking** — approaching an existing environment with structured
-   curiosity rather than assumption.
-2. **Actor intent reading** — separating what an actor is supposed to do from
-   what it does.
-3. **Signal tracing** — following an intention until it resolves or dies, and
-   noticing what it lost on the way.
-4. **Assumption surfacing** — making implicit knowledge explicit before it
-   becomes a design flaw.
-5. **Confidence calibration** — knowing the difference between "we think this
-   is how it works" and "we have validated this is how it works", and being
-   willing to say which.
+- **Path maps** of the existing system, from evidence rather than diagrams.
+- **Actor investigations** that separate what an actor is supposed to do from
+  what it does, including hosting, network and identity.
+- **Intention traces** that follow a signal until it resolves or dies, and
+  record what it lost on the way.
+- **Registered assumptions** for every claim that has no source yet.
+- **Organisational resistance** written as stressors.
+- **A confidence assessment**, and the confidence gate that decides whether
+  the system is understood well enough to stress.
 
-**Residuality goal:** the architect stops designing on top of assumptions
-without having to be told. They reach for evidence before diagram, they notice
-when a claim has no source, and the question "how do we know that?" becomes
-reflexive rather than confrontational.
+## Done when
+
+- Every claim carries its confidence and its source.
+- Surprises are recorded. They mark where the team's model was wrong.
+- The paths nobody wanted examined have been walked, or their absence is
+  recorded as a gap.
+- Every remaining assumption is in the register, with what would settle it.
+- The confidence gate says whether the evidence is enough to act on, not only
+  how comfortable everyone is with the uncertainty.
 
 ## Core concept
 
@@ -286,17 +289,3 @@ organisational constraint alongside the technical ones.
 | `/restack-adr create` | a significant discovery that shapes the approach is a decision |
 | `/restack-solution-doc` | discovery output becomes the baseline architecture description |
 | `/restack-design-review` | discovery findings make the review honest about assumptions |
-
-## Reflection prompts
-
-- **What surprised you?** Surprises mark where the team's model was wrong, and
-  they are the highest-value thing discovery produces.
-- **Where did you stop because it got uncomfortable?** The awkward path — the
-  one owned by the team that does not want you there — is usually the one that
-  matters.
-- **What are you still assuming?** Name them. Unexamined assumptions become
-  design flaws at design-review prices.
-- **What does the organisation want to be true that may not be?** Tribal
-  knowledge is often tribal mythology.
-- **Are you confident enough to act, or just comfortable with the uncertainty?**
-  Those are different states. Know which one you are in before the gate.

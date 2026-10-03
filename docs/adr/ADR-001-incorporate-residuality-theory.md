@@ -8,6 +8,13 @@
 
 **Technical Story:** Phase 1 Refactor - Shift from tool-centric to capability-building approach
 
+> **Amended 2026-10-03 by [ADR-022](ADR-022-working-toolkit-not-training-pack.md):
+> read this before the body.** Incorporating Residuality Theory stands, and so
+> does outcome tracking. The shift to a "capability-building system", the
+> reflection prompts and the teaching mode are withdrawn: ReStack is a working
+> toolkit, every skill states what it produces and when it is done, and the
+> architect owns the decisions. Withdrawn passages are marked inline.
+
 ## Context
 
 After completing ReStack's Phase 1 with four core skills (ADR, Solution Documentation, Tech Stack Advisor, Design Review), we discovered Barry O'Reilly's Residuality Theory, which fundamentally challenges how we think about the value our toolkit should deliver.
@@ -42,15 +49,15 @@ Our initial Phase 1 implementation focused on **output generation** - producing 
 
 ## Decision
 
-We will **refactor ReStack to explicitly incorporate Residuality Theory principles**, shifting from a tool-centric approach to a capability-building system.
+We will **refactor ReStack to explicitly incorporate Residuality Theory principles**, ~~shifting from a tool-centric approach to a capability-building system~~ *(withdrawn 2026-10-03, ADR-022: a working toolkit)*.
 
 **Phase 1 Refactor:**
 Enhance existing skills to include:
-1. **Reflection Prompts** - Each skill asks "What did you learn?" and captures insights
+1. ~~**Reflection Prompts** - Each skill asks "What did you learn?" and captures insights~~ *(withdrawn, ADR-022)*
 2. **Learning Capture** - Document not just decisions but the thinking behind them
-3. **Capability Focus** - Make explicit what capability each skill builds
+3. ~~**Capability Focus** - Make explicit what capability each skill builds~~ *(replaced by What it produces / Done when, ADR-022)*
 4. **Outcome Tracking** - Enable follow-up to learn from past decisions
-5. **Teaching Mode** - Skills explain *why*, not just *what*
+5. ~~**Teaching Mode** - Skills explain *why*, not just *what*~~ *(withdrawn, ADR-022)*
 
 **Phase 2 Redesign:**
 Shift from "Deep Analysis Tools" to "Capability Building Skills":

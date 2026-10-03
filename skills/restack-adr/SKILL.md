@@ -4,8 +4,8 @@ version: 2.1.0
 preamble-tier: 2
 model: opus
 description: |
-  Create and maintain Architecture Decision Records, and build the thinking
-  behind them. Records what was decided, why, what it cost, whether it can be
+  Create and maintain Architecture Decision Records. Records what was
+  decided, why, what it cost, whether it can be
   undone, and - when the decision implements a residual - which stressors it
   clears, so the trail from analysis to decision survives.
   Use when asked to "write an ADR", "document this decision", "why did we
@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -329,9 +327,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -342,30 +338,39 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 
 # Architecture Decision Records
 
-You help architects record decisions in a way that survives the people who made
-them, and you build the decision-making capability while doing it.
+You record architecture decisions so they survive the people who made them:
+what was decided, why, what it cost, whether it can be undone, and which
+stressors it clears.
 
-The document is the byproduct. The value is that writing it forces the
-alternatives to be named, the cost to be admitted, and the reasoning to be
-examined while it can still change the decision.
+Writing the record is also where a decision gets checked. Naming the
+alternatives, admitting the cost and stating the reversibility happen while the
+reasoning can still change the decision.
 
-## Capability being built
+## What it produces
 
-1. **Structured decision-making** — evaluating a choice systematically instead
-   of arriving at it.
-2. **Trade-off articulation** — naming what a decision costs, out loud, at the
-   time.
-3. **Context preservation** — recording the *why*, which decays fastest and
-   matters most.
-4. **Reversibility awareness** — telling a one-way door from a cheap
-   experiment, and spending effort accordingly.
-5. **Learning from outcomes** — closing the loop between what you predicted and
-   what happened.
+- **ADRs** in `docs/adr/`, in the format of `<base>/sections/adr-format.md`:
+  context, decision, consequences, alternatives, reversibility, derived
+  details, Knock-on changes, and the residual and stressors where the decision
+  implements one.
+- **Supersessions and amendments** that account for the old decision point by
+  point, and update or banner every document the change invalidates.
+- **Outcome reviews**, appended months later, that separate the outcome from
+  the reasoning.
+- An entry in `docs/journey/decisions-log.md` for every decision recorded.
 
-**Residuality goal:** the architect thinks in alternatives, costs and
-reversibility as a matter of course, and writes ADRs only where the record has
-value to someone else — not to structure their own thinking, because that
-structure has been internalised.
+## Done when
+
+- Every alternative is one a reasonable person could have chosen, and the
+  reason it lost is stated.
+- The Negative consequences are not empty. A decision with no cost has not been
+  examined yet.
+- Reversibility is explicit, and a one-way door says what it would take to undo.
+- A decision that implements a residual names the residual and the stressors
+  it clears.
+- Knock-on changes are filled and true: every document listed was changed,
+  bannered or ticketed in the same step.
+- On a supersession, every withdrawn decision point names what now prevents
+  the failure it prevented.
 
 ## When a decision deserves an ADR
 
@@ -412,10 +417,11 @@ printed, it is `~/.claude/skills/restack-adr`.
    If it does, capture the residual id and the stressors it clears before
    writing anything else — that link is the first thing lost and the hardest to
    reconstruct later.
-4. **Ask clarifying questions one at a time**, not as a form to fill in. The
-   questions are the capability transfer; batching them turns the exercise into
-   data collection. Cover: what forced this decision now, what constrains the
-   options, what you are afraid of, who is affected.
+4. **Ask clarifying questions one at a time**, not as a form to fill in. Each
+   answer changes what the next question should be, and a batch gets answered
+   as a form: short, and missing what nobody was asked. Cover: what forced this
+   decision now, what constrains the options, what you are afraid of, and who
+   is affected and whether they have been asked.
 5. **Establish reversibility explicitly.** If the answer is one-way door, say
    so and slow down — spend the extra time on alternatives before writing.
 6. **Require two or three real alternatives.** If the architect offers only
@@ -437,7 +443,6 @@ printed, it is `~/.claude/skills/restack-adr`.
 10. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
 11. Log to `docs/journey/decisions-log.md` and add to the journey state's
     artifact list.
-12. Close with a reflection prompt.
 
 ## `/restack-adr list`
 
@@ -532,30 +537,3 @@ Confirm you actually read every section the index named as applying to this run,
 | `/restack-tech-stack` | technology evaluations land as ADRs |
 | `/restack-patterns extract` | recurring decisions across ADRs become patterns |
 | `/restack-arch-learning` | reads outcome reviews to find how this team decides |
-
-## Reflection prompts
-
-**Before deciding**
-- What are you assuming that you have not checked?
-- What would have to be true for this to be the wrong call?
-- Who is most affected, and have they been asked?
-
-**While writing**
-- Why is this worth documenting? If you cannot answer, maybe it is not.
-- What does this cost? An empty Negative section means you are not finished.
-- Which of the alternatives could a reasonable person have chosen?
-
-**After writing**
-- What did you work out while writing that you did not know when you started?
-- Did the act of naming alternatives change the decision? If it never does,
-  the alternatives are not real.
-
-**When superseding**
-- What was the old decision quietly protecting that its title never said?
-- Which document will someone follow tomorrow that still describes the old
-  decision?
-
-**At review, months later**
-- What did you predict correctly, and what did you miss entirely?
-- Was the reasoning sound given what was knowable then — separately from
-  whether the outcome was good?

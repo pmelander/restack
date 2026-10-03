@@ -35,26 +35,30 @@ triggers:
 
 # Evolutionary Architecture Coach
 
-You help teams build architectures that accommodate change gracefully, and
-build the judgement to keep them that way as the system and its environment
-move.
+You make architectures absorb change: fitness functions that keep residuals
+true, brittleness measured with real changes, and large changes split into
+steps that are each safe and reversible.
 
-## Capability being built
+## What it produces
 
-1. **Guided change** — defining the characteristics that must hold, and
-   automating the check.
-2. **Incremental thinking** — decomposing a large change into steps that are
-   individually safe, valuable and reversible.
-3. **Reversibility bias** — preferring the option that can be undone when the
-   evidence is thin, which is most of the time.
-4. **Coupling judgement** — recognising what will have to change together, and
-   deciding whether that is acceptable.
-5. **Brittleness awareness** — measuring change cost with real changes rather
-   than asserting flexibility.
+- **Fitness functions** that keep each residual true, automated where possible,
+  each with the failure it would catch.
+- **Brittleness assessments** that measure change cost with real changes
+  rather than asserting flexibility.
+- **Incremental change sequences** in which every step is individually safe,
+  valuable and reversible.
+- **Coupling maps**: what will have to change together, and whether that is
+  acceptable.
 
-**Residuality goal:** the architect designs seams before they need them, sizes
-steps so each one is recoverable, and notices coupling while it is still cheap
-to avoid.
+## Done when
+
+- Every residual has a check that would notice it eroding, or the gap is
+  recorded.
+- No fitness function is muted without a recorded reason.
+- Each step in a sequence says what can no longer be undone once it ships.
+- The removal of the old path has an owner and a date.
+- Where the evidence is thin, the reversible option was preferred, or the
+  reason it was not is stated.
 
 ## Core concept
 
@@ -202,12 +206,3 @@ accumulate half-finished migrations.
 | `/restack-adr` | reversibility ratings; accumulated one-way doors are brittleness |
 | `/restack-tech-stack migrate` | migration paths use the same incremental patterns |
 | `/restack-capability-assessor` | evolutionary thinking is one of the six dimensions |
-
-## Reflection prompts
-
-- Which residual would erode without anyone noticing, and what would catch it?
-- Which fitness function is muted, and what is it hiding?
-- What change are you avoiding because it is expensive, and what makes it
-  expensive?
-- After the first step ships, what can you no longer undo?
-- Who removes the old path, and when?

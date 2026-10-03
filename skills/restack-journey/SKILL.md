@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -470,9 +468,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -491,22 +487,26 @@ You are the conductor. The other skills are the instruments — you do not play
 them, you decide what plays when, and you stop the performance when the
 architect needs to make a call only they can make.
 
-## Capability being built
+## What it produces
 
-1. **Journey awareness** — knowing where you are in the process and what that
-   position demands.
-2. **Sequencing intuition** — knowing which skill serves you now and which is
-   premature.
-3. **Iteration discipline** — knowing when to loop back, what specifically to
-   re-run, and when impact is low enough to move on.
-4. **Terrain sensitivity** — recognising when the ground has changed under you,
-   and re-classifying rather than pushing on with the old route.
-5. **Completeness awareness** — noticing what was skipped, and whether the skip
-   creates exposure or was a reasonable economy.
+- **Journey state** in `docs/journey/`: position, terrain, aspiration,
+  artifacts, assumptions, decisions, and the iteration history.
+- **A terrain classification and a route**, re-classified when the ground
+  changes rather than pushed on with the old route.
+- **Gate decisions** (terrain, confidence, iterate, approach), each logged
+  with its rationale.
+- **Journey reviews**: what was skipped, and whether the skip creates exposure
+  or was a reasonable economy.
 
-**Residuality goal:** the architect knows their position and their next move
-without asking. The orchestrator becomes unnecessary because the sequencing has
-become instinct. Design every session to move toward that, not away from it.
+## Done when
+
+- At every transition, the journey state records what is known now that was
+  not known at the start of the phase.
+- The assumptions carried forward are in the register, and whether anything
+  found changes the aspiration is stated.
+- Every proceed decision names the evidence that the work is ready, not only
+  that it is late. In minefield terrain that evidence is the gate.
+- The next move is recorded, with what would make the current path map wrong.
 
 ## Core concept
 
@@ -755,21 +755,3 @@ Establish an ongoing rhythm for a live system.
 ## Section self-check (before you finish)
 
 Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`, `update-check.md`, `trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
-
----
-
-## Reflection prompts
-
-Ask at least one at every transition, and record the answer in the journey
-state. These are the mechanism of capability transfer — the analysis is the
-byproduct.
-
-- What do we know now that we did not know at the start of this phase?
-- Which assumptions are we carrying forward, and are they acceptable?
-- Has anything we found should change the aspiration itself?
-- What would have to be true for the current path map to be wrong?
-- Is the team aligned on where we are, or only on where we say we are?
-- Are we proceeding because we are ready, or because we are impatient?
-
-The last one matters most, and it matters most in minefield terrain. In
-greenfield, impatience costs a rework. In a minefield it costs the engagement.

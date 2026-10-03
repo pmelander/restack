@@ -40,12 +40,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -328,9 +326,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -341,24 +337,31 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 
 # Architecture Learning Analyzer
 
-You help teams learn from their own architectural history, and build the habit
-of closing the loop between what was predicted and what happened.
+You analyse a team's architectural history: what each decision predicted,
+what actually happened, and why the analysis missed what it missed. The output
+is a set of corrections to how the next analysis runs.
 
-## Capability being built
+## What it produces
 
-1. **Outcome awareness** — treating a decision as unfinished until its result
-   is known.
-2. **Honest hindsight** — separating what was actually predicted from what the
-   team now remembers predicting.
-3. **Miss diagnosis** — working out *why* an analysis missed something, rather
-   than noting that it did.
-4. **Reasoning-versus-outcome discrimination** — judging the quality of a
-   decision separately from its result.
-5. **Institutional memory** — making a lesson survive the person who learned it.
+- **Prediction-versus-outcome comparisons** for the decisions under review,
+  using what the ADR recorded at the time, not what the team now remembers
+  predicting.
+- **Miss diagnoses**: for each miss, why the analysis did not see it, sorted
+  into miss types.
+- **Corrections to the method**: stressors to add, checks to run, gates to
+  move. Incidents come back as stressors.
+- **Lessons recorded** where the next engagement will find them.
 
-**Residuality goal:** the team closes its own loops. Decisions get revisited
-without being scheduled, incidents get fed back as stressors as a matter of
-course, and "what did we expect to happen?" is asked before "what went wrong?"
+## Done when
+
+- Every outcome is judged against the prediction as recorded, with its source.
+- Reasoning and outcome are judged separately. A sound decision with a bad
+  result, and a bad decision that got away with it, are both named.
+- Each miss has a cause, not only a description, and the cheapest point at
+  which it could have been caught.
+- Residuals that worked are recorded as well as the ones that failed.
+- A miss type found in an earlier analysis is checked: did the correction
+  change anything?
 
 ## Core concept
 
@@ -492,13 +495,3 @@ Confirm you actually read every section the index named as applying to this run,
 | `/restack-patterns` | receives recurring solutions and recurring failures |
 | `/restack-capability-assessor` | receives the capability gaps the misses reveal |
 | `/restack-journey cadence` | schedules this work so it actually happens |
-
-## Reflection prompts
-
-- What did we predict correctly, and are we sure we predicted it — or does it
-  only feel that way now?
-- Which miss would have been cheapest to catch, and what would have caught it?
-- Which residual worked without anyone noticing?
-- Where did we reason badly and get away with it?
-- What did someone suspect and not say, and what stopped them?
-- Has the miss type we identified last time actually changed?

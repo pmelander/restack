@@ -34,24 +34,31 @@ triggers:
 
 # Architecture Learning Analyzer
 
-You help teams learn from their own architectural history, and build the habit
-of closing the loop between what was predicted and what happened.
+You analyse a team's architectural history: what each decision predicted,
+what actually happened, and why the analysis missed what it missed. The output
+is a set of corrections to how the next analysis runs.
 
-## Capability being built
+## What it produces
 
-1. **Outcome awareness** — treating a decision as unfinished until its result
-   is known.
-2. **Honest hindsight** — separating what was actually predicted from what the
-   team now remembers predicting.
-3. **Miss diagnosis** — working out *why* an analysis missed something, rather
-   than noting that it did.
-4. **Reasoning-versus-outcome discrimination** — judging the quality of a
-   decision separately from its result.
-5. **Institutional memory** — making a lesson survive the person who learned it.
+- **Prediction-versus-outcome comparisons** for the decisions under review,
+  using what the ADR recorded at the time, not what the team now remembers
+  predicting.
+- **Miss diagnoses**: for each miss, why the analysis did not see it, sorted
+  into miss types.
+- **Corrections to the method**: stressors to add, checks to run, gates to
+  move. Incidents come back as stressors.
+- **Lessons recorded** where the next engagement will find them.
 
-**Residuality goal:** the team closes its own loops. Decisions get revisited
-without being scheduled, incidents get fed back as stressors as a matter of
-course, and "what did we expect to happen?" is asked before "what went wrong?"
+## Done when
+
+- Every outcome is judged against the prediction as recorded, with its source.
+- Reasoning and outcome are judged separately. A sound decision with a bad
+  result, and a bad decision that got away with it, are both named.
+- Each miss has a cause, not only a description, and the cheapest point at
+  which it could have been caught.
+- Residuals that worked are recorded as well as the ones that failed.
+- A miss type found in an earlier analysis is checked: did the correction
+  change anything?
 
 ## Core concept
 
@@ -172,13 +179,3 @@ opinion with a chart.
 | `/restack-patterns` | receives recurring solutions and recurring failures |
 | `/restack-capability-assessor` | receives the capability gaps the misses reveal |
 | `/restack-journey cadence` | schedules this work so it actually happens |
-
-## Reflection prompts
-
-- What did we predict correctly, and are we sure we predicted it — or does it
-  only feel that way now?
-- Which miss would have been cheapest to catch, and what would have caught it?
-- Which residual worked without anyone noticing?
-- Where did we reason badly and get away with it?
-- What did someone suspect and not say, and what stopped them?
-- Has the miss type we identified last time actually changed?

@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -329,9 +327,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -352,19 +348,24 @@ matrices, identify residuals or judge whether a stressor matters. It produces
 statements with a distribution that was decided before the model saw anything,
 and hands them over.
 
-## Capability being built
+## What it produces
 
-The architect learns to distrust their own stressor list. A list written
-directly - by a person or by a model - is drawn from what its author already
-fears, and things you already fear are things you have already partly designed
-for. The capability is noticing when a generation step has collapsed onto its
-prior, and knowing that the fix is structural rather than a better prompt.
+- **Specs** (`specs.jsonl`) drawn by a seeded sampler, reproducible from the
+  seed.
+- **Statements** (`statements.jsonl`), one rendered per spec by an isolated
+  subagent, with the grounding each was rendered under.
+- **A validation report**: the cell spread, and any statement on a blind track
+  that leaked the system's own terms.
 
-## Residuality goal
+## Done when
 
-Batches that a team argues about on the merits, because nobody chose them. The
-skill has done its job when an architect stops asking "what could go wrong" and
-starts asking "what would I never have put on this list".
+- The seed is stated, so the specs can be drawn again.
+- Every blind-track statement was rendered without the system's context, and
+  validation found none of the forbidden terms in it.
+- The report says which statements came from the blind tracks.
+- Statements the architect wants to discard before walking are discarded only
+  for a stated reason: they cannot reach the system, not that nobody can yet
+  see how they would.
 
 ## Core concept
 
@@ -502,16 +503,3 @@ rendering runs on subagents inside the session. Nothing here needs
 ## Section self-check (before you finish)
 
 Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`grounding.md`, `render-protocol.md`, `handoff.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
-
-## Reflection prompts
-
-End every run with one of these. They are what turn a batch into transferable
-thinking:
-
-- Which statement in this batch would you never have written yourself? What
-  does it being absent from your own list tell you about your prior?
-- Which uncoupled statements did you want to discard before walking them, and
-  what was the actual reason - that they cannot reach the system, or that you
-  cannot yet see how they would?
-- If the batch produced nothing surprising, is the system genuinely
-  well-defended, or is the taxonomy describing the world you already expect?

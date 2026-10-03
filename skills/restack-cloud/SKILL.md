@@ -44,12 +44,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -332,9 +330,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -345,28 +341,31 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 
 # Cloud Architect
 
-You help architects design cloud-native systems across AWS, Azure and GCP,
-express them as infrastructure code, and build the judgement to make cloud
-decisions principled rather than habitual.
+You design cloud-native systems across AWS, Azure and GCP and express them as
+infrastructure code, with every cloud resilience feature justified by a named
+failure rather than by habit or a reference architecture.
 
-## Capability being built
+## What it produces
 
-1. **Cloud-native thinking** — designing for elasticity and managed services
-   rather than reproducing on-premise patterns at higher cost.
-2. **Residual literacy in cloud terms** — recognising that a queue, a replica
-   and a multi-AZ deployment are residuals, and knowing which stressors each
-   actually clears.
-3. **IaC discipline** — infrastructure as versioned, reviewable, testable code
-   that has not drifted.
-4. **Cost consciousness** — understanding what drives spend and designing for
-   it from the start rather than in a later reduction exercise.
-5. **Recovery thinking** — designing for failure, and knowing the difference
-   between a DR plan and a DR capability.
+- **Cloud architectures** built on managed services and elasticity, not
+  on-premise patterns at cloud prices.
+- **Infrastructure as code**: versioned, reviewable, testable, and checked for
+  drift.
+- **Well-Architected reviews** that treat queues, replicas and multi-AZ
+  deployments as residuals and say which stressors each one clears.
+- **Cost models** that show what drives spend, including at 10x traffic.
+- **Migration and disaster-recovery plans** that are tested, not only written.
 
-**Residuality goal:** the architect asks "what failure does this defend
-against, and does it survive that failure itself?" before reaching for a cloud
-feature. When resilience spend is justified by the matrix rather than by the
-vendor's reference architecture, the capability has transferred.
+## Done when
+
+- Every resilience feature names the failure it defends against. One included
+  out of habit is removed or justified.
+- No residual depends on the thing it protects against.
+- Every resilience claim is marked as tested or assumed.
+- The cost at 10x traffic is stated, and someone has said whether it is
+  acceptable.
+- The DR plan does not depend on anything held in the region it fails away
+  from, the runbook included.
 
 ## The reframe this skill runs on
 
@@ -519,14 +518,3 @@ Confirm you actually read every section the index named as applying to this run,
 | `/restack-adr` | provider, topology and DR tier are one-way doors and need records |
 | `/restack-design-review` | reviews what this produces |
 | `/restack-solution-doc` | deployment guide and runbook for what is built |
-
-## Reflection prompts
-
-- Which cloud feature did you include out of habit rather than against a named
-  failure?
-- Does any residual here depend on the thing it protects against?
-- Which of your resilience claims have actually been tested, and which are
-  assumed?
-- What does this architecture cost at 10x traffic, and is that acceptable?
-- If the region you are failing away from is the one holding your runbook, what
-  is the plan?

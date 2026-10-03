@@ -78,7 +78,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-021
+    ├── adr/                            # ADR-001 .. ADR-022
     └── ...                             # Generated documentation location
 ```
 
@@ -101,14 +101,14 @@ Each skill template follows this structure:
    `triggers`
 2. **`{{PREAMBLE}}`** — shared behaviour composed by tier (see below)
 3. **Role Definition** — clear statement of the skill's purpose
-4. **Capability Being Built** — what thinking the skill transfers to the architect
-5. **Residuality Goal** — what success looks like when the capability is internalised
+4. **What it produces** — the artifacts the skill writes, and where
+5. **Done when** — the quality bar those artifacts must meet before the skill
+   reports done; checkable, not aspirational
 6. **Core Concept** — the key idea and compound effect
 7. **`{{SECTION_INDEX}}`** — the on-demand sections and when to read each
 8. **Commands** — numbered, executable steps; not bullet summaries. Each names
    the section to read and the gates where it must **STOP**
 9. **`{{SECTION_SELF_CHECK}}`** — catches sections run from memory
-10. **Reflection Prompts** — questions that build the capability
 
 ### Preamble tiers
 
@@ -198,7 +198,14 @@ validator that cries wolf gets muted, and a muted check is a failed control.
 
 ### Key Design Principle
 
-Skills are **capability transfer tools**, not dependency-creating tools. Every skill should build thinking that architects carry forward independently. The measure of success is how rarely the skill needs to be invoked because the thinking has been internalised.
+ReStack is a **working toolkit** for residuality-based architecture, not a
+training pack ([ADR-022](docs/adr/ADR-022-working-toolkit-not-training-pack.md)).
+The skills do the method and the bookkeeping in full: discovery, stressor
+analysis, decisions, documentation, and keeping a long engagement consistent.
+**The architect owns the decisions.** Gates, decision briefs and "never
+auto-resolve" exist because the architect answers for the design, not to
+teach them. A skill is measured by the quality and traceability of what it
+produces, not by how rarely it is needed.
 
 ## Development Commands
 
@@ -394,10 +401,15 @@ matrices), `decisions-log.md` (every gate passed, with rationale), and
 
 ### For Skill Development
 
-1. **Capability first** — every command should build a thinking skill, not just produce output
-2. **Clear residuality goal** — state what success looks like when the skill is no longer needed
-3. **Reflection prompts** — include questions that deepen the thinking
-4. **Consistent philosophy** — new skills must align with Residuality Theory; if a skill would train architects to think in checklists or registers, reconsider the approach
+1. **Output first** — every command produces something the engagement uses: an
+   artifact, a decision, a finding, a gate passed
+2. **A checkable bar** — "Done when" states what the output must meet, in terms
+   someone could verify
+3. **Decisions stay with the architect** — the skill frames the call and stops;
+   it never makes a call the architect answers for
+4. **Consistent method** — new skills must align with Residuality Theory. A
+   skill that reduces the method to a checklist or a risk register is the wrong
+   shape, because a checklist covers only what its author already feared
 
 ## Installation
 
@@ -435,7 +447,7 @@ temporary clone and never touches a checkout.
 ## Contributing
 
 When adding new skills:
-1. Follow existing skill patterns — especially the Capability Being Built and Residuality Goal sections
+1. Follow existing skill patterns — especially the What it produces and Done when sections
 2. Create an ADR in `docs/adr/` for any significant design decision (including decisions *not* to build something)
 3. Update all documentation files: README.md, QUICKREF.md, GETTING_STARTED.md, CLAUDE.md
 4. Test thoroughly before committing

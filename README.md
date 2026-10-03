@@ -2,10 +2,11 @@
 
 **Architecture skills for Claude Code, built on Residuality Theory.**
 
-Seventeen skills — fourteen that walk you through designing systems which
+Seventeen skills — fourteen that do the work of designing systems which
 survive things nobody predicted, and three utilities: spreadsheets in, document
-drift found, updates installed. They build the thinking so that eventually you
-do it without them.
+drift found, updates installed. The skills run the method and keep the record:
+discovery, stressor analysis, decisions, documentation, and the consistency of
+a long engagement. You make the calls.
 
 ---
 
@@ -309,7 +310,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.9.1**. All seventeen skills are generated from templates with
+ReStack is at **v2.10.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

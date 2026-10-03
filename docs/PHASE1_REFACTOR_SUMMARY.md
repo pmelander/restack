@@ -1,5 +1,11 @@
 # Phase 1 Refactor Complete - Residuality Integration
 
+> **Historical record (bannered 2026-10-03).** This document describes the
+> May 2026 premise that ReStack builds capability in its users. That premise
+> was withdrawn by [ADR-022](adr/ADR-022-working-toolkit-not-training-pack.md):
+> ReStack is a working toolkit, and the architect owns the decisions. Read
+> this as history, not as current guidance.
+
 **Date:** 2026-05-17  
 **Status:** ✅ All Phase 1 skills refactored with residuality principles
 

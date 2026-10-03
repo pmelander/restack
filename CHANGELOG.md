@@ -3,6 +3,43 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.10.0] — 2026-10-03
+
+ReStack is a working toolkit, not a training pack
+([ADR-022](docs/adr/ADR-022-working-toolkit-not-training-pack.md)). The
+skills run the method and keep the record; the architect makes the calls. The
+premise that the pack builds capability in its users, measured by how rarely
+it is needed, was never the intention and is withdrawn.
+
+### Changed
+
+- **Every skill states what it produces and when it is done.** "Capability
+  being built" and "Residuality goal" are replaced in fifteen skills by **What
+  it produces** (the artifacts, and where) and **Done when** (a checkable bar).
+- **No reflection prompts.** Removed from the voice fragment, from the chain
+  rules, from fifteen skills, and from two command steps. Prompts that carried
+  method became Done-when checks on the output.
+- **The voice rule is "The architect owns the judgement"**, justified by
+  accountability rather than teaching. Gates, decision briefs and stop rules
+  are unchanged.
+- **`/restack-design-review self-check` is an author's review**: the architect
+  reviews, the skill challenges their answers and then adds its own findings,
+  marked as its own.
+- `/restack-adr` still asks one question at a time, now because each answer
+  changes the next question. Its descriptions and `/restack-tech-stack`'s no
+  longer promise to build habits or thinking.
+- CLAUDE.md (template structure, design principle, skill-development rules),
+  README, ROADMAP (the new-skill test, and "a training pack" under
+  Deliberately not doing), RESIDUALITY.md, QUICKREF and PROJECT_SUMMARY.
+- ADR-001, ADR-002, ADR-005 and ADR-020 are amended with banners and inline
+  marks; ADR-022 accounts for each withdrawn point. The May 2026 phase and
+  integration write-ups are bannered as historical record.
+
+### Added
+
+- ROADMAP item 9: restyle an existing project to the current style, ADRs
+  included, with a guard that proves nothing material changed.
+
 ## [2.9.1] — 2026-10-03
 
 The first field run of `/restack-trace`, on the 2.4.0 reference engagement,

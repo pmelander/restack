@@ -40,12 +40,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -328,9 +326,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -345,21 +341,22 @@ You help organisations turn what they have repeatedly done into knowledge the
 next team can use — and keep that knowledge honest as the context that produced
 it changes.
 
-## Capability being built
+## What it produces
 
-1. **Pattern recognition** — seeing the recurring problem underneath
-   superficially different solutions.
-2. **Evidence discipline** — three independent instances, not one good idea.
-3. **Context boundary thinking** — knowing where a solution stops applying,
-   which is what separates a pattern from a slogan.
-4. **Trade-off honesty** — every pattern costs something, and the write-up says
-   what.
-5. **Institutional memory** — making knowledge survive the person who acquired
-   it.
+- **Patterns** extracted from what the organisation has actually done, each
+  naming the recurring problem underneath superficially different solutions.
+- **Anti-patterns** from failures that recur.
+- **A catalog** kept current: entries re-validated, narrowed or retired as the
+  context that produced them changes.
 
-**Residuality goal:** the team notices its own recurrence without prompting,
-and reaches for "where have we solved this before?" as a first move rather than
-designing from scratch each time.
+## Done when
+
+- Every pattern has three independent instances, not one good outcome.
+- Every pattern states where it stops applying, and how that boundary is known.
+- Every pattern states what it cost each time it was used.
+- Catalog entries nobody would recommend today are retired or rewritten, not
+  left in place.
+- Where the current work matches an anti-pattern, that is said.
 
 ## The bar
 
@@ -518,11 +515,3 @@ context, it becomes one of the anti-patterns in the same catalog.
 | `/restack-design-review` | class B findings become anti-patterns |
 | `/restack-adr` | repeated identical decisions signal an unextracted pattern |
 | `/restack-capability-assessor` | a healthy catalog is evidence of learning-culture maturity |
-
-## Reflection prompts
-
-- Is this a pattern, or one good outcome you are fond of?
-- Where does it stop applying, and how do you know?
-- What did it cost the three times you used it?
-- Which catalog entry would you not recommend today, and why is it still there?
-- Which anti-pattern are you currently in?

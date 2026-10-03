@@ -16,6 +16,10 @@
 
 **Review Date:** 2026-11-18
 
+> **Amended 2026-10-03 by [ADR-022](ADR-022-working-toolkit-not-training-pack.md).**
+> The skill stands. Its reflection prompts are withdrawn; the skill states
+> what it produces and when it is done. Marked inline.
+
 ## Context
 
 After completing Phase 1 (5 capability-building skills) and establishing the Utilities category (Excel reader), we're ready to begin Phase 2: **Organizational Capabilities**.
@@ -92,7 +96,7 @@ Create `skills/phase-2/arch-learning.md` with 6 commands:
 
 **Follows Phase 1 patterns:**
 - Capability Being Built section
-- Reflection prompts at each stage
+- ~~Reflection prompts at each stage~~ *(withdrawn 2026-10-03, ADR-022)*
 - Learning capture template
 - Capability rubric (Novice → Expert)
 - Integration with Phase 1 skills

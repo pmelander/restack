@@ -51,9 +51,8 @@ recommending one:
 The output is `docs/journey/cadence-schedule.md`, and it must name an **owner**
 per activity. A cadence with no named owner is a document, not a rhythm.
 
-### The residuality goal for this route
+### When the cadence can be lightened
 
-You are trying to make this route unnecessary as a *process* while keeping it
-alive as a *habit*. When the team re-walks a path because a change shipped —
-without anyone consulting a schedule — the cadence has done its job and can be
-retired to a lighter check.
+The schedule exists so the re-walks happen. When the team already re-walks a
+path because a change shipped, without anyone consulting the schedule, the
+calendar is adding nothing, and the cadence can drop to a lighter check.
