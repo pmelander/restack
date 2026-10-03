@@ -157,7 +157,15 @@ knock-on changes). Then:
 4. Record the derived details and fill **Knock-on changes** as in `create`
    steps 7 and 9. A supersession invalidates the documents written against the
    old decision, and those documents are what people actually follow.
-5. Log to `docs/journey/decisions-log.md`.
+   **Read** `<base>/sections/trace.md`. Run `refs ADR-<number>`: its unmarked
+   citations in descriptive documents are the Knock-on candidates, found
+   rather than remembered.
+5. **Gate on the replaced terms.** After an amendment, run `terms` with the
+   terms of the mechanism it replaces. Each passage listed is marked inline or
+   confirmed as still correct. **STOP** while one still specifies the replaced
+   behaviour unmarked. This is the step that keeps an amendment from becoming
+   a footnote.
+6. Log to `docs/journey/decisions-log.md`.
 
 Never quietly rewrite a decision to match what happened. That destroys the only
 record of what was actually believed at the time.

@@ -60,6 +60,13 @@
       "shared": true,
       "title": "Update check - one line at session open",
       "trigger": "the first step of /restack-journey start and /restack-journey where, before any question or brief - never inside a gate or while a brief is open"
+    },
+    {
+      "id": "trace",
+      "file": "trace.md",
+      "shared": true,
+      "title": "Trace - a worklist from the documents",
+      "trigger": "running /restack-journey review - after the artifact inventory, for the Knock-on, stale-figure and register evidence"
     }
   ]
 }

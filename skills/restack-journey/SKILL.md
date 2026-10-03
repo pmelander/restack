@@ -549,6 +549,7 @@ printed, it is `~/.claude/skills/restack-journey`.
 | `<base>/sections/assumptions-register-template.md` | creating docs/journey/assumptions-register.md, or appending to one whose shape you need to confirm |
 | `<base>/sections/decisions-log-template.md` | creating docs/journey/decisions-log.md, or logging the first gate of a journey |
 | `<base>/sections/update-check.md` | the first step of /restack-journey start and /restack-journey where, before any question or brief - never inside a gate or while a brief is open |
+| `<base>/sections/trace.md` | running /restack-journey review - after the artifact inventory, for the Knock-on, stale-figure and register evidence |
 
 ---
 
@@ -701,6 +702,10 @@ A journey health check. Audit the work, not the plan.
 2. Inventory every artifact produced, and open each one rather than trusting
    the index. An HLD that exists but has three unfilled template sections is
    not an artifact.
+   Then **read** `<base>/sections/trace.md` and run `scan docs`. Its `KO`,
+   `BASE`, `REG` and `REF` items are the starting evidence for *Knock-on
+   changes unfinished*, *Stale figures quoted* and *Assumptions unregistered*
+   below. Confirm each in the document before counting it.
 3. Check for the eleven journey failures:
 
    | Failure | How it looks | Why it matters |
@@ -749,7 +754,7 @@ Establish an ongoing rhythm for a live system.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`, `update-check.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`route-greenfield.md`, `route-brownfield.md`, `route-minefield.md`, `route-ongoing.md`, `terrain-classification.md`, `journey-state-template.md`, `assumptions-register-template.md`, `decisions-log-template.md`, `update-check.md`, `trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

@@ -1,0 +1,144 @@
+---
+name: restack-trace
+version: 1.0.0
+preamble-tier: 1
+model: sonnet
+description: |
+  Trace the documents a journey produces and list where they drift - IDs cited
+  and never defined, register rows a later line contradicts, Knock-on changes
+  recorded but not made, amendments written as footnotes, superseded ADRs still
+  cited as current, matrices scored before an actor-set change, totals that do
+  not add up. A read-only script does the bookkeeping; the output is a
+  worklist to confirm, never a verdict.
+  Use when asked to "trace the docs", "check the documents for drift", "what
+  still cites ADR-12", "did the amendment reach the body", or "is the register
+  consistent".
+  Proactively suggest it after an ADR batch, a supersession, or a stressor
+  iteration that changed the actor set - drift is introduced in exactly those
+  steps, and found weeks later by whoever follows the stale document.
+allowed-tools:
+  - Read
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - Skill
+triggers:
+  - trace the docs
+  - check the documents for drift
+  - what still cites
+  - did the amendment reach the body
+  - is the register consistent
+---
+
+{{PREAMBLE}}
+
+---
+
+# Document Trace
+
+A utility. It finds the places where a project's documents have drifted from
+each other, as far as a script can see that drift, and hands the list to
+whoever is doing the judging: the architect, `/restack-design-review`,
+`/restack-journey review`, or `/restack-adr update`.
+
+## Role
+
+Bookkeeping, not review. The script counts, compares and points. It does not
+read for meaning, rate severity, or change a document. Everything it reports
+is confirmed by opening the document before anyone acts on it.
+
+## Capability being built
+
+The habit of treating the document set as one system with its own failure
+modes. A decision changes and five documents should change with it. An
+amendment lands at the end and the body still specifies the old behaviour. A
+register row says Open three updates after it was falsified. Each is a defect
+someone will eventually implement. The architect learns where drift enters,
+which is at the moment of the change, not at review.
+
+## Residuality goal
+
+Drift handled at the change: the Knock-on field filled and true, the banner
+written with the amendment, the register appended in its one canonical shape.
+When that is routine, trace reports little, and the review time it saves goes
+to the drift a script cannot see.
+
+## Core concept
+
+**A worklist, not a verdict.** A long engagement produces hundreds of
+documents, and re-reading all of them for mechanical drift is expensive. A
+model doing it from memory misses rows. The mechanical part (does this ID
+exist, does this total add up, did this file change after that date) is
+exactly what a script does reliably, and doing it first leaves the reading
+for the questions that need judgement.
+
+The limit is the point: **silence is not consistency.** trace sees the formats
+ReStack defines. Whether an ADR's substance reached the HLD is a question of
+meaning, and it stays with the reader.
+
+{{SECTION_INDEX}}
+
+## Commands
+
+**First, read** `<base>/sections/trace.md`. It has the snippet that locates the
+script, the meaning of each code, and the rules for reading the output. Do not
+run trace from memory of what the codes mean.
+
+### 1. `/restack-trace [docs]`
+
+Every check over the project's documents. Default `docs`.
+
+1. Run `scan <docs>`. If the project keeps its documents elsewhere, ask where
+   rather than guessing.
+2. Report the header line (what was read, which date source) and the items,
+   grouped by code as the script prints them.
+3. For each group, open the first two or three items and say whether they hold
+   up. Say plainly which you confirmed and which you did not open.
+4. Name the cluster if there is one. Drift usually dates from one iteration
+   or one ADR batch, and that tells the architect which step of the loop was
+   skipped.
+
+Do not fix anything in this command. Fixing belongs to the skill that owns the
+document: `/restack-adr update`, `/restack-solution-doc update`, or the
+journey files under `/restack-journey`.
+
+### 2. `/restack-trace only <codes> [docs]`
+
+Some checks only, for example `only KO,AM`. Use it when a consuming skill needs
+one class of item, or to rerun one check after a fix.
+
+### 3. `/restack-trace terms <term>... [--in <file>...]`
+
+Passages that still use a replaced mechanism's terms and carry no inline mark.
+This is the gate after an amendment: the section says how to clear each
+passage. Exit 0 means none remain.
+
+### 4. `/restack-trace refs <ID>`
+
+Every citation of an ADR, decision or assumption, labelled by document kind
+and by whether the line marks it as retired. Use it before a supersession: the
+unmarked citations in descriptive documents are the Knock-on candidates.
+
+## Constraints
+
+**Read-only.** The script never writes to the project. Neither does this
+skill.
+
+**No severity.** Severity comes from who acts on a stale document
+(`/restack-design-review`), and a script cannot know that.
+
+**Conservative by design.** A check that reports noise gets ignored, and an
+ignored check is a failed control. Patterns the toolkit's formats define are
+reported plainly; inferred ones are marked `[heuristic]`. A project that
+adopted a field late is not flagged for the ADRs written before it.
+
+{{SECTION_SELF_CHECK}}
+
+## Reflection prompts
+
+- Which code produced the most items, and in which iteration or batch were they
+  introduced? What step of that loop would have caught them at the time?
+- Which item did you dismiss after opening the document, and what did trace
+  not know that you did?
+- What drift in these documents would trace never see?

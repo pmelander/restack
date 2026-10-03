@@ -1,0 +1,14 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-trace",
+  "version": 1,
+  "sections": [
+    {
+      "id": "trace",
+      "file": "trace.md",
+      "shared": true,
+      "title": "Trace - a worklist from the documents",
+      "trigger": "before running any /restack-trace command: how to run the script, what each code feeds, and how to read the output"
+    }
+  ]
+}

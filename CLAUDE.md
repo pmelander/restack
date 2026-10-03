@@ -21,7 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── check_skills.py                 # validates frontmatter, banners, sections
 │   ├── shared/                         # method shared by several skills, vendored into each
 │   │   ├── second-opinion.md           #   outside opinion (stressor, design-review)
-│   │   └── update-check.md             #   update notice at session open (journey, discover)
+│   │   ├── update-check.md             #   update notice at session open (journey, discover)
+│   │   └── trace.md                    #   document-drift worklist (design-review, journey, adr, solution-doc, trace)
 │   └── preamble/                       # shared behaviour, composed by tier
 │       ├── manifest.json               # tier -> fragment composition
 │       ├── voice.md                    # tier 1
@@ -68,6 +69,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── restack-evolve/                         # generated, tier 2
 │   ├── restack-excel/                          # generated, tier 1
 │   │   └── read_spreadsheet.py                #   runtime helper, ships with the skill
+│   ├── restack-trace/                          # generated, tier 1
+│   │   └── scripts/trace.py                    #   document drift, run by review, journey, adr, solution-doc
 │   └── restack-upgrade/                        # generated, tier 1
 │       └── scripts/update_check.py             #   update check, run by journey + discover
 ├── templates/                          # Document templates, vendored into the skills that write them
@@ -75,7 +78,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-020
+    ├── adr/                            # ADR-001 .. ADR-021
     └── ...                             # Generated documentation location
 ```
 
@@ -86,9 +89,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-**All sixteen skills are generated.** Tiers: `/restack-journey`,
+**All seventeen skills are generated.** Tiers: `/restack-journey`,
 `/restack-discover` and `/restack-stressor` at 3 (the residuality core);
-`/restack-excel` and `/restack-upgrade` at 1 (utilities); the other eleven at 2.
+`/restack-excel`, `/restack-trace` and `/restack-upgrade` at 1 (utilities); the
+other eleven at 2.
 `scripts/check_skills.py` reports the current state.
 
 Each skill template follows this structure:
@@ -240,8 +244,8 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 
 ### Skills that ship executable scripts
 
-`/restack-excel`, `/restack-events` and `/restack-upgrade` ship Python alongside
-their SKILL.md.
+`/restack-excel`, `/restack-events`, `/restack-trace` and `/restack-upgrade`
+ship Python alongside their SKILL.md.
 Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
@@ -258,14 +262,21 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    runs every silent path, the throttle, snooze and opt-out, and the shared
    section's shell snippets as written, against a scratch `~/.restack`
    (`RESTACK_STATE_DIR`) and a local bare repository. Never test against the
-   real `~/.restack` or the live skills directory.
+   real `~/.restack` or the live skills directory. `tests/test_trace.py` runs
+   every check against `tests/fixtures/trace/`, a synthetic engagement with a
+   planted defect and a clean neighbour per check. **Fixtures are invented,
+   never taken from a real engagement**: this repository is public.
 
-`update_check.py` is the one script another skill calls:
-`/restack-journey` and `/restack-discover` run it through
-`update-check.md`. That is acceptable only because the dependency is
-optional by construction. If the script is missing, the snippet prints
-nothing, which is the same as "up to date"
-([ADR-016](docs/adr/ADR-016-update-awareness.md)).
+Two scripts are called by other skills, and both dependencies are optional
+by construction. `update_check.py` is run by `/restack-journey` and
+`/restack-discover` through `update-check.md`; if it is missing, the snippet
+prints nothing, which is the same as "up to date"
+([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by
+design-review, journey, adr and solution-doc through `trace.md`; if it is
+missing, the skill says so and does the checks by hand
+([ADR-021](docs/adr/ADR-021-trace-checks-as-a-worklist.md)). **trace's output
+is a worklist, not a verdict**: a check added to it must point at something a
+reader confirms, never rate it.
 
 ### Adding Compliance Packs
 
@@ -342,6 +353,11 @@ git push origin feature/new-skill-name
 
 /restack-excel read <file> [sheet]       # Excel/CSV Reader
 
+/restack-trace [docs]                    # document drift: a worklist to confirm
+/restack-trace only <codes> [docs]       # some checks: REF REG KO AM SUP BASE MX ALERT PH PDF
+/restack-trace terms <term>...           # unmarked uses of a replaced mechanism's terms
+/restack-trace refs <ID>                 # every citation of ADR-12, D7 or A-31
+
 /restack-upgrade                         # pull, reinstall, show what changed
 /restack-upgrade check                   # verify the install + update-check status
 /restack-upgrade snooze [days]           # hide the daily update notice
@@ -413,6 +429,7 @@ temporary clone and never touches a checkout.
 | Cloud Architect | `/restack-cloud` | Specialised |
 | Capacity Planner | `/restack-capacity` | Specialised |
 | Excel Reader | `/restack-excel` | Utility |
+| Document Trace | `/restack-trace` | Utility |
 | Upgrade | `/restack-upgrade` | Utility |
 
 ## Contributing

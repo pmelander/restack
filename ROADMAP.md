@@ -88,6 +88,14 @@ the long-running engagements the toolkit exists for. The same argument that
 justified `setup` over `cp -R`: a step that matters should not depend on
 remembering to take it.
 
+**The reading half shipped in 2.9.0** as `/restack-trace`
+([ADR-021](docs/adr/ADR-021-trace-checks-as-a-worklist.md)): a read-only
+script that finds where the journey files and the documents drift, and hands
+the reviewer a worklist. The writing half is still open: a helper that appends
+a register row, a status line or a decision in the canonical shape, and takes
+the next `D<n>` from the log. trace reports the damage that the missing helper
+lets in, which is the case for building it.
+
 ### 4. A worked end-to-end example
 
 `examples/` has fragments — an ADR, an HLD, a banking stressor analysis. What

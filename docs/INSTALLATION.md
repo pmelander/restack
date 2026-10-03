@@ -52,7 +52,7 @@ run either.
 `--symlink` and `--target` were removed in 2.7.0 and are refused with a
 message. `CLAUDE_SKILLS_DIR` is ignored, with a note.
 
-**Result:** sixteen directories in `~/.claude/skills/`, each named `restack-*`
+**Result:** seventeen directories in `~/.claude/skills/`, each named `restack-*`
 and each containing a `SKILL.md`. Verify with:
 
 ```bash
@@ -135,8 +135,9 @@ Claude should start asking you questions to fill in the ADR template.
   restack-discover/     SKILL.md + sections/
   restack-stressor/     SKILL.md + sections/ + compliance-packs/
   restack-adr/          ...
-  ... 16 in total, all prefixed restack-
+  ... 17 in total, all prefixed restack-
   restack-excel/        SKILL.md + read_spreadsheet.py
+  restack-trace/        SKILL.md + scripts/trace.py
   restack-upgrade/      SKILL.md + scripts/update_check.py
   [your other skills, untouched]
 
@@ -225,7 +226,7 @@ it fetches from, and the result of the last attempt.
 
 ## Selective installation
 
-`setup` installs all sixteen. If you want a subset, copy the directories you
+`setup` installs all seventeen. If you want a subset, copy the directories you
 want — the skills work independently, though `/restack-journey` will reference
 commands that are not installed:
 

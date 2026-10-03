@@ -237,7 +237,16 @@ mostly artifact means the analysis is sound and the docs are not keeping up.
 /restack-excel preview <file> [rows]     # check the shape first
 /restack-excel sheets <file>
 /restack-excel convert <file> [sheet]    # write to a file instead of the chat
+
+/restack-trace [docs]                    # where the documents drift: a worklist to confirm
+/restack-trace only KO,AM [docs]         # some checks: REF REG KO AM SUP BASE MX ALERT PH PDF
+/restack-trace terms <term>...           # after an amendment: unmarked uses of the replaced terms
+/restack-trace refs ADR-12               # every citation, marked or unmarked
 ```
+
+`/restack-design-review consistency`, `/restack-journey review`, `/restack-adr
+update` and `/restack-solution-doc update` run trace themselves. Its items are
+places to look, never findings: confirm each in the document.
 
 ---
 
@@ -287,6 +296,7 @@ docs/learning/         outcome analyses, retrospectives
 | Decide whether to keep iterating | `/restack-journey iterate` |
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |
+| Find where the documents disagree, fast | `/restack-trace` |
 | Work out how big it needs to be | `/restack-capacity estimate` |
 | Know why every change is expensive | `/restack-evolve brittleness` |
 | Find out if we are getting better | `/restack-arch-learning trends` |

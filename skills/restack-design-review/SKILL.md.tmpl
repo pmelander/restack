@@ -153,6 +153,13 @@ HLD, residuals against their records, placeholders and empty evidence,
 operational documents against the current design, and amendments against their
 own bodies (footnote amendments and stale amendments, reported as `AM-n`).
 
+**Start from the trace worklist.** Before the checks, **read**
+`<base>/sections/trace.md` and run `scan docs`. Its `SUP`, `REF`, `PH`,
+`ALERT`, `PDF`, `AM` and `KO` items are where checks 1, 5, 6 and 7 and the
+Knock-on pattern start. Each item is confirmed in the document before it
+becomes an `AC-n` or `AM-n`. The worklist replaces none of the checks: checks
+2, 3 and 4 are about meaning, and trace cannot see them.
+
 Worth running on its own, more often than a full review — it is cheap, and drift
 compounds. Any design past a handful of ADRs is a candidate.
 

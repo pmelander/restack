@@ -14,6 +14,13 @@
       "file": "outcome-review.md",
       "title": "Outcome review protocol",
       "trigger": "running /restack-adr review - revisiting a decision months later to capture what actually happened"
+    },
+    {
+      "id": "trace",
+      "file": "trace.md",
+      "shared": true,
+      "title": "Trace - a worklist from the documents",
+      "trigger": "running /restack-adr update - for the Knock-on candidates (refs) and, after an amendment, the replaced-terms gate (terms)"
     }
   ]
 }
