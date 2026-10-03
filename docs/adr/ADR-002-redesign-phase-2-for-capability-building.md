@@ -10,6 +10,13 @@
 
 **Supersedes:** Original Phase 2 plan (Tech Debt Analyzer, System Mapper, Migration Planner, API Designer)
 
+> **Amended 2026-10-03 by [ADR-022](ADR-022-working-toolkit-not-training-pack.md):
+> read this before the body.** The four organisational skills stand. The
+> premise that justified them, building capability *in* users rather than
+> doing analysis *for* them, is withdrawn: ReStack is a working toolkit, and
+> those skills analyse a team's history, capability and patterns as work, not
+> as training. Marked inline at the decision.
+
 ## Context
 
 After successfully refactoring Phase 1 skills with residuality principles (ADR-001), we need to redesign Phase 2 to align with capability-building philosophy rather than continuing the tool-centric pattern.
@@ -47,7 +54,7 @@ Phase 1 focuses on individual architect capabilities. Phase 2 should focus on **
 
 ## Decision
 
-We will **completely redesign Phase 2** to focus on **organizational capability building** rather than analysis tools.
+We will **completely redesign Phase 2** to focus on **organizational capability building** rather than analysis tools. *(The four skills stand; the capability-building premise is withdrawn, ADR-022.)*
 
 **New Phase 2: Capability Building 🌱**
 

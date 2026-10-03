@@ -9,28 +9,28 @@ contribute to this toolkit. For what it does and why, read the
 
 ## What it is
 
-Fifteen Claude Code skills implementing
+Seventeen Claude Code skills implementing
 [Residuality Theory](RESIDUALITY.md) as a working architectural practice —
 walking paths, stress-testing them against scenarios including deliberately
 absurd ones, and identifying the discrete architectural changes (residuals)
 that reduce whole classes of exposure at once.
 
-**Status:** v2.2.0, September 2026. All fifteen skills generated from
+**Status:** v2.10.0, October 2026. All seventeen skills generated from
 templates with a shared behavioural preamble. CI enforces that generated files
-match their source. Not yet run end to end on a live engagement in this form.
+match their source. Run end to end on one live brownfield engagement.
 
 ---
 
 ## The premise
 
-Skills are **capability transfer tools, not dependency-creating tools**. Every
-skill states what thinking it builds and what success looks like when it is no
-longer needed. The measure is how rarely the toolkit gets invoked because the
-thinking has been internalised.
+ReStack is a **working toolkit, not a training pack**
+([ADR-022](docs/adr/ADR-022-working-toolkit-not-training-pack.md)). The skills
+run the method and keep the record. Every skill states what it produces and the
+bar that output must meet. The architect makes the calls, and the skills stop
+at every decision the architect answers for.
 
-That premise is enforced in review: a proposed skill that would train
-architects to work from checklists or registers is turned down, however useful
-it looks.
+That is enforced in review: a proposed skill that reduces the method to a
+checklist or a risk register is turned down, however useful it looks.
 
 ---
 
@@ -120,8 +120,8 @@ Highest value first:
 2. **Compliance packs** — HIPAA, PCI DSS, ISO 27001, SOC 2. GDPR ships as a
    worked example. Each stressor must be a walkable scenario, not a restated
    control.
-3. **Skills that fit the theory**, with an argument for why they build
-   capability rather than dependency.
+3. **Skills that fit the theory**, with what they produce and the bar that
+   output must meet.
 
 `SKILL.md` files are generated — edit the `.tmpl` and run the generator; CI
 rejects drift. See [CONTRIBUTING.md](CONTRIBUTING.md) and the

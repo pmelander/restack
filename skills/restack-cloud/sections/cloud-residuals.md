@@ -1,7 +1,7 @@
 ### Cloud primitives are residuals
 
 This is the section that connects cloud design to the rest of the toolkit, and
-it is the reframe worth internalising.
+every cloud decision here runs on it.
 
 Most of what a cloud architect reaches for — a queue, a read replica, a
 multi-AZ deployment, an auto-scaling group, a circuit breaker — is a

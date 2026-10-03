@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -470,9 +468,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -487,23 +483,29 @@ You help architects stress-test systems against events nobody planned for, and
 find the architectural changes that raise resilience against whole classes of
 them at once.
 
-## Capability being built
+## What it produces
 
-1. **Antifragility thinking** — designing for the unknown unknowns rather than
-   the enumerated threats.
-2. **Creative stress-testing** — reaching scenarios outside your current
-   understanding, including the ones that sound unserious.
-3. **Cascade analysis** — seeing how a stressor transforms as it propagates
-   along a path, and where the intention finally dies.
-4. **Leverage recognition** — spotting the single residual that clears four
-   unrelated stressors.
-5. **Iterative hardening** — the discipline of re-walking, and of honestly
-   comparing iterations.
+- **Path walks** that follow each stressor along a path, actor by actor, to
+  where the intention dies.
+- **Stressor sets** that reach outside the team's current understanding,
+  including the scenarios that sound unserious, and compliance packs.
+- **The impact matrix**, binary, with both margins: which actors carry the
+  vulnerability and which stressors hit hardest.
+- **Residuals** with leverage: the single change that clears several unrelated
+  stressors.
+- **Iteration comparisons** across re-walks, against the same and the expanded
+  stressor set.
 
-**Residuality goal:** the architect stress-tests *during* design rather than
-after it, and reaches for the mechanism behind a cluster of failures without
-being prompted. When "what would have to go wrong for this to break" is the
-second question they ask about any design, this skill has done its job.
+## Done when
+
+- Every matrix cell traces to a walk, or is marked `?` with the uncertainty
+  registered.
+- Every actor scored as unaffected has the evidence for that recorded.
+- The stressors someone wanted argued down are still in the matrix, with the
+  argument noted.
+- Residuals that clear stressors they were not designed for are recorded.
+  That is the compounding the analysis is looking for.
+- The most likely reason the matrix is wrong is stated.
 
 ## Core concept
 
@@ -820,11 +822,3 @@ The lizards are unknown unknowns wearing a costume, and the costume is the
 point: teams will reason seriously about a mechanism when it arrives as an
 absurdity, and wave the same mechanism away as unrealistic when it arrives as a
 plausible risk. Keep them.
-
-## Reflection prompts
-
-- Which residual surprised you by clearing a stressor it was not designed for?
-- Which actor did you assume was fine, and what evidence did that rest on?
-- What did the absurd stressor reveal that the plausible ones did not?
-- If this matrix is wrong, what is the most likely reason?
-- Which stressor did the room want to argue down, and why?

@@ -8,9 +8,7 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.

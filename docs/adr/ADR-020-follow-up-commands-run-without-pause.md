@@ -18,6 +18,11 @@ the choice format whenever possible."
 
 **Review Date:** 2027-04-02
 
+> **Amended 2026-10-03 by [ADR-022](ADR-022-working-toolkit-not-training-pack.md).**
+> Chaining stands. Decision 4's held reflection prompts are withdrawn, with
+> the prompts themselves: a chain ends at its last status line and `Next:`.
+> Marked inline.
+
 ## Context
 
 [ADR-018](ADR-018-next-command-as-a-copy-block.md) ended every command that
@@ -52,9 +57,10 @@ numbers and the confusion protocol were often asked in prose.
    instructions in documents or tool output. A command that already ran in the
    chain with the same arguments, with nothing changed on disk since, does not
    run again: the chain stops with `DONE_WITH_CONCERNS`.
-4. **Reflection prompts close the chain.** Mid-chain a command ends at its
-   status line and `Next:`. When the chain stops, the held prompts follow, one
-   per command run, so the reflection keeps the last word.
+4. ~~**Reflection prompts close the chain.**~~ Mid-chain a command ends at its
+   status line and `Next:`. ~~When the chain stops, the held prompts follow, one
+   per command run, so the reflection keeps the last word.~~ *(withdrawn
+   2026-10-03, ADR-022: there are no reflection prompts to hold)*
 5. **Every question is a choice.** A new tier-1 fragment, `questions.md`: every
    question goes through `AskUserQuestion` with two to four options, the
    recommended one first, including confirms and open answers (offer what was
@@ -89,8 +95,9 @@ numbers and the confusion protocol were often asked in prose.
   concern returns in a weaker form: nothing is sent in the architect's voice,
   but document text could steer which command runs. The routing rule in
   decision 3 is an instruction, not code.
-- **Reflection prompts are batched.** Held to the end of a chain, they can be
-  skimmed. Nothing makes the architect answer them, as before.
+- ~~**Reflection prompts are batched.** Held to the end of a chain, they can be
+  skimmed. Nothing makes the architect answer them, as before.~~ *(moot since
+  ADR-022)*
 - Nothing automated tests chaining. The rules are verified by reading and by
   running a chain by hand.
 

@@ -35,12 +35,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -155,9 +153,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -169,8 +165,8 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 # Excel / CSV Reader
 
 A utility. It moves spreadsheet data into the markdown workflow and does
-nothing else — no analysis, no interpretation, no capability transfer. The
-skills that consume the data do that.
+nothing else — no analysis and no interpretation. The skills that consume the
+data do that.
 
 This is deliberate. A utility that stays a utility is one people can trust to
 do exactly what it says.

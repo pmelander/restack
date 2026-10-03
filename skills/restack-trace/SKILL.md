@@ -43,12 +43,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -163,9 +161,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -187,21 +183,23 @@ Bookkeeping, not review. The script counts, compares and points. It does not
 read for meaning, rate severity, or change a document. Everything it reports
 is confirmed by opening the document before anyone acts on it.
 
-## Capability being built
+## What it produces
 
-The habit of treating the document set as one system with its own failure
-modes. A decision changes and five documents should change with it. An
-amendment lands at the end and the body still specifies the old behaviour. A
-register row says Open three updates after it was falsified. Each is a defect
-someone will eventually implement. The architect learns where drift enters,
-which is at the moment of the change, not at review.
+- **A worklist** of drift, grouped by code, each item a place in a document to
+  open: a decision changed and five documents should have changed with it, an
+  amendment landed at the end while the body still specifies the old
+  behaviour, a register row says Open three updates after it was falsified.
+- **Citation lists** (`refs`) and **unmarked replaced terms** (`terms`) for
+  the update steps of `/restack-adr` and `/restack-solution-doc`.
 
-## Residuality goal
+## Done when
 
-Drift handled at the change: the Knock-on field filled and true, the banner
-written with the amendment, the register appended in its one canonical shape.
-When that is routine, trace reports little, and the review time it saves goes
-to the drift a script cannot see.
+- The header line (trace version, what was read, date source) is reported.
+- Items opened are reported as confirmed or dismissed, and items not opened
+  are said to be unopened.
+- Items are grouped by the iteration or batch that introduced them, where
+  that is visible. It tells the architect which step of the loop let them in.
+- Drift trace cannot see is stated as not covered, not implied to be absent.
 
 ## Core concept
 
@@ -285,11 +283,3 @@ adopted a field late is not flagged for the ADRs written before it.
 ## Section self-check (before you finish)
 
 Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`trace.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
-
-## Reflection prompts
-
-- Which code produced the most items, and in which iteration or batch were they
-  introduced? What step of that loop would have caught them at the time?
-- Which item did you dismiss after opening the document, and what did trace
-  not know that you did?
-- What drift in these documents would trace never see?

@@ -48,21 +48,23 @@ Bookkeeping, not review. The script counts, compares and points. It does not
 read for meaning, rate severity, or change a document. Everything it reports
 is confirmed by opening the document before anyone acts on it.
 
-## Capability being built
+## What it produces
 
-The habit of treating the document set as one system with its own failure
-modes. A decision changes and five documents should change with it. An
-amendment lands at the end and the body still specifies the old behaviour. A
-register row says Open three updates after it was falsified. Each is a defect
-someone will eventually implement. The architect learns where drift enters,
-which is at the moment of the change, not at review.
+- **A worklist** of drift, grouped by code, each item a place in a document to
+  open: a decision changed and five documents should have changed with it, an
+  amendment landed at the end while the body still specifies the old
+  behaviour, a register row says Open three updates after it was falsified.
+- **Citation lists** (`refs`) and **unmarked replaced terms** (`terms`) for
+  the update steps of `/restack-adr` and `/restack-solution-doc`.
 
-## Residuality goal
+## Done when
 
-Drift handled at the change: the Knock-on field filled and true, the banner
-written with the amendment, the register appended in its one canonical shape.
-When that is routine, trace reports little, and the review time it saves goes
-to the drift a script cannot see.
+- The header line (trace version, what was read, date source) is reported.
+- Items opened are reported as confirmed or dismissed, and items not opened
+  are said to be unopened.
+- Items are grouped by the iteration or batch that introduced them, where
+  that is visible. It tells the architect which step of the loop let them in.
+- Drift trace cannot see is stated as not covered, not implied to be absent.
 
 ## Core concept
 
@@ -134,11 +136,3 @@ reported plainly; inferred ones are marked `[heuristic]`. A project that
 adopted a field late is not flagged for the ADRs written before it.
 
 {{SECTION_SELF_CHECK}}
-
-## Reflection prompts
-
-- Which code produced the most items, and in which iteration or batch were they
-  introduced? What step of that loop would have caught them at the time?
-- Which item did you dismiss after opening the document, and what did trace
-  not know that you did?
-- What drift in these documents would trace never see?

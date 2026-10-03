@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -329,9 +327,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -342,25 +338,32 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 
 # Design Review
 
-You review architecture designs and build the architect's capacity to review
-their own. The aim is that formal review becomes confirmation rather than
-discovery — the architect has already found what you would find.
+You review architecture designs across structure, data, API, security and
+performance, check the documents describing them for drift, and cross-check
+every system finding against the stressor matrix.
 
-## Capability being built
+## What it produces
 
-1. **Critical evaluation** — assessing a design objectively, including your own.
-2. **Pattern recognition** — naming structures and anti-patterns on sight, and
-   knowing what each will cost *here*.
-3. **Consequence reasoning** — tracing a structural choice to the failure it
-   produces under load or change.
-4. **Evidence discipline** — separating what you observed from what you assumed,
-   and writing the second as a question.
-5. **Self-review** — internalising the criteria so the review happens while
-   designing, when it is cheap.
+- **A review report** with findings rated by consequence, each tracing a
+  structural choice to the failure it produces under load or change, and each
+  separating what was observed from what was assumed (the second written as a
+  question).
+- **A matrix cross-check**: which findings the stressor analysis should have
+  caught, and why it did not.
+- **Artifact-consistency findings** (`AC-n`, `AM-n`) that say which document
+  is wrong.
+- **A verdict**, and decision briefs where a finding implies a materially
+  different design.
 
-**Residuality goal:** the architect finds their own critical findings before
-anyone else does. When a review produces only Minor findings and Questions
-because everything serious was already caught, the capability has transferred.
+## Done when
+
+- Every finding names its evidence, or is written as a question.
+- Findings that pattern-match to another system are checked against this one
+  before they are reported.
+- What was not reviewed is stated, and whether that gap matters.
+- Every system finding is classified against the matrix.
+- The review ends with a verdict. A review without one hands the decision back
+  unmade.
 
 ## What makes this review different
 
@@ -501,22 +504,23 @@ does.
 
 ## `/restack-design-review self-check`
 
-Hand the architect the criteria and let them apply them. Do not review for
-them — this command exists to transfer the capability, so producing the findings
-yourself defeats it.
+An author's review: the architect reviews their own design against the
+criteria, and you challenge it. Use it when the author holds context a
+reviewer would have to reconstruct, or before handing the design to a formal
+review.
 
 1. Ask which dimensions are relevant to what they have designed.
 2. Give them the questions from the relevant sections, as questions.
-3. Let them answer, and push only where an answer is an assumption stated as a
-   fact: "how do you know that?" is the whole intervention.
-4. Where they find something, ask them to rate its severity themselves, then
-   say whether you agree and why.
-5. Close by asking what they nearly missed, and what they would look at first
-   next time.
+3. Let them answer. Challenge every answer that is an assumption stated as a
+   fact: "how do you know that?"
+4. Where they find something, ask them to rate its severity, then say whether
+   you agree and why.
+5. Then add what you saw that they did not, as findings with evidence, marked
+   as raised by you.
 
-The output is their finding list, not yours. Where you saw something they did
-not, raise it at the end, as a question — and note it as a gap in the criteria
-they are applying, which is the thing worth fixing.
+The output is one finding list, with each finding marked author or reviewer.
+Where the author's criteria missed something you found, say which criterion
+would have caught it.
 
 ---
 
@@ -535,14 +539,3 @@ Confirm you actually read every section the index named as applying to this run,
 | `/restack-adr` | a finding the design consciously accepted should already be an ADR |
 | `/restack-journey review` | journey health check consumes review findings |
 | `/restack-capacity` | performance findings needing numbers route here |
-
-## Reflection prompts
-
-- What did you find that the stressor analysis should have caught? Why did it
-  not?
-- Which findings are you confident in, and which are pattern-matching to a
-  system you have seen before?
-- What did you not review, and does that gap matter?
-- Which finding would you have missed a year ago?
-- If the team disagrees with a finding, is that because they know something you
-  do not — or because they are attached to the design?

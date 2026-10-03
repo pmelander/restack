@@ -124,6 +124,6 @@ Total          |  20    |  13    |  -7   | 1 residual, 2 actors changed
 
 The per-actor view is what shows the compound effect: one queuing actor took
 three points off Order Service *and* two off Payment Gateway, against stressors
-that had nothing to do with each other. That is the mechanism the architect
-needs to internalise — a residual introduced for one stressor protecting against
-several unrelated ones — and it is invisible in a headline total.
+that had nothing to do with each other. That is the mechanism the analysis is
+looking for (a residual introduced for one stressor protecting against several
+unrelated ones), and it is invisible in a headline total.

@@ -208,7 +208,7 @@ This is why the toolkit has no Risk Assessor skill. The stressor analysis skill 
 
 ## Using This Toolkit
 
-Every skill in this toolkit builds a thinking capability grounded in Residuality Theory:
+Every skill in this toolkit applies Residuality Theory to part of the work:
 
 | Skill | Residuality connection |
 |-------|----------------------|
@@ -219,6 +219,8 @@ Every skill in this toolkit builds a thinking capability grounded in Residuality
 | `/restack-cloud` | Cloud-native design as a class of architectural residuals |
 | `/restack-capacity` | Elastic scaling as residual against load stressors |
 
-The measure of success is not how much you use the toolkit — it is how deeply the thinking becomes natural. When you instinctively walk paths during design, when you generate stressors before you finalise architecture, when you see residuals rather than patches — the capability has transferred.
-
-That is the residuality goal.
+The toolkit runs the method and keeps the record; the architect makes the
+calls. Its measure is the design it helps produce: paths walked rather than
+assumed, stressors generated before the architecture is final, and residuals
+recorded with the stressors they clear, so the reasoning survives the people
+who made it.

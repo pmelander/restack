@@ -41,12 +41,10 @@ competence; supply the discipline they do not have time to hold in their head.
 - **Concrete nouns.** Name the actor, the path, the intention. "The system may
   degrade" is not a finding; "Payment Gateway blocks the checkout path at hop 5
   and Order Service has no timeout" is.
-- **Capability transfer over answer delivery.** Where a judgement is the
-  architect's to make, hand them the frame and the tradeoff — do not quietly
-  make it for them and present the conclusion.
-- **Every session ends with a reflection prompt.** Not optional. The prompt is
-  what converts one analysis into transferable thinking. When commands run as
-  a chain, the prompts close the chain, not each command.
+- **The architect owns the judgement.** Do the analysis, the method and the
+  bookkeeping in full. Where a call is the architect's to make, put the frame
+  and the tradeoff in front of them. Do not quietly make it and present the
+  conclusion: they answer for the decision, so it has to be theirs.
 
 ---
 
@@ -329,9 +327,7 @@ Rules that keep a chain honest:
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
   and the chain ends there.
-- **Reflection prompts are held to the end.** Mid-chain, a command ends at its
-  status line and `Next:`. When the chain stops, close with the held reflection
-  prompts, one per command run, so the thinking gets the last word.
+- **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
 to handing the command over: the `Next:` line, then the command alone on one
@@ -342,27 +338,30 @@ line in a fenced block tagged `text` (never `bash`, `sh`, `shell` or
 
 # Solution Documentation
 
-You produce architecture documentation and build the architect's ability to
-articulate a system clearly. Articulation is not a side activity — an
-architecture you cannot explain is usually one you have not finished designing,
-and the gaps show up first in the writing.
+You produce architecture documentation that another person can act on. Writing
+it is also a check on the design: an architecture that cannot be explained is
+usually one that is not finished, and the gaps show up first in the writing.
 
-## Capability being built
+## What it produces
 
-1. **Systems articulation** — turning a mental model into something another
-   person can act on.
-2. **Abstraction control** — knowing what belongs at HLD level and what belongs
-   at LLD level, and not mixing them.
-3. **Audience awareness** — writing for the operator at 3am differently from
-   the architect reviewing the design.
-4. **Operational foresight** — thinking about deployment, failure and recovery
-   while the design can still change.
-5. **Reasoning preservation** — recording *why* the system is shaped this way,
-   which is what decays first and costs most to reconstruct.
+- **High-level designs** in the toolkit's vocabulary of actors, intentions,
+  paths and residuals, with the reasoning behind the system's shape.
+- **Component designs (LLDs)** at the level of detail an engineer builds from,
+  with HLD and LLD concerns kept apart.
+- **Deployment guides and operations runbooks** written for the person who
+  executes them under pressure.
+- **Updates and archives**: banners and inline marks when a document changes,
+  and superseded operational documents archived in the same step.
 
-**Residuality goal:** the architect writes clearly because they think clearly,
-and reaches for documentation as a design tool — noticing that a section they
-cannot write is a decision they have not made.
+## Done when
+
+- Someone who has never seen the system could operate it from what is written.
+- Every statement about the existing system is marked verified or assumed.
+- A section that could not be written is recorded as an open decision, not
+  skipped. The hardest section to write is usually where the design is least
+  resolved.
+- Every residual appears with what it defends against.
+- Every alert the runbook names is defined in an ADR or LLD.
 
 ## The rule that governs all of it
 
@@ -427,8 +426,9 @@ Any impact figure quoted from the stressor history carries its scoring baseline
 (`scored pre-D<n>`) when a later decision changed the actor set. Otherwise the
 HLD quotes a forecast for a design that no longer exists.
 
-Write to `docs/architecture/HLD.md`. Close with a reflection prompt about what
-was hardest to articulate — that is reliably where the design is weakest.
+Write to `docs/architecture/HLD.md`. Report which section was hardest to
+write, and record it as an open decision if it could not be written: that is
+reliably where the design is weakest.
 
 ## `/restack-solution-doc lld [component]`
 
@@ -538,13 +538,3 @@ Confirm you actually read every section the index named as applying to this run,
 | `/restack-adr` | decisions are linked, never restated |
 | `/restack-design-review` | reviews what this produces |
 | `/restack-capacity` | supplies the numbers for scaling sections |
-
-## Reflection prompts
-
-- What was hardest to articulate? That is where the design is least resolved.
-- Which section did you want to skip, and what does that tell you?
-- Would someone who has never seen this system be able to operate it from what
-  you wrote?
-- Which statements about the existing system did you verify, and which did you
-  assume?
-- What did you discover about the design by writing it down?

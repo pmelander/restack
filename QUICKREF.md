@@ -164,7 +164,7 @@ less about your system than you do.
 /restack-design-review performance       # shape, not speed
 /restack-design-review consistency       # do the documents still agree with each other?
 /restack-design-review complete          # all five, then consistency
-/restack-design-review self-check        # you review; it only pushes on assumptions
+/restack-design-review self-check        # author's review: you review, it challenges and adds
 ```
 
 Every design review triages findings first — *system* findings classify against

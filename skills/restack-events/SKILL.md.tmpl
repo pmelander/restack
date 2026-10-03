@@ -45,19 +45,24 @@ matrices, identify residuals or judge whether a stressor matters. It produces
 statements with a distribution that was decided before the model saw anything,
 and hands them over.
 
-## Capability being built
+## What it produces
 
-The architect learns to distrust their own stressor list. A list written
-directly - by a person or by a model - is drawn from what its author already
-fears, and things you already fear are things you have already partly designed
-for. The capability is noticing when a generation step has collapsed onto its
-prior, and knowing that the fix is structural rather than a better prompt.
+- **Specs** (`specs.jsonl`) drawn by a seeded sampler, reproducible from the
+  seed.
+- **Statements** (`statements.jsonl`), one rendered per spec by an isolated
+  subagent, with the grounding each was rendered under.
+- **A validation report**: the cell spread, and any statement on a blind track
+  that leaked the system's own terms.
 
-## Residuality goal
+## Done when
 
-Batches that a team argues about on the merits, because nobody chose them. The
-skill has done its job when an architect stops asking "what could go wrong" and
-starts asking "what would I never have put on this list".
+- The seed is stated, so the specs can be drawn again.
+- Every blind-track statement was rendered without the system's context, and
+  validation found none of the forbidden terms in it.
+- The report says which statements came from the blind tracks.
+- Statements the architect wants to discard before walking are discarded only
+  for a stated reason: they cannot reach the system, not that nobody can yet
+  see how they would.
 
 ## Core concept
 
@@ -181,16 +186,3 @@ rendering runs on subagents inside the session. Nothing here needs
 `ANTHROPIC_API_KEY` or outbound access. The budget to watch is subagent turns.
 
 {{SECTION_SELF_CHECK}}
-
-## Reflection prompts
-
-End every run with one of these. They are what turn a batch into transferable
-thinking:
-
-- Which statement in this batch would you never have written yourself? What
-  does it being absent from your own list tell you about your prior?
-- Which uncoupled statements did you want to discard before walking them, and
-  what was the actual reason - that they cannot reach the system, or that you
-  cannot yet see how they would?
-- If the batch produced nothing surprising, is the system genuinely
-  well-defended, or is the taxonomy describing the world you already expect?
