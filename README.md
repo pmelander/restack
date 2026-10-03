@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="resources/restack-lockup-on-dark.svg">
+  <img src="resources/restack-lockup-on-light.svg" alt="ReStack" height="64">
+</picture>
+
 # ReStack
 
 **Architecture skills for Claude Code, built on Residuality Theory.**
