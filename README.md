@@ -309,7 +309,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.9.0**. All seventeen skills are generated from templates with
+ReStack is at **v2.9.1**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

@@ -3,6 +3,31 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.9.1] — 2026-10-03
+
+The first field run of `/restack-trace`, on the 2.4.0 reference engagement,
+confirmed most of the items it opened and named four kinds of noise: three
+false-positive classes and one miss. All are fixed in `trace.py`, each with a
+fixture case and a decoy that must still be reported. `tests/test_trace.py`
+goes from 35 to 40 cases.
+
+### Fixed
+
+- **A TBD handed to a registered assumption is a tracked gap.** A Knock-on
+  outcome "struck; … TBD (A-n)" was read as pending (`KO`), and every
+  "TBD (A-n)" counted as a placeholder (`PH`). Both now skip a TBD, TODO or
+  pending that names an assumption in the register. One that names an
+  unregistered assumption is still reported.
+- **Banners in other words cover their amendments.** Blockquote banners headed
+  "UPDATED", "Current state", "Revised" or "Changed" were not recognised, so
+  the amendments they covered were reported as footnotes (`AM`). A
+  `**Updated:** <date>` metadata line is still not a banner.
+- **A renamed export is paired with its source.** `HLD-high-level-design.pdf`
+  was never compared with `HLD.md` (`PDF`). A PDF whose name starts with one
+  Markdown file's name plus `-` is now paired with it, marked `[heuristic]`.
+
+The shared section's `PH` and `PDF` rows say so.
+
 ## [2.9.0] — 2026-10-02
 
 A script finds where the documents drift, and hands the reviewer a worklist
@@ -36,7 +61,7 @@ cells add up. Until now the model ran them by re-reading every document.
   reading rules. The output is a worklist, never a verdict: every item is
   confirmed in the document before it is reported, trace rates nothing, and
   silence is not consistency.
-- `tests/test_trace.py` (40 cases) against `tests/fixtures/trace/`, a synthetic
+- `tests/test_trace.py` (35 cases) against `tests/fixtures/trace/`, a synthetic
   engagement with a planted defect and a clean neighbour per check. Dates are
   tested from both mtimes and git commit times, and the shared section's
   snippet is run as written.
@@ -59,16 +84,6 @@ cells add up. Until now the model ran them by re-reading every document.
   against 188 for the first prototype, among them 17 register rows contradicted
   by later updates and 59 rows stranded outside any table. Nothing from that
   engagement is in this repository.
-- A first field run of `/restack-trace` on that engagement confirmed most
-  items it opened and named five false positives and one miss. All six are
-  fixed, each with a fixture case and a decoy that must still be reported:
-  - a Knock-on outcome "struck; ... TBD (A-n)" was read as pending. A TBD
-    handed to a registered assumption is now a tracked gap, in `KO` and `PH`;
-  - banners headed "UPDATED" or "Current state" were not recognised, so their
-    amendments were reported as footnotes. Blockquote banners in those words
-    now count; a `**Updated:**` metadata line still does not;
-  - a renamed export (`HLD.md` → `HLD-high-level-design.pdf`) was never
-    paired with its source. It is now, marked `[heuristic]`.
 
 ## [2.8.0] — 2026-10-02
 
