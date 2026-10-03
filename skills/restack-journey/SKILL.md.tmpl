@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 3
 model: opus
 description: |
@@ -9,7 +9,9 @@ description: |
   gates that decide whether to iterate the stressor loop or proceed, and keeps
   journey state on disk so the work survives weeks, breaks, and handoffs.
   Use when asked to "start a journey", "where am I", "should we iterate",
-  "review the journey", or "set a cadence".
+  "review the journey", "set a cadence", or "what are we waiting on" - the
+  asks pack writes the open handoff asks as one send-ready section per
+  recipient.
   Proactively invoke when the architect begins engaging with a system and has
   not yet established terrain or aspiration - sequencing errors made in the
   first hour are the expensive ones.
@@ -27,6 +29,8 @@ triggers:
   - where am i in this
   - should we iterate
   - journey health
+  - what are we waiting on
+  - summarise the asks
 ---
 
 {{PREAMBLE}}
@@ -53,6 +57,9 @@ architect needs to make a call only they can make.
   with its rationale.
 - **Journey reviews**: what was skipped, and whether the skip creates exposure
   or was a reasonable economy.
+- **Asks packs** in `docs/journey/asks-<date>.md`: what the design needs from
+  people outside it, as one send-ready section per recipient. Every question
+  traces to a register row, and the register records what was sent.
 
 ## Done when
 
@@ -109,6 +116,9 @@ Then, in order:
    - **Design boundary:** which team boundary does the design stop at, and what
      beyond it becomes a handoff ask rather than something to investigate?
 
+   Questions beyond the boundary are registered as asks with `--ask`, so
+   `/restack-journey asks` can write them out later.
+
    Getting these wrong costs iterations. Searching for repositories in a
    spec-only engagement, or analysing a neighbour team's system as if it were in
    scope, are the two corrections architects most often have to make
@@ -162,6 +172,8 @@ brief is open. `where` is often asked in the middle of one.
    reasonable economy or an exposure. Be specific about the consequence:
    "discovery skipped" is not a finding; "the HLD's retry design assumes Order
    Service is idempotent and nothing verified that" is.
+   Run `journey.py asks` as well. An ask never sent, that holds up the next
+   gate, is a skip of the same kind. Name it, with its recipient.
 5. Recommend the next move, with the alternative you rejected and why. It runs
    once step 6 is done, per *Next command*.
 6. Update `journey-state.md` with the current position and the gaps found.
@@ -286,6 +298,33 @@ Establish an ongoing rhythm for a live system.
    if the architect cannot name one, that is a finding to surface, not a blank
    to leave.
 4. Write `docs/journey/cadence-schedule.md`.
+
+## `/restack-journey asks [recipient]`
+
+Write what the design needs from people outside it, one send-ready section per
+recipient, from the assumptions register. Use it when asks have piled up
+before a gate, before a review or a handoff goes out, or when the architect
+asks what the design is waiting on. With a recipient, the pack covers that
+recipient only.
+
+**Read** `<base>/sections/asks-pack.md` and follow it. The reader of a pack
+is outside the design, and writing for them is most of the work.
+
+1. Run `asks` (or `asks <recipient>`). *Journey Files* has the snippet.
+2. **Settle the routing in one confirm**: the unrouted rows that read like
+   asks, and the recipient names that may be one. Then run `assume route`
+   for each confirmed row. Never route a row on your own judgement.
+3. Ask what else is going out that closes no assumption. If one is really a
+   question, register it with `--ask` before packing it.
+4. Write `docs/journey/asks-<date>.md` in the section's format.
+5. **STOP.** Ask which sections are going out now. The skill never sends
+   anything, and writing a pack records nothing.
+6. For each section the architect says went: `assume asked <IDs> --to
+   "<recipient>"`. Then `history add`.
+
+**Output:** the pack's path, its summary table, and the asks recorded as sent.
+
+---
 
 ## `/restack-journey migrate`
 

@@ -1,6 +1,6 @@
 ---
 name: restack-discover
-version: 2.2.0
+version: 2.2.1
 preamble-tier: 3
 model: opus
 description: |
@@ -118,7 +118,8 @@ On most days it prints nothing, and it never asks anything.
      evidence is documents and people. Do not search for repositories or work
      items.
    - **Which team boundary does the design stop at?** Anything past it becomes
-     a handoff ask. Do not analyse it. Discovery that creeps into neighbour
+     a handoff ask, registered with `assume add ... --ask "<the team that
+     owns it>"`. Do not analyse it. Discovery that creeps into neighbour
      teams' systems costs iterations, and the architect has to pull it back.
 3. **Find the entry points.** Where do intentions enter? Include the ones that
    are not the front door: scheduled jobs, admin tools, partner callbacks,

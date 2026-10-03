@@ -296,6 +296,9 @@ path is no longer translated for a Windows Python.
 | **before** issuing a decision brief | `decision open "<question>" --gate <terrain\|confidence\|iterate\|approach\|brief>` prints the brief's number, `D<n>` |
 | the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no` (or `--actors "yes: added <actor>"`; `--supersedes D<m>` when it reverses one) |
 | a belief the design relies on is unverified | `assume add "<belief>" --source "..." --validates "..." --depends "..."` prints `A-<n>` |
+| only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
+| an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
+| the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
@@ -304,6 +307,11 @@ path is no longer translated for a Windows Python.
 **A `--why` comes from the record.** Quote or point at what settled it: the
 discovery note, the code read, the architect's answer, the line that already
 says so. If the record holds no reason, ask; never write a plausible one.
+
+**An ask is recorded as sent only when the architect says it went.** Writing
+an asks pack is not sending it, and neither is the architect reading it.
+`journey.py asks` lists what is open, by recipient, with when each was last
+asked.
 
 **Number a brief before you ask it.** `decision open` writes the entry with
 `Answer: (open)`. If the session is interrupted, the open entry is the record:

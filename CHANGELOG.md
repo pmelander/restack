@@ -3,6 +3,46 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.14.0] — 2026-10-03
+
+Asks to people outside the design are routed in the assumptions register and
+written out as a send-ready pack
+([ADR-026](docs/adr/ADR-026-asks-routed-in-the-register.md)). On the
+reference engagement, seven recipients were waiting on asks at the end of
+review, and one hand-written document covered three of them. The rest were
+spread across a register of about 150 rows.
+
+### Added
+
+- **`/restack-journey asks [recipient]`** (journey 2.3.0) writes
+  `docs/journey/asks-<date>.md`, with one section per recipient. Each section
+  stands alone and has no method vocabulary outside its `Ref:` line. It
+  stops to ask which sections went out, and records only those. It never
+  sends anything. The method is in the new section `asks-pack.md`.
+- **`journey.py`**:
+  - `assume add --ask <recipient>`: writes `Ask <recipient>:` at the start of
+    `Validates it`.
+  - `assume route A-n <recipient>`: sets or renames the recipient, and
+    changes nothing else in the row.
+  - `assume asked A-n... --to <recipient>`: records a send as a status line
+    that repeats the row's status. It cannot change a status, and records
+    nothing if any row is wrong.
+  - `asks [recipient]`: read-only. The open asks by recipient, with
+    last-asked dates, unrouted rows that read like asks, and recipient names
+    that may be the same.
+- 21 test cases against `tests/fixtures/journey/asks/`.
+
+### Changed
+
+- `assume sync` ignores `asked` lines, so a row's date stays the date its
+  status last changed.
+- Handoff asks are registered with `--ask` when they are made:
+  `journey-state.md` and `journey-files.md` (preamble),
+  `/restack-discover` 2.2.1, `/restack-stressor` 2.3.1, and
+  `/restack-journey start`. `/restack-journey where` names asks never sent
+  that hold up the next gate.
+- The register template documents the prefix and the `asked` status line.
+
 ## [2.13.0] — 2026-10-03
 
 The impact matrix's arithmetic is done by a script; scoring stays with the

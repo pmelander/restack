@@ -9,7 +9,11 @@
 **Technical Story:** the reference engagement's Documentation/Review phase.
 Seven recipients were waiting on asks, and only one document was ready to send.
 
-**Implementation Status:** in-progress
+**Implementation Status:** implemented
+
+**Implemented Date:** 2026-10-03
+
+**Implemented By:** ReStack maintainers
 
 **Review Date:** 2027-04-03
 

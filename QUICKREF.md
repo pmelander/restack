@@ -69,6 +69,7 @@ moves), each asked as a choice. Interrupt to redirect.
 /restack-journey review          # health check against the eleven journey failures
 /restack-journey cadence         # ongoing rhythm for a live system
 /restack-journey migrate         # old-shape journey files to the canonical one (dry run first)
+/restack-journey asks [who]      # what we need from people outside the design, one section each
 ```
 
 State lives in `docs/journey/` — position, iteration history, decisions,
@@ -83,6 +84,10 @@ journey.py assume add "<belief>" --source S --validates V --depends D
 journey.py assume status A-12 "Partly resolved" --why "..."   # --why from the record
 journey.py assume sync A-12 | --all       # row cells from the last status line
 journey.py decision note D7 --actors no   # an answered decision that never said
+journey.py assume add "..." ... --ask BI  # an ask: only someone outside the design can settle it
+journey.py assume route A-12 "BI"         # route an existing row (after the architect confirms)
+journey.py assume asked A-12 A-14 --to BI # they went out; statuses unchanged
+journey.py asks [BI]                      # open asks by recipient, last asked when (read-only)
 journey.py history add --command "/restack-journey iterate" --outcome "..."
 journey.py check | migrate [--write]     # is it canonical; convert an old shape
 ```
@@ -319,6 +324,7 @@ docs/learning/         outcome analyses, retrospectives
 | Find out what will break it | `/restack-stressor walk` → `generate` → `analyze` |
 | Get stressors nobody would have thought of | `/restack-events batch` |
 | Decide whether to keep iterating | `/restack-journey iterate` |
+| Send what we need from other teams | `/restack-journey asks` |
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |
 | Find where the documents disagree, fast | `/restack-trace` |
