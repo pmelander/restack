@@ -36,7 +36,7 @@ cells add up. Until now the model ran them by re-reading every document.
   reading rules. The output is a worklist, never a verdict: every item is
   confirmed in the document before it is reported, trace rates nothing, and
   silence is not consistency.
-- `tests/test_trace.py` (35 cases) against `tests/fixtures/trace/`, a synthetic
+- `tests/test_trace.py` (40 cases) against `tests/fixtures/trace/`, a synthetic
   engagement with a planted defect and a clean neighbour per check. Dates are
   tested from both mtimes and git commit times, and the shared section's
   snippet is run as written.
@@ -59,6 +59,16 @@ cells add up. Until now the model ran them by re-reading every document.
   against 188 for the first prototype, among them 17 register rows contradicted
   by later updates and 59 rows stranded outside any table. Nothing from that
   engagement is in this repository.
+- A first field run of `/restack-trace` on that engagement confirmed most
+  items it opened and named five false positives and one miss. All six are
+  fixed, each with a fixture case and a decoy that must still be reported:
+  - a Knock-on outcome "struck; ... TBD (A-n)" was read as pending. A TBD
+    handed to a registered assumption is now a tracked gap, in `KO` and `PH`;
+  - banners headed "UPDATED" or "Current state" were not recognised, so their
+    amendments were reported as footnotes. Blockquote banners in those words
+    now count; a `**Updated:**` metadata line still does not;
+  - a renamed export (`HLD.md` → `HLD-high-level-design.pdf`) was never
+    paired with its source. It is now, marked `[heuristic]`.
 
 ## [2.8.0] — 2026-10-02
 
