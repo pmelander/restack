@@ -305,10 +305,11 @@ canonical". *Journey Files* in the preamble has the snippet.
    tree it leaves a `*.pre-migration-<date>.md` backup beside each file; say
    where.
 4. Work through the judgement items with the architect, one write per item:
-   a status the notes say changed is `assume status`; an assumption defined
+   a status the notes say changed is `assume status`; a row that disagrees
+   with a status line already recorded is `assume sync`; an assumption defined
    only in a note is `assume add --id A-<n>`; a decision that does not say
-   whether it changed the actor set is answered in the log. Never resolve one
-   on the architect's behalf.
+   whether it changed the actor set is `decision note`. Never resolve one on
+   the architect's behalf.
 5. Run `/restack-trace` afterwards. The structural `REG` items should be gone;
    what remains is content to confirm.
 

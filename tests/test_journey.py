@@ -125,6 +125,42 @@ class Register(JourneyCase):
         self.assertEqual(code, 0, out)
         self.assertIn("· Superseded by D2 ·", self.text("assumptions-register.md"))
 
+    def drift_a1(self):
+        """A-1's last status line says Resolved; its row still says Open."""
+        reg = self.docs / "journey" / "assumptions-register.md"
+        reg.write_text(reg.read_text(encoding="utf-8") + "- A-1 · Resolved · 2026-04-12 · logs\n",
+                       encoding="utf-8")
+
+    def test_sync_takes_status_and_date_from_the_last_line(self):
+        self.drift_a1()
+        before = self.text("assumptions-register.md").count("\n- A-")
+        code, out = self.j("assume", "sync", "A-1")
+        self.assertEqual((code, out.strip()), (0, "A-1: Open -> Resolved (2026-04-12)"))
+        reg = self.text("assumptions-register.md")
+        self.assertIn("| ADR-0002 | Resolved | 2026-04-12 |", reg)
+        self.assertEqual(reg.count("\n- A-"), before)                 # no new status line
+
+    def test_sync_all_only_touches_drifted_rows(self):
+        self.drift_a1()
+        code, out = self.j("assume", "sync", "--all")
+        self.assertEqual(out.strip(), "A-1: Open -> Resolved (2026-04-12)")
+        self.assertEqual(self.j("assume", "sync", "--all")[1].strip(), "already in step")
+        code, out = run(str(self.docs), "--only", "REG", script=TRACE)
+        self.assertEqual(code, 0, out)
+
+    def test_sync_needs_one_id_or_all(self):
+        self.assertEqual(self.j("assume", "sync")[0], 2)
+        self.assertEqual(self.j("assume", "sync", "A-1", "--all")[0], 2)
+
+    def test_sync_without_a_status_line_is_refused(self):
+        self.j("assume", "add", "x", "--source", "s", "--validates", "v", "--depends", "d")
+        reg = self.docs / "journey" / "assumptions-register.md"
+        reg.write_text(reg.read_text(encoding="utf-8").replace("- A-3 · Open · 2026-04-20 · registered\n", ""),
+                       encoding="utf-8")
+        code, out = self.j("assume", "sync", "A-3")
+        self.assertEqual(code, 1)
+        self.assertIn("no status line", out)
+
     def test_trace_agrees_the_result_is_consistent(self):
         self.j("assume", "add", "x", "--source", "s", "--validates", "v", "--depends", "d")
         self.j("assume", "status", "A-1", "Resolved", "--why", "logs")
@@ -171,6 +207,28 @@ class Decisions(JourneyCase):
         self.assertEqual(self.j("decision", "answer", "D3", "--answer", "x", "--rationale", "y",
                                 "--actors", "yes")[0], 2)
 
+    def test_note_records_a_missing_actor_set_as_recorded_later(self):
+        log = self.docs / "journey" / "decisions-log.md"
+        log.write_text(log.read_text(encoding="utf-8").replace(
+            "- **Changes the actor set:** no\n- **Supersedes:** —\n\n## 2026-03-15", "- **Supersedes:** —\n\n## 2026-03-15"),
+            encoding="utf-8")
+        code, out = self.j("decision", "note", "D1", "--actors", "yes: added the depot gateway")
+        self.assertEqual(code, 0, out)
+        entry = self.text("decisions-log.md").split("## 2026-03-15")[0]
+        self.assertIn("- **Changes the actor set:** yes: added the depot gateway. Matrices scored before "
+                      "this are `scored pre-D1` *(recorded 2026-04-20; not stated when decided)*", entry)
+
+    def test_note_refuses_when_already_recorded(self):
+        code, out = self.j("decision", "note", "D2", "--actors", "yes: x")
+        self.assertEqual(code, 1)
+        self.assertIn("already records it", out)
+
+    def test_note_refuses_an_open_decision(self):
+        self.j("decision", "open", "q")
+        code, out = self.j("decision", "note", "D3", "--actors", "no")
+        self.assertEqual(code, 1)
+        self.assertIn("still open", out)
+
     def test_open_creates_a_missing_log(self):
         (self.docs / "journey" / "decisions-log.md").unlink()
         self.assertEqual(self.j("decision", "open", "q")[1].strip(), "D1")
@@ -184,6 +242,14 @@ class History(JourneyCase):
         self.assertEqual(code, 0, out)
         self.assertTrue(self.text("journey-state.md").rstrip().endswith(
             "- 2026-04-20 · `/restack-journey iterate` · proceed: impact 2 · D3"))
+
+    def test_msys_rewritten_command_is_put_back(self):
+        for given in ("C:/Program Files/Git/restack-journey migrate", "restack-journey migrate",
+                      "D:\\tools\\git\\restack-journey migrate"):
+            with self.subTest(given=given):
+                self.j("history", "add", "--command", given, "--outcome", "o")
+                self.assertTrue(self.text("journey-state.md").rstrip().endswith(
+                    "- 2026-04-20 · `/restack-journey migrate` · o"))
 
     def test_missing_state_is_refused(self):
         (self.docs / "journey" / "journey-state.md").unlink()
@@ -353,6 +419,25 @@ class SharedSnippet(JourneyCase):
         code, out = self.run_snippet(home)
         self.assertEqual(code, 0, out)
         self.assertIn("journey/assumptions-register.md: canonical", out)
+
+    def test_snippet_passes_a_slash_command_through_unchanged(self):
+        # The case Git Bash broke in the field: an argument starting with `/`.
+        home = self.tmp / "home"
+        shutil.copytree(ROOT / "skills" / "restack-journey", home / ".claude" / "skills" / "restack-journey",
+                        ignore=shutil.ignore_patterns("__pycache__"))
+        snippet = self.snippet()
+        self.assertIn('"$JY" check;', snippet)
+        snippet = snippet.replace(
+            '"$JY" check;',
+            '"$JY" history add --command "/restack-journey iterate" --outcome "o" --date 2026-04-20;')
+        shell = posix_shell("sh") or posix_shell("bash")
+        if not shell:
+            self.skipTest("no POSIX shell")
+        done = subprocess.run([shell, "-c", snippet], cwd=self.tmp, capture_output=True,
+                              env=posix_env(shell, dict(os.environ, HOME=home.as_posix())), timeout=60)
+        self.assertEqual(done.returncode, 0, done.stderr.decode("utf-8", "replace"))
+        self.assertTrue(self.text("journey-state.md").rstrip().endswith(
+            "- 2026-04-20 · `/restack-journey iterate` · o"))
 
     def test_snippet_without_the_script_says_so(self):
         code, out = self.run_snippet(self.tmp / "empty-home")

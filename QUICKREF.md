@@ -80,7 +80,9 @@ canonical shape:
 journey.py decision open "<question>"     # a brief takes its number when issued
 journey.py decision answer D7 --answer "..." --rationale "..." --actors no
 journey.py assume add "<belief>" --source S --validates V --depends D
-journey.py assume status A-12 "Partly resolved" --why "..."
+journey.py assume status A-12 "Partly resolved" --why "..."   # --why from the record
+journey.py assume sync A-12 | --all       # row cells from the last status line
+journey.py decision note D7 --actors no   # an answered decision that never said
 journey.py history add --command "/restack-journey iterate" --outcome "..."
 journey.py check | migrate [--write]     # is it canonical; convert an old shape
 ```
