@@ -31,7 +31,7 @@ This is the writing half of ROADMAP item 3; trace (2.9.0) was the reading half.
   writes decisions or assumptions uses the helper.
 - `tests/test_journey.py` (35 cases) against `tests/fixtures/journey/`, a
   synthetic canonical journey and a legacy one.
-- **Branding** in `resources/`: lockups for light and dark backgrounds, mark,
+- **Branding** in `assets/`: lockups for light and dark backgrounds, mark,
   icon, avatar and favicon. The README opens with the lockup, switching on
   the reader's colour scheme.
 
