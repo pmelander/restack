@@ -300,6 +300,7 @@ path is no longer translated for a Windows Python.
 | only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
 | an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
 | the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
+| a send was recorded that did not happen | `assume unasked A-<n> [A-<m> ...] --why "..."`: keeps each status, cancels the row's last send |
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
@@ -309,8 +310,9 @@ path is no longer translated for a Windows Python.
 discovery note, the code read, the architect's answer, the line that already
 says so. If the record holds no reason, ask; never write a plausible one.
 
-**An ask is recorded as sent only when the architect says it went.** Writing
-an asks pack is not sending it, and neither is the architect reading it.
+**An ask is recorded as sent only when the architect says it went**, in a
+question that asks exactly that. Writing an asks pack is not sending it, and
+neither is the architect reading it or saying which sections are going out.
 `journey.py asks` lists what is open, by recipient, with when each was last
 asked.
 

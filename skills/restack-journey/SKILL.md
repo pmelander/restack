@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.3.0
+version: 2.4.0
 preamble-tier: 3
 model: opus
 description: |
@@ -10,8 +10,8 @@ description: |
   journey state on disk so the work survives weeks, breaks, and handoffs.
   Use when asked to "start a journey", "where am I", "should we iterate",
   "review the journey", "set a cadence", or "what are we waiting on" - the
-  asks pack writes the open handoff asks as one send-ready section per
-  recipient.
+  asks pack puts each open handoff ask to the architect first, then writes
+  the deferred ones as one send-ready section per recipient.
   Proactively invoke when the architect begins engaging with a system and has
   not yet established terrain or aspiration - sequencing errors made in the
   first hour are the expensive ones.
@@ -379,6 +379,7 @@ path is no longer translated for a Windows Python.
 | only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
 | an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
 | the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
+| a send was recorded that did not happen | `assume unasked A-<n> [A-<m> ...] --why "..."`: keeps each status, cancels the row's last send |
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
@@ -388,8 +389,9 @@ path is no longer translated for a Windows Python.
 discovery note, the code read, the architect's answer, the line that already
 says so. If the record holds no reason, ask; never write a plausible one.
 
-**An ask is recorded as sent only when the architect says it went.** Writing
-an asks pack is not sending it, and neither is the architect reading it.
+**An ask is recorded as sent only when the architect says it went**, in a
+question that asks exactly that. Writing an asks pack is not sending it, and
+neither is the architect reading it or saying which sections are going out.
 `journey.py asks` lists what is open, by recipient, with when each was last
 asked.
 
@@ -461,7 +463,8 @@ the one it replaces. The trail is the point, especially in minefield terrain.
   `## Status lines` and updates the row's two status cells. Never start a
   second table, and never add an "Update" heading. An ask's `Validates it`
   starts `Ask <recipient>:`, and a send is a status line that repeats the
-  status with `asked <recipient>` as its reason.
+  status with `asked <recipient>` as its reason (`unasked <recipient>: <why>`
+  cancels one recorded in error).
 - **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
   brief, appended at the end. It records whether the decision changed the actor
   set, because that makes earlier matrices `scored pre-D<n>`.
@@ -573,8 +576,9 @@ architect needs to make a call only they can make.
 - **Journey reviews**: what was skipped, and whether the skip creates exposure
   or was a reasonable economy.
 - **Asks packs** in `docs/journey/asks-<date>.md`: what the design needs from
-  people outside it, as one send-ready section per recipient. Every question
-  traces to a register row, and the register records what was sent.
+  people outside it, once the architect has answered what they can, as one
+  send-ready section per recipient. Every question traces to a register row,
+  and the register records each answer and what was sent.
 
 ## Done when
 
@@ -628,7 +632,7 @@ printed, it is `~/.claude/skills/restack-journey`.
 | `<base>/sections/decisions-log-template.md` | creating docs/journey/decisions-log.md, or logging the first gate of a journey |
 | `<base>/sections/update-check.md` | the first step of /restack-journey start and /restack-journey where, before any question or brief - never inside a gate or while a brief is open |
 | `<base>/sections/trace.md` | running /restack-journey review - after the artifact inventory, for the Knock-on, stale-figure and register evidence |
-| `<base>/sections/asks-pack.md` | running /restack-journey asks: routing open asks, writing the pack, recording what was sent |
+| `<base>/sections/asks-pack.md` | running /restack-journey asks: routing open asks, triaging them with the architect, writing the pack of deferred asks, recording or cancelling what was sent |
 
 ---
 
@@ -834,30 +838,44 @@ Establish an ongoing rhythm for a live system.
    to leave.
 4. Write `docs/journey/cadence-schedule.md`.
 
-## `/restack-journey asks [recipient]`
+## `/restack-journey asks [recipient] [--no-triage]`
 
-Write what the design needs from people outside it, one send-ready section per
-recipient, from the assumptions register. Use it when asks have piled up
-before a gate, before a review or a handoff goes out, or when the architect
-asks what the design is waiting on. With a recipient, the pack covers that
-recipient only.
+Settle what the architect can answer, then write what is left for people
+outside the design, one send-ready section per recipient, from the
+assumptions register. Use it when asks have piled up before a gate, before a
+review or a handoff goes out, or when the architect asks what the design is
+waiting on. With a recipient, the pack covers that recipient only.
 
-**Read** `<base>/sections/asks-pack.md` and follow it. The reader of a pack
-is outside the design, and writing for them is most of the work.
+**Read** `<base>/sections/asks-pack.md` and follow it. The architect reads
+every ask first. The reader of the pack is outside the design, and writing
+for them is most of the work.
 
 1. Run `asks` (or `asks <recipient>`). *Journey Files* has the snippet.
 2. **Settle the routing in one confirm**: the unrouted rows that read like
    asks, and the recipient names that may be one. Then run `assume route`
-   for each confirmed row. Never route a row on your own judgement.
-3. Ask what else is going out that closes no assumption. If one is really a
-   question, register it with `--ask` before packing it.
-4. Write `docs/journey/asks-<date>.md` in the section's format.
-5. **STOP.** Ask which sections are going out now. The skill never sends
-   anything, and writing a pack records nothing.
-6. For each section the architect says went: `assume asked <IDs> --to
-   "<recipient>"`. Then `history add`.
+   for each confirmed row. Never route a row on your own judgement. Where
+   the owner is unclear and the design boundary names the architect's team,
+   propose the architect first.
+3. **Triage before packing.** Put every routed ask to the architect, one
+   choice question each: two or three plausible answers, and
+   `Defer to <recipient>` always last. Write each answer to the register as
+   it comes, at Medium confidence. An answer that contradicts a logged
+   decision or an ADR is a brief, issued then: **STOP** on it, then resume.
+   Skip triage only for a recipient the architect names, with
+   `--no-triage`.
+4. Ask what else is going out that closes no assumption. If one is really a
+   question, register it with `--ask`, then triage and pack it.
+5. Write `docs/journey/asks-<date>.md` in the section's format, with the
+   deferred asks only. If nothing was deferred, write no pack.
+6. **STOP.** Then ask, as its own question, whether any section has been
+   sent. The skill never sends anything. Writing a pack, or saying which
+   sections are going out, records nothing.
+7. For each section the architect says went: `assume asked <IDs> --to
+   "<recipient>"`. A send recorded in error is cancelled with
+   `assume unasked`. Then `history add`.
 
-**Output:** the pack's path, its summary table, and the asks recorded as sent.
+**Output:** the triage counts (answered, deferred, withdrawn), any briefs it
+raised, the pack's path and summary table, and the asks recorded as sent.
 
 ---
 

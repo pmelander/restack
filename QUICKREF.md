@@ -69,7 +69,7 @@ moves), each asked as a choice. Interrupt to redirect.
 /restack-journey review          # health check against the eleven journey failures
 /restack-journey cadence         # ongoing rhythm for a live system
 /restack-journey migrate         # old-shape journey files to the canonical one (dry run first)
-/restack-journey asks [who]      # what we need from people outside the design, one section each
+/restack-journey asks [who]      # you answer what you can; the rest, one section per team
 ```
 
 State lives in `docs/journey/` — position, iteration history, decisions,
@@ -87,6 +87,7 @@ journey.py decision note D7 --actors no   # an answered decision that never said
 journey.py assume add "..." ... --ask BI  # an ask: only someone outside the design can settle it
 journey.py assume route A-12 "BI"         # route an existing row (after the architect confirms)
 journey.py assume asked A-12 A-14 --to BI # they went out; statuses unchanged
+journey.py assume unasked A-12 --why "..." # that send never happened; cancels it
 journey.py asks [BI]                      # open asks by recipient, last asked when (read-only)
 journey.py history add --command "/restack-journey iterate" --outcome "..."
 journey.py check | migrate [--write]     # is it canonical; convert an old shape

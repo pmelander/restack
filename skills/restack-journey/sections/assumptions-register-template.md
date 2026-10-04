@@ -30,7 +30,10 @@ and never add an "Update" heading. Both make the file impossible to append to.
   `- A-<n> · Open · <YYYY-MM-DD> · asked <recipient>`. The row is not changed.
   Its `Status date` stays the date the status last changed.
   `journey.py assume asked A-<n> --to <recipient>` writes it, and
-  `journey.py asks` lists the open asks by recipient.
+  `journey.py asks` lists the open asks by recipient. A send recorded in
+  error is cancelled, never deleted:
+  `- A-<n> · Open · <YYYY-MM-DD> · unasked <recipient>: <why>`, written by
+  `journey.py assume unasked A-<n> --why "..."` (ADR-027).
 
 | ID | Assumption | Source | Validates it | Depends on it | Status | Status date |
 |---|---|---|---|---|---|---|

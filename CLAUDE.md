@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-026
+    ├── adr/                            # ADR-001 .. ADR-027
     └── ...                             # Generated documentation location
 ```
 
@@ -297,7 +297,9 @@ writes only canonical files, and `migrate` changes structure only**: a change
 to it must never let a write or a migration alter a status, a decision or a
 date on the architect's behalf. Recording a sent ask repeats the row's
 status rather than taking one, for the same reason
-([ADR-026](docs/adr/ADR-026-asks-routed-in-the-register.md)). `update_check.py` is run by `/restack-journey` and
+([ADR-026](docs/adr/ADR-026-asks-routed-in-the-register.md)); cancelling a send recorded in error
+likewise repeats the status
+([ADR-027](docs/adr/ADR-027-asks-triaged-with-the-architect-first.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by
@@ -333,7 +335,7 @@ git push origin feature/new-skill-name
 /restack-journey iterate         # Iterate stressor loop or proceed?
 /restack-journey review          # Journey health check
 /restack-journey cadence         # Establish an ongoing rhythm
-/restack-journey asks [who]      # Send-ready asks to people outside the design
+/restack-journey asks [who]      # Architect answers first; send-ready asks for the rest
 
 /restack-discover paths                  # Map paths through an existing system
 /restack-discover actor <name>           # Investigate what an actor actually does

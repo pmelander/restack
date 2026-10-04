@@ -161,8 +161,11 @@ other teams. Those asks were routed to a recipient when they were registered.
 /restack-journey asks                           # one send-ready section per recipient
 ```
 
-It writes the pack, and asks you which sections went out. Only those are
-recorded as asked.
+It puts each ask to you first, with "defer to the team" as an option every
+time: you can often settle most of them in minutes, and an answer that
+contradicts an earlier decision becomes a brief on the spot. Only what you
+defer goes into the pack. Afterwards it asks whether any section has been
+sent, and records only those.
 
 ---
 
