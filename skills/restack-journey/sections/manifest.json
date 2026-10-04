@@ -72,7 +72,7 @@
       "id": "asks-pack",
       "file": "asks-pack.md",
       "title": "Asks pack - what the design needs from people outside it",
-      "trigger": "running /restack-journey asks: routing open asks, writing the pack, recording what was sent"
+      "trigger": "running /restack-journey asks: routing open asks, triaging them with the architect, writing the pack of deferred asks, recording or cancelling what was sent"
     }
   ]
 }

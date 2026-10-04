@@ -13,6 +13,7 @@ and keeping a register row and its status lines in step.
     journey.py assume sync A-12 | --all        row cells from the last status line
     journey.py assume route A-12 "<recipient>"  `Ask <recipient>:` on Validates it
     journey.py assume asked A-12 A-14 --to R    the asks went out; statuses unchanged
+    journey.py assume unasked A-12 --why "..."  cancel a send recorded in error
     journey.py asks [recipient]               open asks by recipient (read-only)
     journey.py decision next                 the number the next brief takes
     journey.py decision open "<question>" [--gate brief]
@@ -288,8 +289,8 @@ def assume_sync(root: Path, ident: str | None) -> list[str]:
     last: dict[int, tuple[str, str]] = {}
     for line in lines:
         m = STATUS_LINE.match(line)
-        # an `asked` line repeats the status; the row's date stays the date it changed
-        if m and STATUS_TERM.fullmatch(m.group(2).strip()) and not m.group(4).startswith("asked "):
+        # a send line repeats the status; the row's date stays the date it changed
+        if m and STATUS_TERM.fullmatch(m.group(2).strip()) and not is_send_line(m.group(4)):
             last[int(m.group(1))] = (canonical_term(m.group(2).strip()), m.group(3))
     if ident:
         m = re.fullmatch(r"A-(\d+)", ident.strip())
@@ -419,14 +420,54 @@ def assume_asked(root: Path, idents: list[str], recipient: str, date: str) -> li
     return [f"{label} · {status} · {date} · asked {routed}" for label, status, routed in todo]
 
 
-def asks(root: Path, only: str | None, today: str) -> list[str]:
-    """The open asks grouped by recipient: a worklist to write the pack from, never a verdict."""
-    path, lines, _, rows = open_register(root)
+def is_send_line(why: str) -> bool:
+    """An `asked` or `unasked` status line records a send, never a status change."""
+    return why.startswith(("asked ", "unasked "))
+
+
+def sends(lines: list[str]) -> dict[int, list[tuple[str, str]]]:
+    """Each row's sends as (date, recipient), oldest first. An `unasked` line cancels the last."""
     asked: dict[int, list[tuple[str, str]]] = collections.defaultdict(list)
     for line in lines:
         m = STATUS_LINE.match(line)
-        if m and m.group(4).startswith("asked "):
-            asked[int(m.group(1))].append((m.group(3), m.group(4)[len("asked "):].strip()))
+        if not m:
+            continue
+        n = int(m.group(1))
+        if m.group(4).startswith("asked "):
+            asked[n].append((m.group(3), m.group(4)[len("asked "):].strip()))
+        elif m.group(4).startswith("unasked ") and asked[n]:
+            asked[n].pop()
+    return asked
+
+
+def assume_unasked(root: Path, idents: list[str], why: str, date: str) -> list[str]:
+    """Cancel each row's last recorded send: a status line that repeats the row's status (ADR-027)."""
+    if not why.strip():
+        raise UsageError("--why is required: say why the recorded send did not happen")
+    path, lines, newline, rows = open_register(root)
+    history = sends(lines)
+    todo, problems = [], []
+    for ident in idents:
+        n = row_for(ident, rows)
+        cells = split_row(lines[rows[n]])
+        label, status = strip_md(cells[0]), canonical_term(strip_md(cells[5]))
+        if history.get(n):
+            todo.append((label, status, history[n][-1][1]))
+        else:
+            problems.append(f"{label} has no recorded send to cancel")
+    if problems:
+        raise Refused("nothing recorded: " + "; ".join(problems))
+    reason = " ".join(why.split())
+    for label, status, whom in todo:
+        lines = append_status_line(lines, label, status, date, f"unasked {whom}: {reason}")
+    write(path, lines, newline)
+    return [f"{label} · {status} · {date} · unasked {whom}" for label, status, whom in todo]
+
+
+def asks(root: Path, only: str | None, today: str) -> list[str]:
+    """The open asks grouped by recipient: a worklist to write the pack from, never a verdict."""
+    path, lines, _, rows = open_register(root)
+    asked = sends(lines)
     groups: dict[str, list[list[str]]] = collections.defaultdict(list)
     spelling: dict[str, str] = {}
     unrouted = []
@@ -1123,6 +1164,9 @@ def main(argv: list[str]) -> int:
     a_asked = p_assume.add_parser("asked", parents=[common])
     a_asked.add_argument("idents", nargs="+")
     a_asked.add_argument("--to", required=True)
+    a_unasked = p_assume.add_parser("unasked", parents=[common])
+    a_unasked.add_argument("idents", nargs="+")
+    a_unasked.add_argument("--why", required=True)
     a_status = p_assume.add_parser("status", parents=[common])
     a_status.add_argument("ident")
     a_status.add_argument("status")
@@ -1186,6 +1230,8 @@ def main(argv: list[str]) -> int:
             print(assume_route(root, args.ident, args.recipient))
         elif args.command == "assume" and args.action == "asked":
             print("\n".join(assume_asked(root, args.idents, args.to, args.date)))
+        elif args.command == "assume" and args.action == "unasked":
+            print("\n".join(assume_unasked(root, args.idents, args.why, args.date)))
         elif args.command == "assume" and args.action == "sync":
             if bool(args.ident) == bool(args.all):
                 raise UsageError("give one assumption ID, or --all")

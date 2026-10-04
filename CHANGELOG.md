@@ -3,6 +3,41 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.15.0] — 2026-10-04
+
+The architect answers the asks first; only what they defer goes into the
+pack ([ADR-027](docs/adr/ADR-027-asks-triaged-with-the-architect-first.md)).
+On the first real `asks` run, the architect settled 33 of 43 routed asks in
+one sitting. Three decisions and one structural finding came out of the
+answers, and a pack-first flow would have surfaced them weeks later.
+
+### Added
+
+- **Triage in `/restack-journey asks`** (journey 2.4.0). Every routed ask is
+  put to the architect, one choice question each, with `Defer to
+  <recipient>` always the last option. Answers go to the register as they
+  come, at Medium confidence. An answer that contradicts a logged decision or
+  an ADR becomes a brief in the same run. `--no-triage` skips it for one
+  recipient the architect names.
+- **`journey.py assume unasked A-n... --why "..."`** cancels a send recorded
+  in error. It writes a status line that repeats the status, and `asks`
+  counts the row as asked one time fewer, or never. It refuses a row with no
+  send to cancel.
+- 5 test cases for `unasked`, including sync and trace.
+
+### Changed
+
+- The pack holds only deferred asks, and its summary shows answered and
+  deferred counts per recipient. With nothing deferred, no pack is written.
+- A send is recorded only after "has any of these sections been sent?",
+  asked on its own. "Which sections are going out" no longer records
+  anything.
+- Routing proposes the architect first for a row whose owner is unclear,
+  when the design boundary names the architect's team.
+- `assume sync` ignores `unasked` lines as it does `asked` lines.
+- The register template, `journey-files.md` and `journey-state.md` document
+  the `unasked` line.
+
 ## [2.14.0] — 2026-10-03
 
 Asks to people outside the design are routed in the assumptions register and

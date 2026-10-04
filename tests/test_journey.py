@@ -531,10 +531,57 @@ class Asks(JourneyCase):
         code, out = run(str(self.docs), "--only", "REG", script=TRACE)
         self.assertEqual(code, 0, out)
 
+    def test_unasked_makes_a_single_send_never_asked(self):
+        row2 = self.row("A-2")
+        code, out = self.j("assume", "unasked", "A-2", "--why", "the section was held back")
+        self.assertEqual((code, out.strip()), (0, "A-2 · Open · 2026-04-20 · unasked Locker vendor"))
+        self.assertTrue(self.text("assumptions-register.md").rstrip().endswith(
+            "- A-2 · Open · 2026-04-20 · unasked Locker vendor: the section was held back"))
+        self.assertEqual(self.row("A-2"), row2)              # row status and date unchanged
+        out = self.j("asks")[1]
+        self.assertIn("- A-2 · Open · never asked", out)
+        self.assertIn("3 open for 3 recipient(s), 2 never asked", out)
+
+    def test_unasked_cancels_only_the_last_send(self):
+        code, out = self.j("assume", "unasked", "A-3", "--why", "recorded from the plan, not the send")
+        self.assertEqual(code, 0, out)
+        self.assertIn("- A-3 · Partly resolved · asked Locker vendor team 2026-03-25, 26 days ago",
+                      self.j("asks")[1].splitlines())        # the earlier send stands, once
+
+    def test_unasked_then_asked_again_counts_the_new_send(self):
+        self.j("assume", "asked", "A-1", "--to", "Depot operations")
+        self.j("assume", "unasked", "A-1", "--why", "not sent")
+        self.assertIn("- A-1 · Open · never asked", self.j("asks")[1])
+        self.j("assume", "asked", "A-1", "--to", "Depot operations")
+        self.assertIn("- A-1 · Open · asked Depot operations 2026-04-20, 0 days ago",
+                      self.j("asks")[1].splitlines())
+
+    def test_unasked_refuses_and_writes_nothing_without_a_send(self):
+        path = self.docs / "journey" / "assumptions-register.md"
+        before = path.read_bytes()
+        for args, code, why in ((["A-2", "A-1"], 1, "A-1 has no recorded send"),   # one good, one never sent
+                                (["A-99"], 1, "no row"),
+                                (["A-2", "--why", " "], 2, "--why is required")):
+            argv = ["assume", "unasked", *args] + ([] if "--why" in args else ["--why", "not sent"])
+            got, out = self.j(*argv)
+            self.assertEqual(got, code, out)
+            self.assertIn(why, out)
+        self.assertEqual(path.read_bytes(), before)
+        self.j("assume", "unasked", "A-2", "--why", "not sent")       # its only send, cancelled
+        self.assertIn("A-2 has no recorded send", self.j("assume", "unasked", "A-2", "--why", "again")[1])
+
+    def test_sync_and_trace_ignore_an_unasked_line(self):
+        self.j("assume", "unasked", "A-3", "--why", "not sent")
+        self.assertIn("already in step", self.j("assume", "sync", "--all")[1])
+        self.assertTrue(self.row("A-3").endswith("| Partly resolved | 2026-04-10 |"))
+        code, out = run(str(self.docs), "--only", "REG", script=TRACE)
+        self.assertEqual(code, 0, out)
+
     def test_ask_commands_refuse_a_legacy_register(self):
         shutil.rmtree(self.docs)
         shutil.copytree(FIXTURES / "legacy", self.docs)
-        for args in (["asks"], ["assume", "route", "A-1", "BI"], ["assume", "asked", "A-1", "--to", "BI"]):
+        for args in (["asks"], ["assume", "route", "A-1", "BI"], ["assume", "asked", "A-1", "--to", "BI"],
+                     ["assume", "unasked", "A-1", "--why", "not sent"]):
             code, out = self.j(*args)
             self.assertEqual(code, 1, out)
             self.assertIn("migrate register", out)

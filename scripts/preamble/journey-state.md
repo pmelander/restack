@@ -49,7 +49,8 @@ the one it replaces. The trail is the point, especially in minefield terrain.
   `## Status lines` and updates the row's two status cells. Never start a
   second table, and never add an "Update" heading. An ask's `Validates it`
   starts `Ask <recipient>:`, and a send is a status line that repeats the
-  status with `asked <recipient>` as its reason.
+  status with `asked <recipient>` as its reason (`unasked <recipient>: <why>`
+  cancels one recorded in error).
 - **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
   brief, appended at the end. It records whether the decision changed the actor
   set, because that makes earlier matrices `scored pre-D<n>`.
