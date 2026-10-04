@@ -1,0 +1,174 @@
+---
+name: restack-restyle
+version: 1.0.0
+preamble-tier: 1
+model: opus
+description: |
+  Restyle a project's ADRs and descriptive documents (HLD, LLDs, deployment
+  guide, runbook) to the current ReStack style - wording and shape only. A
+  script compares the material content before and after: an ID, date,
+  figure, status, table row, code block, link or alternative that differs
+  refuses the write; rewordings a script cannot judge are put to the
+  architect; every restyled document gets an editorial note.
+  Use when asked to "restyle the docs", "bring the ADRs up to the current
+  style", "remove the reflection prompts from our documents", or "reword
+  this ADR without changing it".
+  Proactively suggest it when a project's documents still carry an older
+  style (reflection sections, capability-transfer framing, metadata as
+  sections) and someone is about to read or extend them.
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - Skill
+triggers:
+  - restyle the docs
+  - restyle this adr
+  - bring the adrs up to the current style
+  - remove the reflection prompts
+  - reword without changing
+---
+
+{{PREAMBLE}}
+
+---
+
+# Document Restyle
+
+Projects written under an older ReStack style keep it: reflection sections,
+capability-transfer framing, metadata shaped by an older template. This skill
+rewrites the **wording and shape** of ADRs and descriptive documents to the
+current style, and proves that nothing material moved.
+
+## Role
+
+Rewording under a guard. You draft; `restyle.py` compares the draft with the
+original and decides whether it may be written. Everything a reader acts on
+(IDs, statuses, dates, figures, decision points, alternatives, Knock-on rows,
+code, links) passes through unchanged or the write is refused. The architect
+confirms what a script cannot judge, and names every section that goes.
+
+`/restack-adr` says "never quietly rewrite a decision". This skill is the one
+exception, and the guard and the editorial note are what keep it from being
+quiet.
+
+## What it produces
+
+- **A survey** of the documents an older style left, each with its old-style
+  sections and wording, and with the gaps and amendments that belong to
+  another skill.
+- **Restyled documents**, written over the originals by `restyle.py apply`
+  only after the comparison passed, each carrying an `## Editorial notes`
+  line: date, "restyled, wording only", what was reshaped, what was dropped.
+- **A list of what was not restyled and why**: refused (with the difference
+  that caused it), declined by the architect, or out of scope.
+
+## Done when
+
+- Every written document passed `compare` with no refusal, every CONFIRM
+  item was put to the architect and answered, and the note came from `apply`.
+- Nothing refused was written, and each refusal is reported with its cause.
+- Every dropped section was named by the architect, and the note names it.
+- Gaps (a missing Reversibility, Knock-on changes, Review date) and
+  amendments written as footnotes are listed with the skill that owns them.
+  None was filled here.
+- Documents surveyed but not opened are reported as not opened.
+
+## Core concept
+
+**A restyle that can change meaning is an amendment nobody decided.** An ADR
+whose "must" became "should", whose 72-hour retention became 48, or whose
+rejected alternative vanished in the tidy-up now records a decision that was
+never made, and it reads as if it always said so. The guard makes the
+boundary mechanical: what a reader acts on is compared exactly, the rest is
+the architect's to confirm, and a change that would be material goes to
+`/restack-adr update` as a decision.
+
+The guard proves less than it seems to, and the skill says so: it sees
+tokens, not meaning. A reworded sentence that keeps every ID, figure and
+normative word can still say something different. That is why the confirm
+items exist, and why the architect reads the diff of any ADR that matters.
+
+{{SECTION_INDEX}}
+
+## Commands
+
+**First, read** `<base>/sections/restyle.md`: the snippet that locates the
+script, what each check compares, and how to read the output. **Before
+drafting any document, read** `<base>/sections/house-style.md`: what the
+current style is, and what a restyle may and may not touch. Do not restyle
+from memory of either.
+
+**Without Python or the script, nothing is written.** Unlike trace, restyle
+has no by-hand fallback: the comparison is the only thing that makes the
+rewrite safe. Say so in one line and stop.
+
+### 1. `/restack-restyle survey [docs]`
+
+1. Run `survey <docs>` (default `docs`). If the project keeps its documents
+   elsewhere, ask where rather than guessing.
+2. Report the header line and the documents listed, grouped: old-style
+   sections and wording (restyle's), gaps and footnote amendments (the
+   owning skill's), retired ADRs (history, restyled only if named).
+3. Ask which documents to restyle, as a choice: all listed, ADRs only,
+   descriptive documents only, or named ones. **STOP** for the answer.
+
+### 2. `/restack-restyle <file>...`
+
+For each document, one at a time:
+
+1. Read it in full, and read `<base>/sections/house-style.md` if not yet read
+   in this run.
+2. **Name what goes.** List its old-style sections (Reflection prompts,
+   Capability being built, Residuality goal, ...) and ask, as one
+   multi-select question, which to drop. **STOP.** Only the sections chosen
+   are passed with `--drop`.
+3. Write the draft to `<dir>/.restyle/<file name>`, next to the original.
+   Change wording and shape only, as the house style allows. Never touch a
+   table, a code block, a struck passage, a banner or a metadata value. Never
+   add a field or a section that would carry content.
+4. Run `compare <original> <draft> [--drop "<heading>"]...`.
+   - **Exit 1, REFUSED:** restore the material content in the draft and
+     compare again. If the difference is one the document genuinely needs,
+     it is not a restyle: report it for `/restack-adr update` or
+     `/restack-solution-doc update` and leave the document unwritten.
+   - **Exit 3, CONFIRM:** show each item with its OLD and NEW lines and ask
+     the architect to accept or reject them, as one question per document.
+     **STOP.** A rejected item goes back into the draft, and compare runs
+     again.
+   - **Exit 0:** nothing to confirm.
+5. Run `apply <original> <draft> --reshaped "<what changed, in a phrase>"`
+   with the same `--drop` flags, adding `--confirmed` only when the architect
+   accepted every CONFIRM item. `apply` compares again, writes, appends the
+   editorial note, keeps a backup when the file is not committed, and deletes
+   the draft.
+
+With many documents, draft and compare them all first, then put the
+confirmations to the architect document by document. A clean document
+(exit 0) is applied after one batch approval listing them by name.
+
+### 3. `/restack-restyle check <original> <draft> [--drop <heading>]...`
+
+The guard alone, for a rewrite done by hand or by another session. It runs
+`compare` and reports. It writes nothing.
+
+## Constraints
+
+**Restyle never decides.** It does not fill a gap, resolve a TBD, move an
+amendment into the body, update a status, or fix a drift that trace reports.
+Each of those changes what the document says, and each has an owning
+command.
+
+**Out of scope:** the journey files (`/restack-journey migrate` restructures
+them), and the records in `journey/`, `reviews/`, `stressor-analysis/`,
+`discovery/` and any `archive/`, which are history. A retired ADR is history
+too, and is restyled only when the architect names it.
+
+**The `.restyle/` folders are scratch.** trace and survey ignore them.
+After a run, backups left there can be deleted once the restyled files are
+committed.
+
+{{SECTION_SELF_CHECK}}

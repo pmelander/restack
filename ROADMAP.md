@@ -175,7 +175,21 @@ the same-family fallback, whose agreement is weak evidence. If it turns out
 nobody has Codex installed, the honest question is whether the fallback alone
 justifies the step.
 
-### 9. Restyle an existing project
+### 9. ~~Restyle an existing project~~ — done
+
+**Shipped in 2.16.0** as `/restack-restyle`
+([ADR-028](docs/adr/ADR-028-restyle-under-a-material-guard.md)), a utility
+skill rather than a mode of trace: the guard has to be present whenever a
+write happens, and trace is read-only and optional. `restyle.py compare`
+refuses any change to an ID, date, figure, metadata value, code, link, table
+row, alternative, struck passage or banner, and lists changed normative words,
+lost names and words, and renamed sections for the architect. Gaps are
+reported, never filled; sections go only when named; `apply` writes the
+editorial note. What is still unknown: how often the confirm items get
+accepted unread on a 61-ADR set. If they do, the guard needs to carry more
+and ask less.
+
+The original framing, kept for the record:
 
 Projects written under an older style keep it. The reference engagement has
 61 ADRs and a full document set written while the pack still closed with

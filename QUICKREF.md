@@ -273,6 +273,10 @@ mostly artifact means the analysis is sound and the docs are not keeping up.
 /restack-trace only KO,AM [docs]         # some checks: REF REG KO AM SUP BASE MX ALERT PH PDF
 /restack-trace terms <term>...           # after an amendment: unmarked uses of the replaced terms
 /restack-trace refs ADR-12               # every citation, marked or unmarked
+
+/restack-restyle survey [docs]           # what an older style left, per document
+/restack-restyle <file>...               # reword to the current style; the guard refuses material change
+/restack-restyle check <old> <new>       # the guard alone, for a rewrite done elsewhere
 ```
 
 `/restack-design-review consistency`, `/restack-journey review`, `/restack-adr
@@ -329,6 +333,7 @@ docs/learning/         outcome analyses, retrospectives
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |
 | Find where the documents disagree, fast | `/restack-trace` |
+| Bring old-style documents up to date, nothing material changed | `/restack-restyle survey` |
 | Work out how big it needs to be | `/restack-capacity estimate` |
 | Know why every change is expensive | `/restack-evolve brittleness` |
 | Find out if we are getting better | `/restack-arch-learning trends` |

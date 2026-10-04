@@ -21,12 +21,12 @@ cd restack-install
 
 `setup` tells you exactly what it installed. The install is a copy in your user
 profile, so you can delete `restack-install` afterwards. Python is optional:
-`/restack-excel`, `/restack-events`, `/restack-trace` and the update check use it,
+`/restack-excel`, `/restack-events`, `/restack-trace`, `/restack-restyle` and the update check use it,
 and each says so if it is missing. `openpyxl` is needed only by `/restack-excel`.
 
-**Verify:** type `/restack` in Claude Code. You should see seventeen skills —
-fourteen for the work, plus `/restack-excel`, `/restack-trace` and
-`/restack-upgrade`.
+**Verify:** type `/restack` in Claude Code. You should see eighteen skills —
+fourteen for the work, plus `/restack-excel`, `/restack-trace`,
+`/restack-restyle` and `/restack-upgrade`.
 
 Want an agent to install it for you? Point Claude Code at
 [INSTALL.md](INSTALL.md). Developing ReStack, or upgrading from an unprefixed
@@ -235,7 +235,7 @@ a three-week gap, a handoff, or an audit.
 
 ## Checklist
 
-- [ ] Installed; `/restack` shows seventeen skills
+- [ ] Installed; `/restack` shows eighteen skills
 - [ ] Read [Residuality Theory](RESIDUALITY.md) — the vocabulary is load-bearing
 - [ ] `/restack-journey start` and confirmed the terrain
 - [ ] Walked one path, including its error path

@@ -74,6 +74,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   └── read_spreadsheet.py                #   runtime helper, ships with the skill
 │   ├── restack-trace/                          # generated, tier 1
 │   │   └── scripts/trace.py                    #   document drift, run by review, journey, adr, solution-doc
+│   ├── restack-restyle/                        # generated, tier 1
+│   │   └── scripts/restyle.py                  #   the material guard: survey, compare, apply
 │   └── restack-upgrade/                        # generated, tier 1
 │       ├── scripts/update_check.py             #   update check, run by journey + discover
 │       └── scripts/local_copies.py             #   old ReStack copies in a project or profile (retire-local)
@@ -93,10 +95,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Hand edits to a generated file are lost at the next build. See
 [ADR-008](docs/adr/ADR-008-generated-skills-with-tiered-preamble.md).
 
-**All seventeen skills are generated.** Tiers: `/restack-journey`,
+**All eighteen skills are generated.** Tiers: `/restack-journey`,
 `/restack-discover` and `/restack-stressor` at 3 (the residuality core);
-`/restack-excel`, `/restack-trace` and `/restack-upgrade` at 1 (utilities); the
-other eleven at 2.
+`/restack-excel`, `/restack-trace`, `/restack-restyle` and `/restack-upgrade` at
+1 (utilities); the other eleven at 2.
 `scripts/check_skills.py` reports the current state.
 
 Each skill template follows this structure:
@@ -256,7 +258,8 @@ from so `/restack-upgrade` can find it ([ADR-011](docs/adr/ADR-011-setup-script-
 ### Skills that ship executable scripts
 
 `/restack-excel`, `/restack-events`, `/restack-journey`, `/restack-stressor`,
-`/restack-trace` and `/restack-upgrade` ship Python alongside their SKILL.md.
+`/restack-trace`, `/restack-restyle` and `/restack-upgrade` ship Python
+alongside their SKILL.md.
 Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
 
 1. **Standard library only.** A skill runs from whatever project the architect
@@ -282,7 +285,9 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    `tests/test_matrix.py` runs the matrix arithmetic against
    `tests/fixtures/matrix/`, two iterations and their residuals with the
    numbers known. `tests/test_local_copies.py` builds scratch projects with old copies
-   and look-alikes. **Anything that runs `update_check.py check` points
+   and look-alikes. `tests/test_restyle.py` plants one change per material
+   class in a restyled draft from `tests/fixtures/restyle/`, and checks that
+   each is refused, each confirm item is listed, and the clean draft passes. **Anything that runs `update_check.py check` points
    `HOME`, `USERPROFILE` and the working directory at scratch**: the check
    also reads the project's and the profile's `.claude` folders. **Fixtures
    are invented, never taken from a real engagement**: this repository is
@@ -308,6 +313,14 @@ missing, the skill says so and does the checks by hand
 ([ADR-021](docs/adr/ADR-021-trace-checks-as-a-worklist.md)). **trace's output
 is a worklist, not a verdict**: a check added to it must point at something a
 reader confirms, never rate it.
+
+`restyle.py` is the one script that is **not** optional: `/restack-restyle`
+writes nothing without it, because the comparison is what makes a rewrite
+safe ([ADR-028](docs/adr/ADR-028-restyle-under-a-material-guard.md)). **A
+change to it must never let a restyle fill a gap, change a value, or drop a
+section the architect did not name.** A new check can tighten what is
+compared, or move an item from CONFIRM to REFUSED; loosening one needs an
+ADR.
 
 ### Adding Compliance Packs
 
@@ -390,6 +403,10 @@ git push origin feature/new-skill-name
 /restack-trace terms <term>...           # unmarked uses of a replaced mechanism's terms
 /restack-trace refs <ID>                 # every citation of ADR-12, D7 or A-31
 
+/restack-restyle survey [docs]           # what an older style left, per document
+/restack-restyle <file>...               # reword to the current style, under the material guard
+/restack-restyle check <old> <new>       # the guard alone
+
 /restack-upgrade                         # pull, reinstall, show what changed
 /restack-upgrade check                   # verify the install + update-check status
 /restack-upgrade snooze [days]           # hide the daily update notice
@@ -467,6 +484,7 @@ temporary clone and never touches a checkout.
 | Capacity Planner | `/restack-capacity` | Specialised |
 | Excel Reader | `/restack-excel` | Utility |
 | Document Trace | `/restack-trace` | Utility |
+| Document Restyle | `/restack-restyle` | Utility |
 | Upgrade | `/restack-upgrade` | Utility |
 
 ## Contributing

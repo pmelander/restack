@@ -7,9 +7,9 @@
 
 **Architecture skills for Claude Code, built on Residuality Theory.**
 
-Seventeen skills — fourteen that do the work of designing systems which
-survive things nobody predicted, and three utilities: spreadsheets in, document
-drift found, updates installed. The skills run the method and keep the record:
+Eighteen skills — fourteen that do the work of designing systems which
+survive things nobody predicted, and four utilities: spreadsheets in, document
+drift found, old-style documents restyled, updates installed. The skills run the method and keep the record:
 discovery, stressor analysis, decisions, documentation, and the consistency of
 a long engagement. You make the calls.
 
@@ -106,7 +106,7 @@ cd restack-install && ./setup    # Windows: .\setup.ps1
 ```
 
 The install is a copy in your user profile, so the clone can be deleted
-afterwards. Either way: type `/restack` in Claude Code to see the seventeen
+afterwards. Either way: type `/restack` in Claude Code to see the eighteen
 skills, and `/restack-upgrade` when you want to update. It needs no clone. You do not have to remember: once
 a day, at the start of a journey or a discovery session, ReStack prints one
 line if a newer version is out. It never upgrades itself, and
@@ -115,7 +115,7 @@ line if a newer version is out. It never upgrades itself, and
 
 ### Optional extras
 
-Neither is required — sixteen of the seventeen skills work without either, and
+Neither is required — seventeen of the eighteen skills work without either, and
 `setup` tells you which are present.
 
 ```bash
@@ -280,6 +280,7 @@ are called — plus three utilities.
 |---|---|
 | [`/restack-excel`](skills/restack-excel/SKILL.md) | spreadsheets into the markdown workflow |
 | [`/restack-trace`](skills/restack-trace/SKILL.md) | where the documents drift — undefined IDs, register rows a later line contradicts, Knock-on changes not made, footnote amendments, superseded ADRs still cited, matrix totals. A worklist to confirm, never a verdict |
+| [`/restack-restyle`](skills/restack-restyle/SKILL.md) | old-style ADRs and documents reworded to the current style, under a guard that refuses any change to an ID, date, figure, status, table row or alternative, and puts every reworded "must" to you |
 | [`/restack-upgrade`](skills/restack-upgrade/SKILL.md) | pull, reinstall, show what changed — also repairs a broken install, snoozes or turns off the daily update notice, and retires old ReStack copies a project or profile still carries |
 
 ### Where this sits

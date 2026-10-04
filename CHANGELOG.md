@@ -3,6 +3,39 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.16.0] — 2026-10-04
+
+Old-style ADRs and descriptive documents can be restyled to the current
+style, with a guard that proves nothing material moved
+([ADR-028](docs/adr/ADR-028-restyle-under-a-material-guard.md)). This closes
+ROADMAP item 9; the journey files were done in 2.11.0.
+
+### Added
+
+- **`/restack-restyle`** (1.0.0, tier 1, the 18th skill): `survey` lists
+  what an older style left in each document (reflection and capability
+  sections, learner-addressed wording) and routes gaps and footnote
+  amendments to the skill that owns them; `<file>...` restyles named
+  documents; `check` runs the guard alone.
+- **`restyle.py`**, shipped in the skill. `compare OLD NEW` refuses any
+  difference in metadata, IDs, dates, figures, code, links, table rows,
+  alternatives, struck passages, banners or earlier editorial notes, and a
+  section removed without `--drop`. It lists for the architect: a changed
+  title, normative words whose count changed (with both sentences), names
+  and long words lost or added, citation counts, renamed sections, and a
+  body that shrank by more than 30%. `apply` compares again, waits for
+  `--confirmed` when anything is listed, writes the editorial note itself,
+  and keeps a backup outside a clean git work tree. Not optional: without
+  it, restyle writes nothing.
+- 44 test cases in `tests/test_restyle.py` against an invented engagement in
+  `tests/fixtures/restyle/`: one planted change per material class, each
+  confirm item, apply, and survey.
+
+### Changed
+
+- README, QUICKREF, GETTING_STARTED, PROJECT_SUMMARY and CLAUDE.md count
+  eighteen skills and list the new one. ROADMAP item 9 is marked done.
+
 ## [2.15.0] — 2026-10-04
 
 The architect answers the asks first; only what they defer goes into the

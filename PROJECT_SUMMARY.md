@@ -9,13 +9,13 @@ contribute to this toolkit. For what it does and why, read the
 
 ## What it is
 
-Seventeen Claude Code skills implementing
+Eighteen Claude Code skills implementing
 [Residuality Theory](RESIDUALITY.md) as a working architectural practice —
 walking paths, stress-testing them against scenarios including deliberately
 absurd ones, and identifying the discrete architectural changes (residuals)
 that reduce whole classes of exposure at once.
 
-**Status:** v2.13.0, October 2026. All seventeen skills generated from
+**Status:** v2.16.0, October 2026. All eighteen skills generated from
 templates with a shared behavioural preamble. CI enforces that generated files
 match their source. Run end to end on one live brownfield engagement.
 

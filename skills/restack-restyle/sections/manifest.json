@@ -1,0 +1,19 @@
+{
+  "note": "Passive registry. Fields are ids, files, titles and human-readable triggers only. The skeleton decides WHEN to read a section; nothing here does.",
+  "skill": "restack-restyle",
+  "version": 1,
+  "sections": [
+    {
+      "id": "restyle",
+      "file": "restyle.md",
+      "title": "Restyle - running the guard",
+      "trigger": "before running any /restack-restyle command: how to run the script, what compare checks, how to read the output, what apply does"
+    },
+    {
+      "id": "house-style",
+      "file": "house-style.md",
+      "title": "The current style, and what a restyle may touch",
+      "trigger": "before drafting any restyled document: what an older style left, the current shape, and what a restyle never changes"
+    }
+  ]
+}
