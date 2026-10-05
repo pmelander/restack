@@ -3,6 +3,34 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+A read-only journey view as a Claude Code mod
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). The first slice is
+the band. `setup` does not install it yet, so it is loaded with
+`claude --plugin-dir mods/restack-view`.
+
+### Added
+
+- **`mods/restack-view`**, ReStack's first TypeScript. It draws one line above
+  the prompt: terrain, phase, confidence, the next command, and the counts of
+  open asks, assumptions and decisions. It is read from the canonical journey
+  files and never written back. `/restack-view` prints the line;
+  `/restack-view band [on|off]` hides or shows it. It shares the band with
+  other mods and survives `/clear`.
+- **`scripts/check_mods.py`**: a mod's calls and hooks, as
+  `claude plugin validate` reports them, held to the view's allowlist.
+- **A `mods` CI job**: installs the Claude Code CLI, runs the check and
+  `claude plugin test`.
+- **`tests/fixtures/journey/band/`**: a full canonical journey, pinned
+  canonical by `journey.py check`, rendered into the mod's tests by
+  `gen_skills.py`.
+
+### Decided
+
+- ADR-029: mods are views; ADR-010 is amended to allow TypeScript for them;
+  packaging ReStack as a marketplace plugin is parked.
+
 ## [2.16.0] — 2026-10-05
 
 Adopted residuals can be challenged by removal

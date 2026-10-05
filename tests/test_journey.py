@@ -54,6 +54,19 @@ def load_module():
     return module
 
 
+class ModFixtureCase(unittest.TestCase):
+    """The `band` journey is what the restack-view mod's tests read (ADR-029).
+
+    It has to be canonical by journey.py's own check, or the mod would be
+    tested against a shape journey.py never writes.
+    """
+
+    def test_band_fixture_is_canonical(self):
+        code, out = run("check", "--docs", str(FIXTURES / "band"), "--date", DATE)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("not canonical", out)
+
+
 class JourneyCase(unittest.TestCase):
     fixture = "canonical"
 

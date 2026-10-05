@@ -1,6 +1,6 @@
 # ADR-029: The Journey Gets a Read-Only View as a Claude Code Mod, Installed by `setup`; Packaging ReStack as a Plugin Is Parked
 
-**Status:** Proposed. Amends [ADR-010](ADR-010-skills-are-self-contained.md)
+**Status:** Accepted. Amends [ADR-010](ADR-010-skills-are-self-contained.md)
 on languages.
 
 **Date:** 2026-10-05
@@ -13,7 +13,11 @@ and [mods](https://code.claude.com/docs/en/plugins/mods/overview)? The
 maintainer then decided to park the plugin install, focus on mods, open
 ADR-010's Python rule to TypeScript, and keep mods to usability only.
 
-**Implementation Status:** not started
+**Implementation Status:** in progress. The band and `/restack-view band
+[on|off]` are built and tested, with `scripts/check_mods.py` and the CI job.
+The pane, `setup --mods` and `local_copies.py` are not yet built.
+
+**Accepted:** 2026-10-05, by the maintainer
 
 **Review Date:** 2027-04-05
 
@@ -201,9 +205,12 @@ nothing else changes.
      band button fires when that digit is typed alone into an empty prompt,
      so the band carries text only.
    - **It finds the journey from the project root.** It looks for
-     `docs/journey/` under `$.session.root`, then walks up from
-     `$.session.cwd` with `$.fs.ancestors`. A session started in a
-     subdirectory still gets its band.
+     `docs/journey/` under `$.session.root`, then under `$.session.cwd`.
+     The types define the root as where the session started, or where `/cd`
+     took it, so **a session started in a subdirectory of the project does
+     not find its journey yet.** Walking up with `$.fs.ancestors` is to be
+     checked in the pane slice: it is declared for instruction files, and
+     whether it takes `docs/journey/journey-state.md` is not documented.
    - **The pane shows rows, not files.** A `Text` or `Markdown` element
      holds at most 10,000 characters. Each tab lists its rows up to that
      budget, then ends with `… N more: /restack-journey asks` (or `where`).
