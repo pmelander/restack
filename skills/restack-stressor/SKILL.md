@@ -624,6 +624,7 @@ printed, it is `~/.claude/skills/restack-stressor`.
 | `<base>/sections/matrix-construction.md` | running /restack-stressor analyze or /restack-stressor vulnerabilities - building the matrix, scoring it, or interpreting what it shows |
 | `<base>/sections/residual-identification.md` | running /restack-stressor residues - proposing residuals and ranking them by leverage |
 | `<base>/sections/ablation.md` | running /restack-stressor ablate - finding a candidate to challenge, or scoring the removal of an adopted residual, the actors it created and what was built on it |
+| `<base>/sections/ablation-report-template.md` | writing docs/stressor-analysis/ablation-<date>-<slug>.md at the end of /restack-stressor ablate |
 | `<base>/sections/workshop-facilitation.md` | running /restack-stressor workshop - facilitating the analysis with a group rather than a single architect |
 | `<base>/sections/second-opinion.md` | running /restack-stressor generate or residues and an outside opinion would help - generating the complement of your stressor list, or checking a mechanism diagnosis against a model that has not seen your reasoning |
 
@@ -957,7 +958,7 @@ remaining columns actors, binary values, header row of actor names.
 
 ## Section self-check (before you finish)
 
-Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `ablation.md`, `workshop-facilitation.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
+Confirm you actually read every section the index named as applying to this run, and executed it in full. The sections are where the method lives (`walk-protocol.md`, `stressor-generation.md`, `matrix-construction.md`, `residual-identification.md`, `ablation.md`, `ablation-report-template.md`, `workshop-facilitation.md`, `second-opinion.md`) - running one from memory produces output with the right shape and none of the teeth. If you skipped one, stop and read it now.
 
 ---
 

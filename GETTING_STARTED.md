@@ -142,6 +142,23 @@ Expect **2–3 iterations** in greenfield, **3–5** in brownfield, **5+** in a
 minefield. If impact is flat despite implemented residuals, the path map is
 usually incomplete — go back to discovery rather than adding more residuals.
 
+**The loop only adds, so the gate also checks whether something should come
+out.** Residuals start defending residuals, the total climbs while
+like-for-like falls, and one piece of shared infrastructure ends up carrying
+more than any single actor. When it sees any of that, or the design is about
+to become the target, the brief offers to challenge first:
+
+```
+/restack-stressor ablate                        # find a candidate: shared substrate, topology, depth
+/restack-stressor ablate R12                    # remove it on paper: what comes back, what goes with it
+```
+
+It names a substitute for what the removed actors carried, classifies every
+affected row with you (vanishes, moves to the substitute, or changes), counts
+what re-opens, and ends in a gate. A residual you keep gets a dated
+"challenged by removal" line in its ADR: the reason it is still there, tested
+against the design as it now stands.
+
 ### 6. Record, document, review
 
 ```

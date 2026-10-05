@@ -180,23 +180,14 @@ will never be cheaper than now.
 
 #### Step 8: the report and the brief
 
-Write `docs/stressor-analysis/ablation-<date>-<slug>.md`:
-
-1. **The question**, how it came up, and the baseline line from Step 1.
-2. **What the target carries**: columns, cells, the incidental jobs.
-3. **The subtree**, with generations.
-4. **Per scenario:**
-   - the substitute, and the record it was checked against;
-   - the classified rows: vanished, inherited and morphed counts, with the
-     rows named;
-   - the re-open set, and what was claimed but didn't re-open, with the
-     reason for each;
-   - the new rows, named;
-   - the net as a range, by lens and on the aspiration's column;
-   - what the matrix can't hold.
-5. **What the ablation found about the analysis**: overlap, circular credit,
-   a hub the columns hid. These hold whatever the architect decides.
-6. **Open for the architect.**
+Write `docs/stressor-analysis/ablation-<date>-<slug>.md` from
+`<base>/sections/ablation-report-template.md`. Fill every part of it. In
+particular:
+- the baseline line from Step 1 at the top;
+- every claimed cell that doesn't re-open, with its reason;
+- the net as a range, by lens and on the aspiration's column;
+- what the ablation found about the analysis, which holds whatever the
+  architect decides.
 
 Then the **approach gate**. Get the number with
 `journey.py decision open "<question>" --gate approach`, and issue the brief

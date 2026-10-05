@@ -10,8 +10,11 @@
 2026-10-05, started by the architect's question about a cluster seen in the
 generated system overview. Feedback from that engagement, anonymised.
 
-**Implementation Status:** not implemented. This ADR records the design; the
-build follows it.
+**Implementation Status:** implemented
+
+**Implemented Date:** 2026-10-05
+
+**Implemented By:** ReStack maintainers
 
 **Review Date:** 2027-04-05
 
@@ -232,19 +235,19 @@ needs. A cut goes through the gate's decision and supersedes in the usual way
 
 ## Knock-on changes
 
-The build, not this ADR, does these. Each is pending until it ships.
+All done in 2.16.0.
 
 | Document | What this decision requires there | Done in the same step |
 |---|---|---|
 | `skills/restack-stressor/SKILL.md.tmpl` | the `ablate` command, its steps and gates | done 2026-10-05: `/restack-stressor` 2.4.0, the command, the `rollup`/`ablate` rows in the `matrix.py` table, Done when, outputs |
-| `skills/restack-stressor/sections/ablation.md` | substitute, subtree, classification, re-open set, topology read, baseline | done 2026-10-05: Steps 0–8; the report's shape is in Step 8 until the template exists |
+| `skills/restack-stressor/sections/ablation.md` | substitute, subtree, classification, re-open set, topology read, baseline | done 2026-10-05: Steps 0–8 |
 | `skills/restack-stressor/scripts/matrix.py` | `rollup`, `ablate` | done 2026-10-05; checked against the reference engagement's pilot: `rollup` gives its hub (35 cells on 24 rows, against 21), `ablate` the pilot's re-open set |
 | `tests/test_matrix.py`, `tests/fixtures/matrix/` | invented fixtures: an overlapping claim, a circular row, a grouped substrate | done 2026-10-05 (iteration 3 of the synthetic engagement) |
-| `templates/` | an ablation report template, vendored into stressor | pending |
+| `templates/` | an ablation report template, vendored into stressor | done 2026-10-05: `ablation-report-template.md`; `ablation.md` Step 8 writes against it |
 | `skills/restack-journey/SKILL.md.tmpl` | the gate row; the four triggers | done 2026-10-05: `/restack-journey` 2.5.0, iterate step 9 and the "Challenge, then proceed" row |
 | `skills/restack-adr/SKILL.md.tmpl` | the "challenged by removal" line on a kept residual | done 2026-10-05: `/restack-adr` 2.2.0, a `Challenged by removal` field (`sections/adr-format.md`, `templates/adr-template.md`) and the recording path in `update` |
 | `skills/restack-stressor/SKILL.md.tmpl` (`residues`) | "remove the defended one" in a gate brief about a residual that defends another | done 2026-10-05 |
-| CLAUDE.md, README.md, QUICKREF.md, GETTING_STARTED.md, CHANGELOG.md | the command and the ADR | pending |
+| CLAUDE.md, README.md, QUICKREF.md, GETTING_STARTED.md, CHANGELOG.md, VERSION | the command and the ADR | done 2026-10-05: 2.16.0 |
 
 ## Alternatives considered
 

@@ -52,7 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── SKILL.md.tmpl
 │   │   ├── SKILL.md
 │   │   ├── sections/                           #   walk, generation, matrix, residuals, workshop
-│   │   ├── scripts/matrix.py                   #   matrix arithmetic: totals, compare, residual claims
+│   │   ├── scripts/matrix.py                   #   matrix arithmetic: totals, compare, claims, rollup, ablate
 │   │   └── compliance-packs/                   #   regulatory stressor packs
 │   ├── restack-events/                         # generated, tier 2
 │   │   ├── SKILL.md.tmpl
@@ -280,8 +280,9 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    canonical journey, a legacy one and one with asks, and checks that
    migration loses no word and that recording a sent ask changes no status.
    `tests/test_matrix.py` runs the matrix arithmetic against
-   `tests/fixtures/matrix/`, two iterations and their residuals with the
-   numbers known. `tests/test_local_copies.py` builds scratch projects with old copies
+   `tests/fixtures/matrix/`, three iterations and their residuals with the
+   numbers known, including a declared substrate and a removal with
+   overlapping and circular credit. `tests/test_local_copies.py` builds scratch projects with old copies
    and look-alikes. **Anything that runs `update_check.py check` points
    `HOME`, `USERPROFILE` and the working directory at scratch**: the check
    also reads the project's and the profile's `.claude` folders. **Fixtures
@@ -355,6 +356,7 @@ git push origin feature/new-skill-name
 /restack-stressor walk [path-name]       # Walk a path, evaluating each actor in sequence
 /restack-stressor analyze                # Stressor Analysis — build impact matrix
 /restack-stressor compliance <pack>      # Inject compliance stressor pack
+/restack-stressor ablate [target]        # Challenge an adopted residual by removing it
 ```
 
 ### Organisational Capabilities
