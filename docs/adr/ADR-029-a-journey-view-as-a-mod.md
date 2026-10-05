@@ -13,10 +13,12 @@ and [mods](https://code.claude.com/docs/en/plugins/mods/overview)? The
 maintainer then decided to park the plugin install, focus on mods, open
 ADR-010's Python rule to TypeScript, and keep mods to usability only.
 
-**Implementation Status:** in progress. Built and tested: the band and
-`/restack-view band [on|off]`, `scripts/check_mods.py` and the CI job,
-`setup --mods` / `--no-mods` in both installers, and `local_copies.py`
-skipping an installed mod. Not yet built: the pane.
+**Implementation Status:** implemented on `feature/restack-mods-adr`: the
+band and `/restack-view band [on|off]`, the pane and its button,
+`scripts/check_mods.py` and the CI job, `setup --mods` / `--no-mods` in both
+installers, and `local_copies.py` skipping an installed mod. Open: a session
+started in a subdirectory of the project does not find its journey (decision
+point 3), and the CI job has not yet run.
 
 **Accepted:** 2026-10-05, by the maintainer
 
@@ -178,7 +180,7 @@ nothing else changes.
      outside this list: `$.fs.read`, `$.fs.stat`, `$.fs.exists`,
      `$.fs.ancestors`, `$.ui.*`, `$.command.register`, `$.prompt.read`,
      `$.prompt.fill`, `$.store.get`, `$.store.set`, `$.session.root`,
-     `$.session.cwd`, `$.clock.after`, `$.clock.now`, and its own `$.state`
+     `$.session.cwd`, `$.session.surfaces`, `$.clock.after`, `$.clock.now`, and its own `$.state`
      atoms. It makes no `$.fs.write`, `$.process.*`, `$.http.*`,
      `$.model.*`, `$.prompt.submit` or `$.session.send` calls, and has no
      `tool.call`, `tool.check` or `prompt.submit` hooks.
@@ -194,14 +196,18 @@ nothing else changes.
      `Brownfield · Stressor Analysis · Medium · next: /restack-stressor
      analyze · 9 asks · 14 open · 2 decisions`.
    - **A `/restack-view` command** opens a pane, with `immediate: true` so
-     it works mid-turn. It has four tabs: *Position* (Current Position and
+     it works mid-turn. Where no surface draws a pane (`$.session.surfaces()`
+     has no `terminal` or `desktop`: a `-p` run, the VS Code chat panel), it
+     prints the band's line instead. A `-p` run reports every pane as
+     placed, so `isPlaced` cannot tell. It has four tabs: *Position* (Current Position and
      Next Session Prep), *Asks* (open asks by recipient), *Assumptions*
      (open rows) and *Decisions* (open decisions).
    - **One button, "Put the next command in the prompt",** fills the prompt
-     box with the next command. The architect reads it and presses Enter.
-     The mod never submits. **It never overwrites a draft:** it reads the
-     prompt first (`$.prompt.read`), and if anything is typed there it
-     shows a toast with the command instead.
+     box with the next command and closes the pane, so the keys go back to
+     the prompt. The architect reads it and presses Enter. The mod never
+     submits. **It never overwrites a draft:** it reads the prompt first
+     (`$.prompt.read`), and if anything is typed there it shows a toast with
+     the command instead.
    - **The button lives in the pane, not the band.** A digit hotkey on a
      band button fires when that digit is typed alone into an empty prompt,
      so the band carries text only.

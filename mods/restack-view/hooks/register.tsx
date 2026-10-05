@@ -1,4 +1,5 @@
-// restack-view: where the ReStack journey stands, on one line above the prompt.
+// restack-view: where the ReStack journey stands, on one line above the prompt,
+// and in a pane with the open asks, assumptions and decisions.
 //
 // A view and nothing more (ADR-029). It reads docs/journey/ and never writes
 // it, never submits, and no skill depends on it: `/restack-journey where`
@@ -7,11 +8,17 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { bandParts, bandText, readJourney } from './journey.ts'
+import { bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
 import type { Files } from './journey.ts'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
+const detail = atom({ plugin: 'restack-view', key: 'detail' } as const, null)
 const isBandOn = atom({ plugin: 'restack-view', key: 'isBandOn' } as const, true)
+const tab = atom({ plugin: 'restack-view', key: 'tab' } as const, 'position')
+
+const PANE = 'restack-view'
+// The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
+const DRAWS = ['terminal', 'desktop']
 
 // The band's on/off choice, kept between sessions. The mod's store holds its
 // own preferences only, never anything about the engagement.
@@ -24,6 +31,7 @@ const FILES = {
 } as const
 
 const USAGE_TEXT = 'Usage: /restack-view [band [on|off]]'
+const FILLED = 'The next command is in the prompt: read it, then press Enter.'
 const NO_JOURNEY = 'No ReStack journey here: no docs/journey/journey-state.md under this project.'
 
 const join = (base: string, ...parts: string[]): string => {
@@ -71,6 +79,7 @@ async function readOnce($: EngineInterface): Promise<void> {
     if (dir === undefined) {
       lastSeen = ''
       await update($, view, () => null)
+      await update($, detail, () => null)
       return
     }
     const names = Object.entries(FILES)
@@ -85,11 +94,31 @@ async function readOnce($: EngineInterface): Promise<void> {
       if (times[i] >= 0) files[key as keyof Files] = await $.fs.read(join(dir, name))
     }
     const next = readJourney(files)
+    const nextDetail = readDetail(files)
     await update($, view, () => next)
+    await update($, detail, () => nextDetail)
     lastSeen = seen
   } catch {
     // A file moved mid-read, or the session is not bound yet: keep the last view.
   }
+}
+
+// The pane's one button. It never submits, and never writes over a draft:
+// with anything typed, the command goes in a toast instead.
+async function fillNext($: EngineInterface, command: string): Promise<void> {
+  const box = await $.prompt.read()
+  if (box.text.trim() !== '') {
+    $.ui.toast(`Your draft is kept. Next: ${command}`)
+    return
+  }
+  const filled = await $.prompt.fill({ text: command })
+  if (!filled.isFilled) {
+    $.ui.toast(`Next: ${command}`)
+    return
+  }
+  // Back to the prompt, where the command waits for the architect's Enter.
+  await $.ui.close({ id: PANE })
+  $.ui.toast(FILLED)
 }
 
 async function loadBand($: EngineInterface): Promise<void> {
@@ -105,7 +134,7 @@ export const register: Register = on => {
     // Registered last: a name refused here would skip the rest of this hook.
     await $.command.register({
       name: 'restack-view',
-      description: 'ReStack journey view: where the journey stands. band [on|off] shows or hides the line above the prompt',
+      description: 'ReStack journey view: open the pane of open asks, assumptions and decisions. band [on|off] shows or hides the line above the prompt',
       argumentHint: '[band [on|off]]',
       immediate: true,
     })
@@ -135,8 +164,13 @@ export const register: Register = on => {
       lastSeen = ''
       await refresh($)
       const current = await read($, view)
+      const surfaces = await $.session.surfaces()
+      if (!surfaces.some(s => DRAWS.includes(s))) {
+        return { text: current === null ? NO_JOURNEY : bandText(current) }
+      }
+      await $.ui.open({ id: PANE, title: 'ReStack journey', focus: true, closeOnEscape: true })
 
-      return { text: current === null ? NO_JOURNEY : bandText(current) }
+      return {}
     }
     if (args[0] !== 'band' || args.length > 2 || (args[1] !== undefined && args[1] !== 'on' && args[1] !== 'off')) {
       return { text: USAGE_TEXT }
@@ -172,6 +206,45 @@ export const register: Register = on => {
       <Box flexDirection="column">
         {mine}
         {theirs}
+      </Box>
+    )
+  })
+
+  on('ui.render', { component: 'Pane' }, async ($, e, next) => {
+    if (e.requestId !== PANE) return next(e)
+    const { Box, Text, Button, Markdown } = $.ui.resolve(e)
+    const current = await read($, view)
+    const lists = await read($, detail)
+    const open = await read($, tab)
+
+    if (current === null) return <Text dimColor>{NO_JOURNEY}</Text>
+    if (current.kind === 'not-canonical' || lists === null) {
+      return <Text color="warning">{bandText(current)}</Text>
+    }
+    const command = current.next
+
+    return (
+      <Box flexDirection="column">
+        <Box flexDirection="row" columnGap={3}>
+          {TABS.map(([name, label], i) => (
+            <Button
+              key={`tab-${name}`}
+              label={label}
+              hotkey={String(i + 1)}
+              plain
+              dimColor={open !== name}
+              onPress={() => update($, tab, () => name)}
+            />
+          ))}
+        </Box>
+        <Text> </Text>
+        {open === 'position' && command !== undefined && (
+          <Box flexDirection="row" columnGap={1}>
+            <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
+            <Text dimColor>{command}</Text>
+          </Box>
+        )}
+        <Markdown key={`body-${open}`} text={tabText(lists, open)} />
       </Box>
     )
   })

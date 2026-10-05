@@ -29,7 +29,7 @@ ALLOWED_CALLS = {
     "$.fs.read", "$.fs.stat", "$.fs.exists", "$.fs.ancestors",
     "$.command.register", "$.prompt.read", "$.prompt.fill",
     "$.store.get", "$.store.set", "$.state.get", "$.state.set",
-    "$.session.root", "$.session.cwd", "$.clock.after", "$.clock.now",
+    "$.session.root", "$.session.cwd", "$.session.surfaces", "$.clock.after", "$.clock.now",
 }
 ALLOWED_PREFIXES = ("$.ui.",)
 

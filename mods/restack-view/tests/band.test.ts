@@ -34,6 +34,8 @@ const stub = (on: On, fixture: string | null, stored: Record<string, unknown> = 
   }
   on('session.root', () => ({ value: ROOT }))
   on('session.cwd', () => ({ value: ROOT }))
+  // Nothing draws a pane here, so /restack-view prints the line: the pane has its own tests.
+  on('session.surfaces', () => ({ value: [] }))
   on('fs.exists', ($, e) => ({ value: nameOf(e.path) in files }))
   on('fs.stat', ($, e) => {
     const name = nameOf(e.path)

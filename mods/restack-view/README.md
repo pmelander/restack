@@ -32,8 +32,25 @@ The choice is remembered, so `/restack-upgrade` keeps it current.
 
 | Command | Does |
 |---|---|
-| `/restack-view` | prints the line, for places that draw nothing |
+| `/restack-view` | opens the pane; where nothing draws a pane, prints the line instead |
 | `/restack-view band [on\|off]` | shows or hides the line; remembered between sessions; no argument toggles |
+
+## The pane
+
+Four tabs, `1` to `4`. Esc closes it.
+
+| Tab | Shows | Whole list in |
+|---|---|---|
+| Position | the header fields and the newest Current Position subsection | `/restack-journey where` |
+| Asks | open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
+| Assumptions | open rows: status, the belief, what would settle it | `assumptions-register.md` |
+| Decisions | open decisions: date, question, gate | `decisions-log.md` |
+
+**Put the next command in the prompt** (`n`, on Position) puts the next move in
+the prompt box and closes the pane. You read it and press Enter: the mod never
+submits. With a draft already typed, it keeps your draft and shows the command
+in a toast instead. Each tab stays under Claude Code's 10,000-character element
+limit and ends with how many rows are left and where the rest is.
 
 ## Where it draws
 

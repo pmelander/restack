@@ -6,10 +6,15 @@ individual skills carry their own `version:` in frontmatter.
 ## [Unreleased]
 
 A read-only journey view as a Claude Code mod
-([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band, installed
-on request with `./setup --mods`.
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band and the
+pane, installed on request with `./setup --mods`.
 
 ### Added
+
+- **The `/restack-view` pane**: Position, Asks, Assumptions and Decisions
+  tabs, read from the same files as the band. One button puts the next
+  command in the prompt; it never submits and never writes over a draft.
+  Where no pane can be drawn, `/restack-view` prints the line instead.
 
 - **`setup --mods` / `--no-mods`** (`-Mods` / `-NoMods`): installs the mods
   beside the skills, where Claude Code loads each as `<name>@skills-dir`. The

@@ -430,6 +430,9 @@ git push origin feature/new-skill-name
 /restack-upgrade check                   # verify the install + update-check status
 /restack-upgrade snooze [days]           # hide the daily update notice
 /restack-upgrade off | on                # the update-check opt-out (~/.restack/config.json)
+
+/restack-view                            # the journey pane (mod; setup --mods, ADR-029)
+/restack-view band on | off              # the line above the prompt
 ```
 
 ## Journey Memory Management

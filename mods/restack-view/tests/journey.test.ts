@@ -4,7 +4,17 @@
 
 import { expect, test } from 'claude-code/testing'
 
-import { bandText, readJourney, readLog, readRegister, stateProblem } from '../hooks/journey.ts'
+import {
+  BUDGET,
+  bandText,
+  budget,
+  readDetail,
+  readJourney,
+  readLog,
+  readRegister,
+  stateProblem,
+  tabText,
+} from '../hooks/journey.ts'
 import { FIXTURES } from './fixtures.ts'
 
 const filesOf = (name: string) => ({
@@ -115,4 +125,60 @@ test('CRLF files read the same as LF', () => {
   expect(readJourney({ state: crlf(files.state), register: crlf(files.register), log: crlf(files.log) })).toEqual(
     readJourney(files),
   )
+})
+
+// --- the pane's lists ---------------------------------------------------------
+
+test('the pane lists what the band counts', () => {
+  const detail = readDetail(filesOf('band'))
+  expect(detail).toBeDefined()
+  expect(detail!.asks.map(a => [a.id, a.recipient, a.sent])).toEqual([
+    ['A-1', 'Depot operations', 'never asked'],
+    ['A-2', 'Locker vendor', 'never asked'],
+  ])
+  expect(detail!.open.map(r => r.id)).toEqual(['A-1', 'A-2', 'A-3'])
+  expect(detail!.decisions).toEqual([
+    { id: 'D3', date: '2026-04-18', question: 'Offline unlock: local codes or a cached allow-list?', gate: 'brief' },
+  ])
+  expect(detail!.header.map(([label]) => label)).toContain('Terrain Type')
+})
+
+test('a send is the last one recorded, and unasked cancels it, as journey.py reads them', () => {
+  const sent = Object.fromEntries(readDetail(filesOf('asks'))!.asks.map(a => [a.id, a.sent]))
+  expect(sent).toEqual({
+    'A-1': 'never asked',
+    'A-2': 'asked Locker vendor 2026-04-02',
+    'A-3': 'asked Locker vendor team 2026-04-15',
+  })
+  const register =
+    FIXTURES.asks['assumptions-register.md'] + '- A-2 · Open · 2026-04-03 · unasked Locker vendor: recorded in error\n'
+  const again = readDetail({ ...filesOf('asks'), register })!
+  expect(again.asks.find(a => a.id === 'A-2')!.sent).toBe('never asked')
+})
+
+test('the position tab is the newest subsection, never a superseded one', () => {
+  const text = tabText(readDetail(filesOf('lived'))!, 'position')
+  expect(text).toContain('**Next move:** `/restack-design-review complete`')
+  expect(text).not.toContain('(superseded)')
+  expect(text).not.toContain('Previous phase line')
+  expect(text.trimEnd().endsWith('---')).toBe(false)
+})
+
+test('each tab names its contents, and says when there is nothing', () => {
+  const detail = readDetail(filesOf('band'))!
+  expect(tabText(detail, 'asks')).toContain('### Depot operations (1)')
+  expect(tabText(detail, 'asks')).toContain('**A-2** · Partly resolved · never asked — the UPS hold-up time')
+  expect(tabText(detail, 'assumptions')).toContain('**A-3** · Open — Reservation lookups stay under 50 ms')
+  expect(tabText(detail, 'decisions')).toContain('**D3** · 2026-04-18 · Offline unlock')
+  const none = readDetail(filesOf('canonical'))!
+  expect(tabText(none, 'asks')).toBe('No open asks.')
+  expect(tabText(none, 'decisions')).toBe('No open decisions.')
+})
+
+test('a tab stays under the element limit and says where the rest is', () => {
+  const rows = Array.from({ length: 400 }, (_, i) => `- **A-${i + 1}** · Open — ${'x'.repeat(60)}`)
+  const text = budget(rows, '/restack-journey asks')
+  expect(text.length).toBeLessThan(BUDGET)
+  expect(text).toMatch(/… \d+ more: \/restack-journey asks$/)
+  expect(budget(['one', 'two'], 'elsewhere')).toBe('one\ntwo')
 })

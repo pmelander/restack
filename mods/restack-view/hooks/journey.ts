@@ -5,7 +5,7 @@
 // The rules mirror journey.py's: a change to the canonical shape there that
 // does not reach here fails tests/journey.test.ts (ADR-029, decision point 4).
 
-import type { Journey, View } from '../types'
+import type { Ask, Decision, Detail, Journey, OpenRow, Tab, View } from '../types'
 
 export type Files = { state?: string; register?: string; log?: string }
 
@@ -132,9 +132,13 @@ export function stateProblem(text: string): string | undefined {
 
 type Register = { open: number; asks: number }
 
+// One register row's cells, as journey.py's split_row gives them.
+type Cells = string[]
+type Table = { rows: Cells[]; statusLines: string[] }
+
 // journey.py's register_shape, then the rows: exactly one table, with the
 // canonical columns, no `Update` headings, and only status lines after it.
-export function readRegister(text: string): Register | string {
+function registerTable(text: string): Table | string {
   const all = lines(text)
   const tables: Array<[number, number]> = []
   let orphans = 0
@@ -165,19 +169,46 @@ export function readRegister(text: string): Register | string {
     if (t && t !== '## Status lines' && !STATUS_LINE.test(line)) return 'a line after the table is not a status line'
   }
 
-  let open = 0
-  let asks = 0
-  for (const line of all.slice(start, end)) {
-    if (!A_ROW.test(line)) continue
-    const cells = splitRow(line)
-    const status = stripMd(cells[5] ?? '').toLowerCase()
-    if (!OPEN.includes(status)) continue
-    open += 1
-    if (ASK_PREFIX.test((cells[3] ?? '').trim())) asks += 1
+  return {
+    rows: all.slice(start, end).filter(l => A_ROW.test(l)).map(splitRow),
+    statusLines: all.slice(end).filter(l => STATUS_LINE.test(l)),
+  }
+}
+
+const isOpen = (cells: Cells): boolean => OPEN.includes(stripMd(cells[5] ?? '').toLowerCase())
+
+// journey.py's split_ask: `Ask BI: row counts` is an ask of BI for row counts.
+const askOf = (cells: Cells): { recipient: string; need: string } | undefined => {
+  const m = (cells[3] ?? '').trim().match(ASK_PREFIX)
+
+  return m ? { recipient: m[1].trim(), need: m[2].trim() } : undefined
+}
+
+export function readRegister(text: string): Register | string {
+  const table = registerTable(text)
+  if (typeof table === 'string') return table
+  const open = table.rows.filter(isOpen)
+
+  return { open: open.length, asks: open.filter(c => askOf(c) !== undefined).length }
+}
+
+// journey.py's sends: each row's sends, oldest first; `unasked` cancels the last.
+const sendsOf = (statusLines: string[]): Map<string, Array<[string, string]>> => {
+  const sends = new Map<string, Array<[string, string]>>()
+  for (const line of statusLines) {
+    const m = line.match(STATUS_LINE)
+    if (!m) continue
+    const id = `A-${Number(m[1])}`
+    const list = sends.get(id) ?? []
+    if (m[4].startsWith('asked ')) list.push([m[3], m[4].slice('asked '.length).trim()])
+    else if (m[4].startsWith('unasked ')) list.pop()
+    sends.set(id, list)
   }
 
-  return { open, asks }
+  return sends
 }
+
+const rowId = (cells: Cells): string => stripMd(cells[0] ?? '')
 
 // journey.py's log_shape, then the decisions whose answer is still `(open)`,
 // as `decision open` writes them.
@@ -250,4 +281,134 @@ export function bandText(view: View): string {
   if (view.kind === 'not-canonical') return `${lead}: ${next}`
 
   return [lead, next === undefined ? undefined : `next ${next}`, tail].filter(Boolean).join(' · ')
+}
+
+// --- the pane ----------------------------------------------------------------
+
+// The decisions whose answer is still `(open)`, with their heading and gate.
+function openDecisions(text: string): Decision[] {
+  const found: Decision[] = []
+  let current: Decision | undefined
+  let isOpenAnswer = false
+  const close = () => {
+    if (current !== undefined && isOpenAnswer) found.push(current)
+  }
+  for (const line of lines(text)) {
+    if (line.startsWith('## ')) {
+      close()
+      const m = line.match(D_HEADING)
+      current = m ? { id: `D${m[1]}`, date: m[2], question: m[3].trim() } : undefined
+      isOpenAnswer = false
+      continue
+    }
+    if (current === undefined) continue
+    const gate = line.match(/^- \*\*Gate:\*\*\s*(.+?)\s*$/)
+    if (gate) current.gate = gate[1]
+    if (/^- \*\*Answer:\*\*\s*\(open\)\s*$/.test(line)) isOpenAnswer = true
+  }
+  close()
+
+  return found
+}
+
+// The header fields, as written: the first line of each `**Label:** value`
+// above the first `##`.
+const headerFields = (text: string): Array<[string, string]> =>
+  lines(header(text))
+    .map(l => l.match(/^\*\*([^*:]+?)(?: \([^)]*\))?:\*\*\s*(.+?)\s*$/))
+    .filter((m): m is RegExpMatchArray => m !== null && !/^previous|^earlier/i.test(m[1]))
+    .map(m => [m[1], m[2]])
+
+// What the pane lists. Null for no journey or one not in the canonical shape:
+// the pane then shows what the band shows.
+export function readDetail(files: Files): Detail | null {
+  const view = readJourney(files)
+  if (view === null || view.kind !== 'journey' || files.state === undefined) return null
+  const table = files.register === undefined ? undefined : registerTable(files.register)
+  const rows = table === undefined || typeof table === 'string' ? [] : table.rows.filter(isOpen)
+  const sends = table === undefined || typeof table === 'string' ? new Map() : sendsOf(table.statusLines)
+
+  const asks: Ask[] = []
+  const open: OpenRow[] = []
+  for (const cells of rows) {
+    const id = rowId(cells)
+    const status = stripMd(cells[5] ?? '')
+    open.push({ id, status, assumption: cells[1] ?? '', validates: cells[3] ?? '' })
+    const ask = askOf(cells)
+    if (ask === undefined) continue
+    const last = sends.get(id)?.at(-1)
+    asks.push({ id, status, ...ask, sent: last === undefined ? 'never asked' : `asked ${last[1]} ${last[0]}` })
+  }
+
+  return {
+    header: headerFields(files.state),
+    // Without the `---` rule that closes the section in the file.
+    position: currentPosition(files.state).replace(/(\s*\n\s*-{3,}\s*)+$/, '').trim(),
+    asks,
+    open,
+    decisions: files.log === undefined ? [] : openDecisions(files.log),
+  }
+}
+
+// One element's text stays under Claude Code's 10,000-character limit: items
+// are added while they fit, then one line says how many are left and where
+// the rest is.
+export const BUDGET = 9_000
+export function budget(items: string[], rest: string, max = BUDGET): string {
+  const kept: string[] = []
+  let size = 0
+  for (const item of items) {
+    if (size + item.length + 1 > max - 200) break
+    kept.push(item)
+    size += item.length + 1
+  }
+  const left = items.length - kept.length
+
+  return left === 0 ? kept.join('\n') : [...kept, '', `… ${left} more: ${rest}`].join('\n')
+}
+
+export const TABS: ReadonlyArray<[Tab, string]> = [
+  ['position', 'Position'],
+  ['asks', 'Asks'],
+  ['assumptions', 'Assumptions'],
+  ['decisions', 'Decisions'],
+]
+
+// A tab's body as markdown. Every list names the command that gives it whole.
+export function tabText(detail: Detail, tab: Tab): string {
+  if (tab === 'position') {
+    const fields = detail.header.map(([label, value]) => `- **${label}:** ${value}`)
+    const position = detail.position === '' ? ['No Current Position section.'] : detail.position.split('\n')
+
+    return budget([...fields, '', ...position], '/restack-journey where')
+  }
+  if (tab === 'asks') {
+    if (detail.asks.length === 0) return 'No open asks.'
+    const groups = new Map<string, Ask[]>()
+    for (const ask of detail.asks) {
+      const key = ask.recipient.toLowerCase()
+      groups.set(key, [...(groups.get(key) ?? []), ask])
+    }
+    const items: string[] = []
+    for (const group of groups.values()) {
+      items.push(`### ${group[0].recipient} (${group.length})`)
+      for (const ask of group) items.push(`- **${ask.id}** · ${ask.status} · ${ask.sent} — ${ask.need}`)
+    }
+
+    return budget(items, '/restack-journey asks')
+  }
+  if (tab === 'assumptions') {
+    if (detail.open.length === 0) return 'No open assumptions.'
+
+    return budget(
+      detail.open.map(r => `- **${r.id}** · ${r.status} — ${r.assumption} *Settles it:* ${r.validates}`),
+      'docs/journey/assumptions-register.md',
+    )
+  }
+  if (detail.decisions.length === 0) return 'No open decisions.'
+
+  return budget(
+    detail.decisions.map(d => `- **${d.id}** · ${d.date} · ${d.question}${d.gate ? ` · gate: ${d.gate}` : ''}`),
+    'docs/journey/decisions-log.md',
+  )
 }

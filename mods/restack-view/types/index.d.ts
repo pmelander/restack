@@ -22,8 +22,45 @@ export type NotCanonical = {
 
 export type View = Journey | NotCanonical
 
+// What the pane lists, read from the same files at the same time as the View.
+
+export type Ask = {
+  id: string
+  recipient: string
+  need: string
+  status: string
+  // `never asked`, or the last recorded send: `asked <whom> <date>`.
+  sent: string
+}
+
+export type OpenRow = {
+  id: string
+  status: string
+  assumption: string
+  validates: string
+}
+
+export type Decision = {
+  id: string
+  date: string
+  question: string
+  gate?: string
+}
+
+export type Detail = {
+  // The header fields as written, first line only, label then value.
+  header: Array<[string, string]>
+  // The newest Current Position subsection, as markdown.
+  position: string
+  asks: Ask[]
+  open: OpenRow[]
+  decisions: Decision[]
+}
+
+export type Tab = 'position' | 'asks' | 'assumptions' | 'decisions'
+
 declare module 'claude-code' {
   interface PluginState {
-    'restack-view': { view: View | null; isBandOn: boolean }
+    'restack-view': { view: View | null; detail: Detail | null; isBandOn: boolean; tab: Tab }
   }
 }
