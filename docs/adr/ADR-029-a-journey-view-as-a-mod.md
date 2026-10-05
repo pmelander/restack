@@ -328,7 +328,7 @@ To do in the change that implements this.
 - **Pros:** one parser.
 - **Cons:** `$.process.run` on every refresh, and the call most policies
   refuse.
-- **Why rejected (provisionally, O3):** the shared fixtures give one source
+- **Why rejected (O3):** the shared fixtures give one source
   of truth for the shape without the process call.
 
 ### Have the button submit the next command
