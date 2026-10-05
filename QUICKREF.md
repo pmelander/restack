@@ -116,6 +116,7 @@ registered assumption; in a **minefield an unknown on a critical path blocks**.
 /restack-stressor vulnerabilities            # concentration, clusters, flatness, zeros
 /restack-stressor residues                   # residuals by mechanism, ranked by leverage
 /restack-stressor iterate                    # re-walk, per-actor before/after
+/restack-stressor ablate [target]            # challenge a residual by removing it on paper
 /restack-stressor workshop                   # facilitate with a group
 /restack-stressor compliance <pack>          # inject a regulatory stressor pack
 /restack-stressor import <file> [sheet]      # import an existing matrix
@@ -128,6 +129,8 @@ and it never scores a cell. A `?` counts as 1.
 matrix.py totals <matrix> [--write]                # margins, unknowns, reading aids
 matrix.py compare <before> <after>                 # per-actor table, both totals
 matrix.py claims <residuals> <before> [--after <after>]   # each claimed cell checked
+matrix.py rollup <matrix> --groups <file>          # columns summed by shared substrate
+matrix.py ablate <matrix> --remove <COLS> ...      # a removal scored from your row classes
 ```
 
 ## Event statements as stressors
@@ -325,6 +328,7 @@ docs/learning/         outcome analyses, retrospectives
 | Find out what will break it | `/restack-stressor walk` → `generate` → `analyze` |
 | Get stressors nobody would have thought of | `/restack-events batch` |
 | Decide whether to keep iterating | `/restack-journey iterate` |
+| Check whether something should come out | `/restack-stressor ablate` |
 | Send what we need from other teams | `/restack-journey asks` |
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |

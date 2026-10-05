@@ -219,6 +219,13 @@ Before anything is sent it asks what may leave. Anonymised is the default, and
 it costs nothing: the method works on mechanism, so "Payment Gateway" carries
 every bit of the analytical weight a real vendor name does.
 
+**They take things out, too.** Each iteration adds residuals, and each
+residual brings stressors of its own. The iterate gate watches for a design
+that is defending its own defences, and offers to remove a residual on paper
+and score what comes back
+([ADR-028](docs/adr/ADR-028-residuals-challenged-by-removal.md)). A residual
+that survives keeps a tested reason in its ADR.
+
 **They compound.** Residuals that recur across engagements become patterns.
 Decisions carry predictions, which makes them falsifiable, which is what lets
 the next analysis be better than the last.
@@ -246,7 +253,7 @@ are called — plus three utilities.
 
 | | |
 |---|---|
-| [`/restack-stressor`](skills/restack-stressor/SKILL.md) | walk paths, generate stressors, build the matrix, identify residuals by mechanism |
+| [`/restack-stressor`](skills/restack-stressor/SKILL.md) | walk paths, generate stressors, build the matrix, identify residuals by mechanism, and challenge adopted ones by removal |
 | [`/restack-events`](skills/restack-events/SKILL.md) | batches of event statements as stressors, distribution fixed by a seeded sampler rather than by the model |
 
 **Decide and record**
@@ -315,7 +322,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.13.0**. All seventeen skills are generated from templates with
+ReStack is at **v2.16.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

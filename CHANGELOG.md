@@ -3,6 +3,58 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.16.0] — 2026-10-05
+
+Adopted residuals can be challenged by removal
+([ADR-028](docs/adr/ADR-028-residuals-challenged-by-removal.md)). The loop
+only ever added: on the reference engagement, like-for-like impact fell
+195 → 133 while the total rose to 244, and every gate offered ways to keep
+and extend. The architect spotted a hub in the generated system overview,
+a storage account the matrix split into five columns that together held 35
+cells on 24 rows, more than any single actor. A paper pilot then showed how
+far a by-hand count goes wrong: 35 cells looked saved and 6 actually went.
+
+### Added
+
+- **`/restack-stressor ablate [target]`** (stressor 2.4.0), with the method
+  in the new section `ablation.md`:
+  - with no target, it finds candidates: substrate groups the architect
+    declares, the topology of the HLD's diagram source, and how deep
+    residuals defend residuals;
+  - with one, it scores scenarios over the target and what was built on it.
+    Each needs a named substitute, checked against the decisions that
+    rejected it; rows classified vanish / inherit / morph, confirmed by the
+    architect; circular credit added. The net is a range, by lens and on the
+    aspiration's column;
+  - it ends in an approach gate, and never edits a matrix or an ADR.
+- **`matrix.py rollup`**: columns summed by declared substrate, each group
+  ranked by distinct rows against the most-hit actor outside it, and the
+  rows that cross a group.
+- **`matrix.py ablate`**: a removal scored from the architect's row classes.
+  The re-open set is the cells only the removed residuals cleared; overlap,
+  circular credit, retired actors and existing 1s are named, not counted.
+  Exit 1 while anything is missing.
+- **The ablation report template**, `templates/ablation-report-template.md`,
+  vendored into the stressor skill.
+- **A `Challenged by removal` field** in the ADR format (adr 2.2.0): absent
+  until a challenge, one dated entry per kept outcome. `update` records it
+  without an amendment.
+- 11 test cases for `rollup` and `ablate`, against a third iteration of the
+  synthetic engagement.
+
+### Changed
+
+- **The iterate gate checks whether the design should shrink** (journey
+  2.5.0, step 9). Four triggers add "challenge first" to the brief: the total
+  rose while like-for-like fell; residuals three generations deep; a declared
+  substrate outranks the most-hit actor; the design is about to become the
+  target. The row "residuals adding complexity faster than they remove
+  impact" now leans **Challenge, then proceed**, not **Proceed**.
+- A `residues` gate brief on a residual that defends an earlier one also
+  offers removing the defended residual.
+- `matrix.py`'s claim parser can keep claims on actor codes a matrix no
+  longer has, so a challenge can name them.
+
 ## [2.15.0] — 2026-10-04
 
 The architect answers the asks first; only what they defer goes into the
