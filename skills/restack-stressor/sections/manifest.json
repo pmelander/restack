@@ -28,6 +28,12 @@
       "trigger": "running /restack-stressor residues - proposing residuals and ranking them by leverage"
     },
     {
+      "id": "ablation",
+      "file": "ablation.md",
+      "title": "Challenge by removal (ablation)",
+      "trigger": "running /restack-stressor ablate - finding a candidate to challenge, or scoring the removal of an adopted residual, the actors it created and what was built on it"
+    },
+    {
       "id": "workshop-facilitation",
       "file": "workshop-facilitation.md",
       "title": "Workshop facilitation",

@@ -117,8 +117,9 @@ forces them:
 `/restack-stressor ablate <residual | actor group> [--substitute <carrier>]`
 scores a removal and writes
 `docs/stressor-analysis/ablation-<date>-<slug>.md`. It ends in a decision
-brief. **It never edits an ADR, a matrix or a journey file**, and it never
-recommends a removal as a verdict. Keep, cut and substitute are the
+brief. **It never edits an ADR or a matrix, and writes to the journey files
+only to number its brief and record the architect's answer**, as every brief
+does. It never recommends a removal as a verdict. Keep, cut and substitute are the
 architect's, at a gate ([ADR-022](ADR-022-working-toolkit-not-training-pack.md)).
 
 ### 2. Every ablation names its substitute
@@ -235,8 +236,8 @@ The build, not this ADR, does these. Each is pending until it ships.
 
 | Document | What this decision requires there | Done in the same step |
 |---|---|---|
-| `skills/restack-stressor/SKILL.md.tmpl` | the `ablate` command, its steps and gates | pending |
-| `skills/restack-stressor/sections/ablation.md` | substitute, subtree, classification, re-open set, topology read, baseline | pending |
+| `skills/restack-stressor/SKILL.md.tmpl` | the `ablate` command, its steps and gates | done 2026-10-05: `/restack-stressor` 2.4.0, the command, the `rollup`/`ablate` rows in the `matrix.py` table, Done when, outputs |
+| `skills/restack-stressor/sections/ablation.md` | substitute, subtree, classification, re-open set, topology read, baseline | done 2026-10-05: Steps 0–8; the report's shape is in Step 8 until the template exists |
 | `skills/restack-stressor/scripts/matrix.py` | `rollup`, `ablate` | done 2026-10-05; checked against the reference engagement's pilot: `rollup` gives its hub (35 cells on 24 rows, against 21), `ablate` the pilot's re-open set |
 | `tests/test_matrix.py`, `tests/fixtures/matrix/` | invented fixtures: an overlapping claim, a circular row, a grouped substrate | done 2026-10-05 (iteration 3 of the synthetic engagement) |
 | `templates/` | an ablation report template, vendored into stressor | pending |
