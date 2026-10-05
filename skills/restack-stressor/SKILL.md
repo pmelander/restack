@@ -811,6 +811,12 @@ different tradeoffs — especially when one is a one-way door — that is an
 approach gate. Issue the decision brief. **STOP.** Do not write the chosen
 residual into an ADR or the journey state before the architect has chosen it.
 
+**When the cluster sits on a residual's own actors**, so that the proposal
+defends an earlier residual, the brief also offers **removing the defended
+residual** (ADR-028). Its option names what would come back, from
+`/restack-stressor ablate`. A gate that offers only ways to protect a
+residual has already decided to keep it.
+
 **Knock-on changes travel with the residual.** A chosen residual that changes
 the design invalidates descriptive documents written before it (HLD, LLD,
 deployment guide, runbook, configuration manifest). Record them in the ADR's

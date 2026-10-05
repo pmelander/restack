@@ -11,6 +11,7 @@
 **Stressors addressed:** [the stressors this decision's residual clears, with their tags]
 **Technical story:** [optional ticket reference]
 **Review date:** [when to run /restack-adr review — default 6 months]
+**Challenged by removal:** [only once challenged: YYYY-MM-DD, kept (D<n>): what would come back, by lens — `docs/stressor-analysis/ablation-<date>-<slug>.md`]
 
 ## Context
 
@@ -81,6 +82,17 @@ An empty field is ambiguous; an explicit "none" is information.
 
 **Review date.** A decision with no review date is never revisited, and
 unrevisited decisions are how architectures rot while everyone follows them.
+
+**Challenged by removal.** Added by `update` after `/restack-stressor ablate`
+removed the decision's residual on paper and the architect kept it (ADR-028 in
+the ReStack repository). One entry per challenge, newest last, separated by
+`;`: the date, the gate's `D<n>`, what would come back if it went (cells and
+the lens they land on, the aspiration's column named when it is hit), and the
+report. **The field is absent until the decision is challenged**, so its
+absence says something. The stressors listed at proposal time say why a
+residual was added; this field says why it is still there, tested against the
+design as it now stands. That is the line an inheritor needs before deleting
+something that looks unnecessary.
 
 **Knock-on changes.** Mandatory, on `create` and on every `update`. List every
 descriptive document the decision invalidates (HLD, LLD, deployment guide,

@@ -1,6 +1,6 @@
 ---
 name: restack-adr
-version: 2.1.0
+version: 2.2.0
 preamble-tier: 2
 model: opus
 description: |
@@ -142,8 +142,18 @@ inventory.
 
 ## `/restack-adr update <number>`
 
-**Read** `<base>/sections/adr-format.md` (decision-point accounting, amendments,
-knock-on changes). Then:
+**Recording a challenge.** When `/restack-stressor ablate` hands over a
+residual the architect kept, the decision stands and no point of it changed.
+That is not an amendment. Add or extend the `Challenged by removal` field
+(`<base>/sections/adr-format.md`): the date, the gate's `D<n>`, what would
+come back, by lens, and the report's path. No banner, no point-by-point
+accounting, no knock-on changes, and no new log entry: the ablation's gate
+already logged the decision. **If the ablation found the ADR wrong** (it
+claims cells a later residual also clears, or lists a stressor that turned out
+to be circular), correcting the claim is an amendment: run the steps below.
+
+Otherwise, **read** `<base>/sections/adr-format.md` (decision-point accounting,
+amendments, knock-on changes). Then:
 
 1. Read the ADR and establish what changed.
 2. **Account for it point by point before choosing a mechanism.** List every

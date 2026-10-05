@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.4.0
+version: 2.5.0
 preamble-tier: 3
 model: opus
 description: |
@@ -218,8 +218,34 @@ decides whether the architecture is done enough to build on.
    Knock-on changes field is filled and the documents it names were changed
    after the ADR's date. Unfinished knock-ons go into the brief: proceeding to
    Documentation over them is how pre-pivot documents survive into review.
-9. **Gate:** issue the decision brief. **STOP.**
-10. Log the decision and rationale to `decisions-log.md` and append the
+9. **Check whether the design should shrink.** The loop only adds residuals,
+   so look for the signs that something should come out (ADR-028). Any one of
+   these is a trigger:
+   - **the full total rose while like-for-like fell**: the residuals are
+     clearing old cells and bringing more of their own;
+   - **a residual's subtree reaches a third generation**: R3 clears cells on
+     actors R2 created, and R2 clears cells on actors R1 created. Follow the
+     `**Creates:**` lines in the residuals files;
+   - **a declared substrate outranks the most-hit actor**:
+     `python "$MX" rollup <matrix> --groups <file>` with the engagement's
+     `docs/stressor-analysis/groups-<date>.md`. With no groups file, say that
+     no substrate has been declared. Do not invent one here;
+
+     ```bash
+     MX="$HOME/.claude/skills/restack-stressor/scripts/matrix.py"
+     [ -f "$MX" ] || MX="skills/restack-stressor/scripts/matrix.py"
+     [ -f "$MX" ] || echo "matrix.py not found: sum the group's rows by hand and say so"
+     ```
+
+   - **this gate would make the design the target**, or start implementation.
+     Removal is cheapest while it costs documents only.
+
+   For each trigger that holds, name the candidate and the evidence, and add
+   **challenge first** to the brief: `/restack-stressor ablate <target>` before
+   proceeding. Choosing it is the architect's call, and the ablation runs its
+   own gate. No trigger is a finding too: say the check ran.
+10. **Gate:** issue the decision brief. **STOP.**
+11. Log the decision and rationale to `decisions-log.md` and append the
     iteration to `stressor-iteration-history.md`.
 
 ### Reading the signals
@@ -229,7 +255,7 @@ decides whether the architecture is done enough to build on.
 | Impact fell materially; residue is on non-critical paths | **Proceed** |
 | Impact fell; critical-path actors still highly vulnerable | **Iterate** |
 | Impact flat despite implemented residuals | **Stop and reassess** — the path map is probably incomplete |
-| Residuals adding complexity faster than they remove impact | **Proceed** — diminishing returns, document what remains |
+| Residuals adding complexity faster than they remove impact | **Challenge, then proceed**: `ablate` the deepest subtree first. Diminishing returns are a reason to stop adding, and to check what could come out |
 | Each iteration keeps finding new actors | **Back to discovery** — the boundary is not settled |
 | Team does not believe the path map | **Back to discovery** — a matrix over a disbelieved map is theatre |
 

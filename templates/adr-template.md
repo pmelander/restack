@@ -16,6 +16,8 @@
 
 **Review Date:** [YYYY-MM-DD for post-implementation review, typically 3-6 months after implementation]
 
+**Challenged by removal:** [only once challenged: YYYY-MM-DD, kept (D<n>): what would come back, by lens — the ablation report]
+
 ## Context
 
 [Describe the context and problem statement. What forces are at play? What are the concerns and constraints?]

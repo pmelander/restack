@@ -241,8 +241,9 @@ The build, not this ADR, does these. Each is pending until it ships.
 | `skills/restack-stressor/scripts/matrix.py` | `rollup`, `ablate` | done 2026-10-05; checked against the reference engagement's pilot: `rollup` gives its hub (35 cells on 24 rows, against 21), `ablate` the pilot's re-open set |
 | `tests/test_matrix.py`, `tests/fixtures/matrix/` | invented fixtures: an overlapping claim, a circular row, a grouped substrate | done 2026-10-05 (iteration 3 of the synthetic engagement) |
 | `templates/` | an ablation report template, vendored into stressor | pending |
-| `skills/restack-journey/SKILL.md.tmpl` | the gate row; the four triggers | pending |
-| `skills/restack-adr/SKILL.md.tmpl` | the "challenged by removal" line on a kept residual | pending |
+| `skills/restack-journey/SKILL.md.tmpl` | the gate row; the four triggers | done 2026-10-05: `/restack-journey` 2.5.0, iterate step 9 and the "Challenge, then proceed" row |
+| `skills/restack-adr/SKILL.md.tmpl` | the "challenged by removal" line on a kept residual | done 2026-10-05: `/restack-adr` 2.2.0, a `Challenged by removal` field (`sections/adr-format.md`, `templates/adr-template.md`) and the recording path in `update` |
+| `skills/restack-stressor/SKILL.md.tmpl` (`residues`) | "remove the defended one" in a gate brief about a residual that defends another | done 2026-10-05 |
 | CLAUDE.md, README.md, QUICKREF.md, GETTING_STARTED.md, CHANGELOG.md | the command and the ADR | pending |
 
 ## Alternatives considered
