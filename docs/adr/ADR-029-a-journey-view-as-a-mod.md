@@ -170,8 +170,9 @@ nothing else changes.
      but what is on screen.
    - **It never writes, decides or submits.** The `calls:` line of
      `claude plugin validate` is the contract, and CI fails on any call
-     outside this list: `$.fs.read`, `$.fs.stat`, `$.fs.exists`, `$.ui.*`,
-     `$.command.register`, `$.prompt.fill`, `$.store.get`, `$.store.set`,
+     outside this list: `$.fs.read`, `$.fs.stat`, `$.fs.exists`,
+     `$.fs.ancestors`, `$.ui.*`, `$.command.register`, `$.prompt.read`,
+     `$.prompt.fill`, `$.store.get`, `$.store.set`, `$.session.root`,
      `$.session.cwd`, `$.clock.after`, `$.clock.now`, and its own `$.state`
      atoms. It makes no `$.fs.write`, `$.process.*`, `$.http.*`,
      `$.model.*`, `$.prompt.submit` or `$.session.send` calls, and has no
@@ -193,7 +194,19 @@ nothing else changes.
      (open rows) and *Decisions* (open decisions).
    - **One button, "Put the next command in the prompt",** fills the prompt
      box with the next command. The architect reads it and presses Enter.
-     The mod never submits.
+     The mod never submits. **It never overwrites a draft:** it reads the
+     prompt first (`$.prompt.read`), and if anything is typed there it
+     shows a toast with the command instead.
+   - **The button lives in the pane, not the band.** A digit hotkey on a
+     band button fires when that digit is typed alone into an empty prompt,
+     so the band carries text only.
+   - **It finds the journey from the project root.** It looks for
+     `docs/journey/` under `$.session.root`, then walks up from
+     `$.session.cwd` with `$.fs.ancestors`. A session started in a
+     subdirectory still gets its band.
+   - **The pane shows rows, not files.** A `Text` or `Markdown` element
+     holds at most 10,000 characters. Each tab lists its rows up to that
+     budget, then ends with `… N more: /restack-journey asks` (or `where`).
    - **It reads again after each turn** (`session.measure`) and when the
      pane opens, comparing file modification times first. The snapshot goes
      into a `$.state` atom, and the render only reads it. It never polls;
@@ -269,6 +282,26 @@ nothing else changes.
    **Revisit when** a team asks to pin a ReStack version per project, or
    Claude Code offers unnamespaced or aliased plugin skills, or the copy
    install fails in a way a plugin would not.
+
+### The mods API this relies on
+
+Checked against the [mods reference](https://code.claude.com/docs/en/plugins/mods/reference),
+which documents v2.1.289. Mods themselves need v2.1.287. When the docs and
+the declarations Claude Code generates for the installed version disagree,
+the declarations win, and this table is corrected.
+
+| Kind | Used | For |
+|---|---|---|
+| Events | `session.start` | register `/restack-view`, restore the band preference, first read |
+| | `session.measure` | re-read after each turn |
+| | `classic.SessionStart` `{ source: clear \| resume \| fork }` | reload after `/clear`, `/resume`, `/branch` |
+| | `command.run` `{ command: 'restack-view' }` | open the pane; `band on \| off` |
+| | `ui.render` `{ component: 'AbovePrompt' }`, `{ component: 'Pane' }` | the band and the pane |
+| Render-site props | `hasSurvey`, `maxRows`, `bodyColumns` (band); `requestId`, `bodyColumns`, `placement`, `scroll` (pane) | stepping aside, fitting the space |
+| Elements | `Box`, `Text`, `Button`, `Markdown` | all available in the terminal and on the Desktop |
+| Methods | the allowlist in decision point 2 | |
+| Command option | `immediate: true` | `/restack-view` works mid-turn |
+| Limits | 10 s per hook; 10,000 characters per `Text` or `Markdown`; 4 MiB per `$.fs.read`; redraws throttled to 10 a second | the reads are bounded, the pane is budgeted, refresh is per turn |
 
 ### Decisions settled by the maintainer, 2026-10-05
 
