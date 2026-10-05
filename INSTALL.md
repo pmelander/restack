@@ -118,8 +118,22 @@ codex login
 `codex login` is interactive and opens a browser. Do not attempt it on the
 user's behalf, and never ask for or handle an API key.
 
-**Do not install either without asking.** It is their machine, and a global npm
-install in particular is not implied by "install ReStack".
+**The journey band** — a mod that shows where the journey stands on one line
+above the prompt, in the terminal and the Desktop Code tab
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). It is read-only, and
+no skill needs it. It is code that runs inside Claude Code (2.1.287 or later),
+so it is installed only on request:
+
+```bash
+"<INSTALL_DIR>/restack/setup" --mods        # Windows: setup.ps1 -Mods
+```
+
+The choice is remembered: later runs and `/restack-upgrade` keep it up to date,
+and `--no-mods` removes it.
+
+**Do not install any of these without asking.** It is their machine. A global
+npm install, and code that runs inside every Claude Code session, are not
+implied by "install ReStack".
 
 ### Step 5 — verify
 
@@ -187,6 +201,12 @@ from it too.
 | `./setup` | install or update the copy in `~/.claude/skills`. Safe to re-run |
 | `./setup --dry-run` | show what would change; write nothing |
 | `./setup --quiet` | print only the summary |
+| `./setup --mods` | also install the mods, such as the journey band ([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). Remembered in `~/.restack/install.json` |
+| `./setup --no-mods` | remove the mods, and stop installing them |
+
+A mod installs beside the skills, as `~/.claude/skills/restack-view`, where
+Claude Code loads it as the plugin `restack-view@skills-dir`. Turn it off
+without uninstalling with `/restack-view band off`, or in `/plugin`.
 
 The install is always a copy in the user profile
 ([ADR-019](docs/adr/ADR-019-copy-only-install.md)). `--symlink` and `--target`
@@ -284,6 +304,10 @@ rm -rf ~/.restack
 No trailing slash on the first line. On a symlinked install from before 2.7.0,
 `rm -rf link/` would delete the contents of the checkout the link points at,
 while `rm -rf link` removes only the link.
+
+The first line removes an installed mod too, since it sits beside the skills
+as `restack-view`. The mod's band preference is in Claude Code's own plugin
+store, under `~/.claude/plugins/store/`.
 
 Nothing else is left behind — ReStack writes only to the skills directory and
 `~/.restack`, and the documents the skills produce live in your own project's

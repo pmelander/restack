@@ -19,6 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── scripts/
 │   ├── gen_skills.py                   # renders SKILL.md from SKILL.md.tmpl
 │   ├── check_skills.py                 # validates frontmatter, banners, sections
+│   ├── check_mods.py                   # holds every mod to the view's contract (ADR-029)
 │   ├── shared/                         # method shared by several skills, vendored into each
 │   │   ├── second-opinion.md           #   outside opinion (stressor, design-review)
 │   │   ├── update-check.md             #   update notice at session open (journey, discover)
@@ -77,6 +78,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   └── restack-upgrade/                        # generated, tier 1
 │       ├── scripts/update_check.py             #   update check, run by journey + discover
 │       └── scripts/local_copies.py             #   old ReStack copies in a project or profile (retire-local)
+├── mods/                               # Claude Code mods: TypeScript, views only (ADR-029)
+│   └── restack-view/                   #   the journey line above the prompt
+│       ├── hooks/register.tsx          #   the hooks module
+│       ├── hooks/journey.ts            #   reads the canonical journey files, pure
+│       └── tests/fixtures.ts           #   generated from tests/fixtures/journey/ - do not edit
 ├── templates/                          # Document templates, vendored into the skills that write them
 ├── examples/                           # Example outputs
 ├── requirements.txt                    # Python dependencies (openpyxl)
@@ -185,9 +191,14 @@ python scripts/gen_skills.py journey    # one skill
 python scripts/gen_skills.py --check    # CI: fail on drift between .tmpl and SKILL.md
 python scripts/check_skills.py          # CI: frontmatter, banners, sections, install paths
 python -m unittest discover -s tests    # CI: behaviour of the scripts skills ship
+python scripts/check_mods.py            # CI: every mod stays a view (needs the claude CLI)
+claude plugin test mods/restack-view    # CI: the mod's own tests, no session needed
 ```
 
-All three run in CI on every push and pull request (`.github/workflows/skills.yml`).
+`gen_skills.py` also renders `tests/fixtures/journey/` into
+`mods/restack-view/tests/fixtures.ts`, so `--check` covers it.
+
+All of them run in CI on every push and pull request (`.github/workflows/skills.yml`).
 `check_skills.py` covers what the generator cannot: a skill with no
 `description` is undiscoverable, a generated file with its banner removed has
 been hand-edited, a section file missing from `manifest.json` will never be
@@ -310,6 +321,29 @@ missing, the skill says so and does the checks by hand
 is a worklist, not a verdict**: a check added to it must point at something a
 reader confirms, never rate it.
 
+### Mods
+
+A mod is TypeScript that runs inside Claude Code and draws: a band above the
+prompt, a pane, a command with no Claude turn
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md), which amends ADR-010
+on languages). The rules:
+
+1. **A mod is a view, never a dependency.** No skill, section or preamble
+   fragment names one, and everything it shows has a command that answers the
+   same. It never writes, decides or submits: `scripts/check_mods.py` fails any
+   call outside the allowlist, any hook on tool calls or prompts, and any
+   environment access.
+2. **No packages.** A mod imports its own files and `claude-code`, nothing
+   else. No `package.json`, no build step: Claude Code loads `.ts` and `.tsx`.
+3. **It reads the canonical journey files itself** and is tested against the
+   same fixtures as `journey.py`, rendered into `tests/fixtures.ts`. Keep pure
+   parsing out of the hooks module, so the tests reach it without `$`.
+4. **Develop with `claude --plugin-dir mods/<name>`**, never against an
+   installed copy. `.claude-plugin/types/` is written by Claude Code at load
+   and git-ignored.
+5. **It shares the band** (`await next(e)` among its children) and reloads its
+   state on `classic.SessionStart` after `/clear`, `/resume` and `/branch`.
+
 ### Adding Compliance Packs
 
 1. Create `skills/restack-stressor/compliance-packs/<framework>.md`
@@ -396,6 +430,9 @@ git push origin feature/new-skill-name
 /restack-upgrade check                   # verify the install + update-check status
 /restack-upgrade snooze [days]           # hide the daily update notice
 /restack-upgrade off | on                # the update-check opt-out (~/.restack/config.json)
+
+/restack-view                            # the journey pane (mod; setup --mods, ADR-029)
+/restack-view band on | off              # the line above the prompt
 ```
 
 ## Journey Memory Management
@@ -443,6 +480,7 @@ matrices), `decisions-log.md` (every gate passed, with rationale), and
 ```bash
 ./setup                 # copy into ~/.claude/skills; the only install method
 ./setup --dry-run       # what would change, without writing
+./setup --mods          # also the mods (ADR-029), remembered; --no-mods removes them
 pip install -r requirements.txt   # optional; /restack-excel only
 ```
 

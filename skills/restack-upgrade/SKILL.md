@@ -1,6 +1,6 @@
 ---
 name: restack-upgrade
-version: 2.0.0
+version: 2.0.1
 preamble-tier: 1
 model: sonnet
 description: |
@@ -178,7 +178,9 @@ It does not depend on any checkout: most people delete their clone after
 installing, and the skills keep working. So upgrading never pulls into an
 existing checkout. It **fetches the latest release into a temporary directory,
 runs that release's `setup`, which copies it into the profile, and deletes the
-temporary directory.** A maintainer's development clone is never pulled,
+temporary directory.** `setup` keeps the architect's mods choice
+(`install.json` records it, ADR-029): mods installed with `setup --mods` are
+updated with the skills, and none are added otherwise. A maintainer's development clone is never pulled,
 stashed or switched.
 
 **`/restack-upgrade check`** runs only the verification in step 4 against the
@@ -348,6 +350,7 @@ does not error: it skips the step that section carries, and nobody notices.
 ```bash
 missing=0
 for skill in "$HOME/.claude/skills"/restack-*/; do
+  [ -f "$skill/SKILL.md" ] || continue          # a mod (ADR-029): no sections to check
   for rel in $(grep -o '<base>/sections/[A-Za-z0-9_.-]*\.md' "$skill/SKILL.md" | sort -u); do
     [ -f "$skill${rel#<base>/}" ] || { echo "MISSING: $(basename "$skill") -> $rel"; missing=$((missing + 1)); }
   done

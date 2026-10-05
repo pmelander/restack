@@ -3,6 +3,56 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+A read-only journey view as a Claude Code mod
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band and the
+pane, installed on request with `./setup --mods`.
+
+### Added
+
+- **The `/restack-view` pane**: Position, Asks, Assumptions and Decisions
+  tabs, read from the same files as the band. One button puts the next
+  command in the prompt; it never submits and never writes over a draft.
+  Where no pane can be drawn, `/restack-view` prints the line instead.
+
+- **`setup --mods` / `--no-mods`** (`-Mods` / `-NoMods`): installs the mods
+  beside the skills, where Claude Code loads each as `<name>@skills-dir`. The
+  choice is recorded in `install.json` (`"mods"`), so a plain re-run and
+  `/restack-upgrade` keep it. A broken mod, a mod named like a skill, and the
+  two flags together are refused. The `.claude-plugin/types/` Claude Code
+  writes on a development load is never installed or compared.
+
+- **`mods/restack-view`**, ReStack's first TypeScript. It draws one line above
+  the prompt: terrain, phase, confidence, the next command, and the counts of
+  open asks, assumptions and decisions. It is read from the canonical journey
+  files and never written back. `/restack-view` prints the line;
+  `/restack-view band [on|off]` hides or shows it. It shares the band with
+  other mods and survives `/clear`.
+- **`scripts/check_mods.py`**: a mod's calls and hooks, as
+  `claude plugin validate` reports them, held to the view's allowlist.
+- **A `mods` CI job**: installs the Claude Code CLI, runs the check and
+  `claude plugin test`.
+- **`tests/fixtures/journey/band/`**: a full canonical journey, pinned
+  canonical by `journey.py check`, rendered into the mod's tests by
+  `gen_skills.py`.
+
+### Changed
+
+- **The band reads a lived-in journey**, not only the template: a terrain
+  sentence shows its terms (`Greenfield/Brownfield`), other fields their first
+  clause, and the next move comes from the newest Current Position subsection
+  only. Found on the first live run.
+- **`local_copies.py`** no longer counts an installed mod as a skill, so a
+  project's own folder sharing the mod's short name is never reported.
+- **`/restack-upgrade`** 2.0.1: the install check skips a mod (no `SKILL.md`),
+  and says upgrades keep the mods choice.
+
+### Decided
+
+- ADR-029: mods are views; ADR-010 is amended to allow TypeScript for them;
+  packaging ReStack as a marketplace plugin is parked.
+
 ## [2.16.0] — 2026-10-05
 
 Adopted residuals can be challenged by removal

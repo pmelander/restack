@@ -1,0 +1,3 @@
+# Written by Claude Code each time it loads the mod from a directory, for
+# the version that loaded it. Never committed: it would pin one version.
+.claude-plugin/types/

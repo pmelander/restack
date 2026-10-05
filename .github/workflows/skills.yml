@@ -27,3 +27,32 @@ jobs:
       # local bare repository as origin, so it needs git and no network.
       - name: Test shipped scripts
         run: python -m unittest discover -s tests -v
+
+  mods:
+    name: Mods stay views, and their tests pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The latest CLI on purpose: the mods API is new, and a release that
+      # changes it should fail here first (ADR-029). `plugin validate` and
+      # `plugin test` need no sign-in and no network.
+      - name: Install the Claude Code CLI
+        run: npm install --global @anthropic-ai/claude-code
+
+      - name: Check every mod against the view's contract
+        run: python scripts/check_mods.py
+
+      - name: Test the mods
+        run: |
+          for mod in mods/*/; do
+            claude plugin test "$mod"
+          done

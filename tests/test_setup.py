@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for setup and setup.ps1 (ADR-019).
+"""Tests for setup and setup.ps1 (ADR-019, and the mods of ADR-029).
 
 The install is always a copy in the user profile: $HOME/.claude/skills. It must
 not depend on the checkout it came from, must replace a link left by an old
@@ -217,6 +217,110 @@ class InstallCases:
         self.assertTrue(is_link(self.installed()))
         self.assertIn("would be replaced with copies", out)
 
+    # --- mods (ADR-029) ------------------------------------------------------
+
+    def add_mod(self, name="restack-demoview", hooks=True) -> Path:
+        """A mod in the repository: a manifest, hooks.json, a module, and the
+        .claude-plugin/types/ Claude Code writes on a development load."""
+        mod = self.repo / "mods" / name
+        (mod / ".claude-plugin" / "types").mkdir(parents=True)
+        (mod / ".claude-plugin" / "plugin.json").write_text(f'{{ "name": "{name}" }}\n', encoding="utf-8")
+        (mod / ".claude-plugin" / "types" / "core.d.ts").write_text("// generated\n", encoding="utf-8")
+        (mod / "hooks").mkdir()
+        if hooks:
+            (mod / "hooks" / "hooks.json").write_text('{ "modules": ["./register.ts"] }\n', encoding="utf-8")
+        (mod / "hooks" / "register.ts").write_text("export const register = () => {}\n", encoding="utf-8")
+        return mod
+
+    def mod_installed(self, name="restack-demoview") -> Path:
+        return self.default / name
+
+    def test_a_mod_is_not_installed_without_asking(self):
+        self.add_mod()
+        out = self.run_setup()
+        self.assertFalse(self.mod_installed().exists())
+        self.assertIs(self.recorded()["mods"], False)
+        self.assertIn(self.mods_flag(), out, "a plain run says how to add the mods")
+
+    def test_mods_installs_beside_the_skills_without_the_generated_types(self):
+        self.add_mod()
+        self.run_setup(self.mods_flag())
+        self.assertTrue((self.mod_installed() / ".claude-plugin" / "plugin.json").is_file())
+        self.assertTrue((self.mod_installed() / "hooks" / "register.ts").is_file())
+        self.assertFalse((self.mod_installed() / ".claude-plugin" / "types").exists(),
+                         "the types Claude Code generates are never installed")
+        self.assertTrue((self.installed() / "SKILL.md").is_file(), "the skills install as before")
+        self.assertIs(self.recorded()["mods"], True)
+
+    def test_a_plain_rerun_keeps_and_refreshes_an_installed_mod(self):
+        mod = self.add_mod()
+        self.run_setup(self.mods_flag())
+        self.assertIn("already up to date", self.run_setup())
+        (mod / "hooks" / "register.ts").write_text("export const register = () => { /* edited */ }\n",
+                                                  encoding="utf-8")
+        self.assertIn("1 updated", self.run_setup())
+        self.assertIn("edited", (self.mod_installed() / "hooks" / "register.ts").read_text(encoding="utf-8"))
+
+    def test_generated_types_in_the_install_are_not_a_change(self):
+        self.add_mod()
+        self.run_setup(self.mods_flag())
+        written = self.mod_installed() / ".claude-plugin" / "types"
+        written.mkdir()
+        (written / "core.d.ts").write_text("// written by a session\n", encoding="utf-8")
+        self.assertIn("already up to date", self.run_setup())
+
+    def test_no_mods_removes_the_mod_and_is_remembered(self):
+        self.add_mod()
+        self.run_setup(self.mods_flag())
+        out = self.run_setup(self.no_mods_flag())
+        self.assertFalse(os.path.lexists(self.mod_installed()))
+        self.assertIn("remove", out)
+        self.assertIs(self.recorded()["mods"], False)
+        self.run_setup()
+        self.assertFalse(self.mod_installed().exists(), "a plain run after --no-mods adds nothing")
+        self.assertTrue((self.installed() / "SKILL.md").is_file(), "the skills stay")
+
+    def test_a_mod_removed_upstream_is_removed(self):
+        mod = self.add_mod()
+        self.run_setup(self.mods_flag())
+        shutil.rmtree(mod)
+        self.assertIn("remove", self.run_setup())
+        self.assertFalse(os.path.lexists(self.mod_installed()))
+
+    def test_without_a_record_an_installed_mod_counts_as_chosen(self):
+        self.add_mod()
+        self.run_setup(self.mods_flag())
+        self.record.unlink()
+        self.run_setup()
+        self.assertTrue((self.mod_installed() / ".claude-plugin" / "plugin.json").is_file())
+        self.assertIs(self.recorded()["mods"], True)
+
+    def test_a_broken_mod_is_refused(self):
+        self.add_mod(hooks=False)
+        out = self.run_setup(self.mods_flag(), expect=1)
+        self.assertIn("broken mod", out)
+        self.assertFalse(self.mod_installed().exists())
+        self.assertFalse(self.record.exists(), "a refused run records nothing")
+
+    def test_a_mod_named_like_a_skill_is_refused(self):
+        self.add_mod(name="restack-demo")
+        out = self.run_setup(self.mods_flag(), expect=1)
+        self.assertIn("name of a skill", out)
+        self.assertFalse(self.record.exists())
+
+    def test_mods_and_no_mods_together_are_refused(self):
+        self.add_mod()
+        out = self.run_setup(self.mods_flag(), self.no_mods_flag(), expect=2)
+        self.assertIn("contradict", out)
+        self.assertFalse(self.default.exists())
+
+    def test_dry_run_with_mods_writes_nothing(self):
+        self.add_mod()
+        out = self.run_setup(self.mods_flag(), dry_run=True)
+        self.assertIn("restack-demoview", out)
+        self.assertFalse(self.default.exists() and any(self.default.iterdir()))
+        self.assertFalse(self.record.exists())
+
 
 class PosixSetup(InstallCases, unittest.TestCase):
     """./setup under sh."""
@@ -237,6 +341,12 @@ class PosixSetup(InstallCases, unittest.TestCase):
 
     def removed_options(self):
         return [["--symlink"], ["--target", (self.tmp / "elsewhere").as_posix()]]
+
+    def mods_flag(self):
+        return "--mods"
+
+    def no_mods_flag(self):
+        return "--no-mods"
 
     def environment(self, env):
         return posix_env(self.shell, env)
@@ -280,6 +390,12 @@ class PowerShellSetup(InstallCases, unittest.TestCase):
 
     def removed_options(self):
         return [["-Symlink"], ["-Target", str(self.tmp / "elsewhere")]]
+
+    def mods_flag(self):
+        return "-Mods"
+
+    def no_mods_flag(self):
+        return "-NoMods"
 
     def environment(self, env):
         return env

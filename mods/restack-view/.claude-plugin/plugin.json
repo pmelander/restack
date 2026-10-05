@@ -1,0 +1,7 @@
+{
+  "name": "restack-view",
+  "version": "0.1.0",
+  "description": "ReStack journey view: where the journey stands, above the prompt, read-only. /restack-view band [on|off]",
+  "author": { "name": "ReStack maintainers" },
+  "types": "./types/index.d.ts"
+}

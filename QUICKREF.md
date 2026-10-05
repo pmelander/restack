@@ -10,8 +10,9 @@ cd restack-install && ./setup          # Windows: .\setup.ps1
 The install is a copy in `~/.claude/skills`; the clone can be deleted.
 `./setup --dry-run` shows what would change · `/restack-upgrade` to update
 later, no clone needed. A one-line notice appears at most once a
-day when a newer version is out; `/restack-upgrade off` turns it off. See
-[INSTALL.md](INSTALL.md).
+day when a newer version is out; `/restack-upgrade off` turns it off.
+`./setup --mods` adds the journey band above the prompt and the `/restack-view`
+pane of open asks, assumptions and decisions; `/restack-view band off` hides the band. See [INSTALL.md](INSTALL.md).
 
 ---
 
