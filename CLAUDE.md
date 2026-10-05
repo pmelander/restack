@@ -82,7 +82,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-027
+    ├── adr/                            # ADR-001 .. ADR-028
     └── ...                             # Generated documentation location
 ```
 
