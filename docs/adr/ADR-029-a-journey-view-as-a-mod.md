@@ -127,8 +127,10 @@ nothing else changes.
    - **The mod's own store holds only its preferences**, such as the band
      being hidden. Nothing about the engagement is stored there.
 3. **The first mod is `restack-view`, a journey view.**
-   - **The band**, one line above the prompt, shown only when the working
-     directory has `docs/journey/journey-state.md`: terrain, phase,
+   - **The band**, one line above the prompt, on by default and shown only
+     when the working directory has `docs/journey/journey-state.md`.
+     `/restack-view band off` hides it, and the mod remembers that choice
+     (O1). It shows terrain, phase,
      confidence, the next command from *Current Position*, and the counts
      of open asks, open assumptions and open decisions. For example:
      `Brownfield · Stressor Analysis · Medium · next: /restack-stressor
@@ -205,13 +207,13 @@ nothing else changes.
    Claude Code offers unnamespaced or aliased plugin skills, or the copy
    install fails in a way a plugin would not.
 
-### Decisions still open
+### Decisions settled by the maintainer, 2026-10-05
 
-| # | Question | Options | Recommendation |
+| # | Question | Options | Answer |
 |---|---|---|---|
 | O1 | **Is the band on by default?** | (a) On whenever a journey is present, with `/restack-view band off` remembered in the mod's store. (b) Off until `/restack-view band on`. | **(a).** The band is the point: the state is visible without asking. One line is cheap, and turning it off is one command. |
-| O2 | **Does `setup` install the mod by default?** | (a) Only with `--mods`. (b) By default, with `--no-mods` to skip it. | **(a) for now.** It is the first write to `~/.claude/settings.json`, and the first TypeScript. Make it the default after a release of field use. |
-| O3 | **Parse in TypeScript, or ask `journey.py`?** | (a) The mod parses the canonical files (decision point 4). (b) Add `journey.py status --json` and have the mod run it with `$.process.run`. | **(a).** It has one source of truth for the *shape*, pinned by shared fixtures. (b) has one parser, but adds `$.process.run`, which is the call reviewers refuse first. |
+| O2 | **Does `setup` install the mod by default?** | (a) Only with `--mods`. (b) By default, with `--no-mods` to skip it. | **(a), for now.** It is the first write to `~/.claude/settings.json`, and the first TypeScript. Revisit making it the default after a release of field use. |
+| O3 | **Parse in TypeScript, or ask `journey.py`?** | (a) The mod parses the canonical files (decision point 4). (b) Add `journey.py status --json` and have the mod run it with `$.process.run`. | **(a).** One source of truth for the *shape*, pinned by shared fixtures. (b) has one parser, but adds `$.process.run`, which is the call reviewers refuse first. |
 | O4 | **Command name** | `/restack-view`, `/rv`, or `/restack` | **`/restack-view`.** It does not collide with a skill and stays in the `restack-` namespace that ADR-009 reserved. |
 
 ### Decision-point accounting
