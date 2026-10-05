@@ -11,6 +11,10 @@
 #
 # POSIX sh. No dependencies. Safe to re-run.
 #
+# With --mods it also installs the mods in mods/restack-*/ beside the skills,
+# where Claude Code loads each as a plugin (<name>@skills-dir; ADR-029). The
+# choice is recorded, so a later plain ./setup keeps it.
+#
 # SAFETY: this script only ever creates, replaces or removes entries whose
 # names begin with "restack-". Nothing else in the skills directory is touched,
 # so it cannot damage another skill suite — the failure mode that ADR-009 exists
@@ -26,6 +30,7 @@ STATE_DIR="$HOME/.restack"
 
 DRY_RUN=""
 QUIET=""
+MODS=""                                         # "", "yes" (--mods) or "no" (--no-mods)
 
 usage() {
   cat <<EOF
@@ -37,6 +42,9 @@ Installs a copy of every ReStack skill into \$HOME/.claude/skills. The copy
 does not depend on this checkout.
 
 Options:
+  --mods        Also install the mods: the journey band above the prompt
+                (ADR-029). Remembered: later runs keep them up to date.
+  --no-mods     Remove the mods, and stop installing them.
   --dry-run     Show what would change; write nothing.
   -q, --quiet   Only print the summary.
   -h, --help    Show this help.
@@ -57,6 +65,12 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN="yes" ;;
     --quiet|-q) QUIET="yes" ;;
+    --mods|--no-mods)
+      want=$([ "$1" = "--mods" ] && echo yes || echo no)
+      if [ -n "$MODS" ] && [ "$MODS" != "$want" ]; then
+        echo "Error: --mods and --no-mods contradict each other." >&2; exit 2
+      fi
+      MODS="$want" ;;
     --copy) ;;                                    # the old default; harmless
     --symlink) removed "--symlink" ;;
     --target) removed "--target" ;;
@@ -89,6 +103,55 @@ for src in "$REPO_DIR"/skills/restack-*/; do
   }
 done
 
+# --- mods (ADR-029) -----------------------------------------------------------
+# A mod is a plugin directory: Claude Code loads one it finds under
+# ~/.claude/skills/ as <name>@skills-dir. Installed only on request; the
+# request is recorded in install.json, so a plain re-run (and /restack-upgrade)
+# keeps what was chosen. Without a record, an installed mod counts as chosen.
+
+MOD_NAMES=""
+if [ -d "$REPO_DIR/mods" ]; then
+  for src in "$REPO_DIR"/mods/restack-*/; do
+    [ -d "$src" ] && MOD_NAMES="$MOD_NAMES $(basename "$src")"
+  done
+fi
+
+WANT_MODS="$MODS"
+if [ -z "$WANT_MODS" ]; then
+  WANT_MODS="no"
+  if [ -f "$STATE_DIR/install.json" ]; then
+    if grep -q '"mods": *true' "$STATE_DIR/install.json"; then WANT_MODS="yes"; fi
+  else
+    for name in $MOD_NAMES; do
+      if [ -f "$SKILLS_DIR/$name/.claude-plugin/plugin.json" ]; then WANT_MODS="yes"; fi
+    done
+  fi
+fi
+
+# Refuse a mod Claude Code would not load, or one that would take a skill's
+# place: same check as the skills', before anything is written.
+if [ "$WANT_MODS" = "yes" ]; then
+  for name in $MOD_NAMES; do
+    src="$REPO_DIR/mods/$name"
+    if [ ! -f "$src/.claude-plugin/plugin.json" ] || [ ! -f "$src/hooks/hooks.json" ]; then
+      echo "Error: mods/$name has no .claude-plugin/plugin.json or hooks/hooks.json - refusing to install a broken mod." >&2
+      exit 1
+    fi
+    if [ -d "$REPO_DIR/skills/$name" ]; then
+      echo "Error: mods/$name has the name of a skill - one would replace the other." >&2
+      exit 1
+    fi
+  done
+fi
+
+# Every file of a mod as `cksum` lines, without .claude-plugin/types/: Claude
+# Code writes that there when it loads a mod for development, and it is never
+# part of the install.
+mod_sig() {
+  (cd "$1" && find . -type f ! -path './.claude-plugin/types/*' | LC_ALL=C sort |
+    while IFS= read -r f; do cksum "$f"; done)
+}
+
 # CLAUDE_SKILLS_DIR used to move the install. It no longer does; say so rather
 # than install somewhere the architect did not expect.
 skills_env_note=""
@@ -117,7 +180,7 @@ remove_entry() {
 
 # --- install -----------------------------------------------------------------
 
-n_new=0; n_upd=0; n_same=0; n_del=0; n_unlinked=0
+n_new=0; n_upd=0; n_same=0; n_del=0; n_unlinked=0; n_mods=0
 
 for src in "$REPO_DIR"/skills/restack-*/; do
   name=$(basename "$src")
@@ -147,6 +210,37 @@ for src in "$REPO_DIR"/skills/restack-*/; do
   cp -R "${src%/}" "$dest"
 done
 
+# --- install the mods ---------------------------------------------------------
+
+if [ "$WANT_MODS" = "yes" ]; then
+  for name in $MOD_NAMES; do
+    src="$REPO_DIR/mods/$name"
+    dest="$SKILLS_DIR/$name"
+    n_mods=$((n_mods + 1))
+
+    if [ -L "$dest" ]; then
+      action="update"; n_upd=$((n_upd + 1))
+    elif [ ! -e "$dest" ]; then
+      action="install"; n_new=$((n_new + 1))
+    elif [ "$(mod_sig "$src")" = "$(mod_sig "$dest")" ]; then
+      action="unchanged"; n_same=$((n_same + 1))
+    else
+      action="update"; n_upd=$((n_upd + 1))
+    fi
+
+    [ "$action" = "unchanged" ] || say "  $action  $name  (mod)"
+
+    [ -n "$DRY_RUN" ] && continue
+    [ "$action" = "unchanged" ] && continue
+
+    if [ -e "$dest" ] || [ -L "$dest" ]; then
+      remove_entry "$dest"
+    fi
+    cp -R "$src" "$dest"
+    rm -rf "$dest/.claude-plugin/types"
+  done
+fi
+
 # --- remove skills deleted upstream -----------------------------------------
 # The reason `cp -R skills/* ~/.claude/skills/` is not good enough: a skill
 # removed or renamed upstream stays installed forever, and the user keeps
@@ -157,7 +251,12 @@ for dest in "$SKILLS_DIR"/restack-*; do
   [ -e "$dest" ] || [ -L "$dest" ] || continue      # unexpanded glob
   name=$(basename "$dest")
   [ -d "$REPO_DIR/skills/$name" ] && continue
-  say "  remove   /$name  (no longer in ReStack)"
+  if [ -d "$REPO_DIR/mods/$name" ]; then
+    [ "$WANT_MODS" = "yes" ] && continue
+    say "  remove   $name  (mod; --no-mods)"
+  else
+    say "  remove   /$name  (no longer in ReStack)"
+  fi
   n_del=$((n_del + 1))
   [ -n "$DRY_RUN" ] || remove_entry "$dest"
 done
@@ -218,6 +317,7 @@ if [ -z "$DRY_RUN" ]; then
   "repo": $(json_str "$REPO_DIR"),
   "skills_dir": $(json_str "$SKILLS_DIR"),
   "method": "copy",
+  "mods": $([ "$WANT_MODS" = "yes" ] && echo true || echo false),
   "installed_at": $(json_str "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
 }
 EOF
@@ -249,7 +349,8 @@ fi
 
 say ""
 if [ $((n_new + n_upd + n_del)) -eq 0 ]; then
-  printf 'ReStack v%s — already up to date (%d skills).\n' "$VERSION" "$n_same"
+  printf 'ReStack v%s — already up to date (%d skills%s).\n' "$VERSION" "$((n_same - n_mods))" \
+    "$([ "$n_mods" -gt 0 ] && printf ', %d mod(s)' "$n_mods")"
 else
   printf 'ReStack v%s — %d installed, %d updated, %d removed, %d unchanged.\n' \
     "$VERSION" "$n_new" "$n_upd" "$n_del" "$n_same"
@@ -262,6 +363,13 @@ fi
 [ -n "$skills_env_note" ] && printf '\nNote: %s\n' "$skills_env_note"
 [ -n "$dep_note" ] && printf '\nNote: %s\n' "$dep_note"
 [ -n "$codex_note" ] && printf '\nNote: %s\n' "$codex_note"
+
+if [ "$WANT_MODS" = "yes" ] && [ "$n_mods" -gt 0 ]; then
+  printf '\nMods: %s load as plugins in new sessions (/reload-plugins in an open one).\n' "$(echo $MOD_NAMES)"
+  printf 'The journey band hides with /restack-view band off; ./setup --no-mods removes it.\n'
+elif [ -n "$MOD_NAMES" ] && [ "$MODS" != "no" ]; then
+  printf '\nOptional: ./setup --mods adds the journey band above the prompt (ADR-029).\n'
+fi
 
 if [ -n "$DRY_RUN" ]; then
   printf '\n(dry run — nothing was written)\n'

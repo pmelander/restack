@@ -46,6 +46,10 @@ def installed_skills() -> dict[str, str]:
     root = Path(__file__).resolve().parent.parent.parent      # .../skills
     found = {}
     for skill in sorted(root.glob("restack-*")):
+        # A mod installs beside the skills (ADR-029) and has no SKILL.md. It is
+        # not a skill, so nothing can be an old copy of it.
+        if not (skill / "SKILL.md").is_file():
+            continue
         title = ""
         try:
             for line in (skill / "SKILL.md").read_text(encoding="utf-8").splitlines():

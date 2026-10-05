@@ -6,11 +6,17 @@ individual skills carry their own `version:` in frontmatter.
 ## [Unreleased]
 
 A read-only journey view as a Claude Code mod
-([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). The first slice is
-the band. `setup` does not install it yet, so it is loaded with
-`claude --plugin-dir mods/restack-view`.
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band, installed
+on request with `./setup --mods`.
 
 ### Added
+
+- **`setup --mods` / `--no-mods`** (`-Mods` / `-NoMods`): installs the mods
+  beside the skills, where Claude Code loads each as `<name>@skills-dir`. The
+  choice is recorded in `install.json` (`"mods"`), so a plain re-run and
+  `/restack-upgrade` keep it. A broken mod, a mod named like a skill, and the
+  two flags together are refused. The `.claude-plugin/types/` Claude Code
+  writes on a development load is never installed or compared.
 
 - **`mods/restack-view`**, ReStack's first TypeScript. It draws one line above
   the prompt: terrain, phase, confidence, the next command, and the counts of
@@ -25,6 +31,17 @@ the band. `setup` does not install it yet, so it is loaded with
 - **`tests/fixtures/journey/band/`**: a full canonical journey, pinned
   canonical by `journey.py check`, rendered into the mod's tests by
   `gen_skills.py`.
+
+### Changed
+
+- **The band reads a lived-in journey**, not only the template: a terrain
+  sentence shows its terms (`Greenfield/Brownfield`), other fields their first
+  clause, and the next move comes from the newest Current Position subsection
+  only. Found on the first live run.
+- **`local_copies.py`** no longer counts an installed mod as a skill, so a
+  project's own folder sharing the mod's short name is never reported.
+- **`/restack-upgrade`** 2.0.1: the install check skips a mod (no `SKILL.md`),
+  and says upgrades keep the mods choice.
 
 ### Decided
 

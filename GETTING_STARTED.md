@@ -28,6 +28,10 @@ and each says so if it is missing. `openpyxl` is needed only by `/restack-excel`
 fourteen for the work, plus `/restack-excel`, `/restack-trace` and
 `/restack-upgrade`.
 
+**Optional:** `./setup --mods` (`.\setup.ps1 -Mods`) adds the journey band, one
+line above the prompt that shows where the journey stands. It is read-only, and
+`/restack-view band off` hides it.
+
 Want an agent to install it for you? Point Claude Code at
 [INSTALL.md](INSTALL.md). Developing ReStack, or upgrading from an unprefixed
 install? See [Installation](docs/INSTALLATION.md).

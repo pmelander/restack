@@ -122,7 +122,14 @@ Neither is required — sixteen of the seventeen skills work without either, and
 pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
 npm i -g @openai/codex            # Codex CLI — a genuine outside voice
 codex login
+./setup --mods                    # the journey band above the prompt (Windows: .\setup.ps1 -Mods)
 ```
+
+**The journey band** is a read-only mod that keeps where the journey stands on
+screen: terrain, phase, the next command, and the open asks, assumptions and
+decisions, without spending a turn to ask
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). No skill depends on
+it, and `/restack-journey where` answers the same wherever it is not loaded.
 
 **Codex is what makes the second opinion worth having.** Without it the outside
 opinion still runs, using a fresh subagent — which removes conversation bias but

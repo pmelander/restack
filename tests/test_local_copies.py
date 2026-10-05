@@ -173,6 +173,32 @@ class LocalCopies(unittest.TestCase):
         finally:
             os.environ.pop("RESTACK_STATE_DIR", None)
 
+    # --- an installed mod (ADR-029) ------------------------------------------
+
+    def test_an_installed_mod_is_not_a_skill_and_has_no_old_copies(self):
+        # An install tree holding one skill and the restack-view mod, with this
+        # script inside it: installed_skills() reads the tree it sits in.
+        tree = self.tmp / "install" / "skills"
+        scripts = tree / "restack-upgrade" / "scripts"
+        scripts.mkdir(parents=True)
+        shutil.copy2(LOCAL, scripts / "local_copies.py")
+        (tree / "restack-upgrade" / "SKILL.md").write_text("# Upgrade\n", encoding="utf-8")
+        (tree / "restack-journey").mkdir()
+        (tree / "restack-journey" / "SKILL.md").write_text("# Architect's Journey\n", encoding="utf-8")
+        (tree / "restack-view" / ".claude-plugin").mkdir(parents=True)
+        (tree / "restack-view" / ".claude-plugin" / "plugin.json").write_text('{ "name": "restack-view" }\n',
+                                                                             encoding="utf-8")
+        lc = load("local_copies_installed", scripts / "local_copies.py")
+
+        self.assertIn("journey", lc.installed_skills())
+        self.assertNotIn("view", lc.installed_skills(), "a mod is not a skill")
+
+        # The project's own `view` skill, residuality words and all, is left alone.
+        skill(self.project, "view", "---\ndescription: ours\n---\n\n# View\n\nresiduals and stressors\n")
+        names = [c["name"] for c in lc.find(self.project)]
+        self.assertNotIn("view", names)
+        self.assertIn("journey", names, "real old copies are still found")
+
     # --- the user profile (installs from before the restack- prefix) --------
 
     def profile_copies(self):

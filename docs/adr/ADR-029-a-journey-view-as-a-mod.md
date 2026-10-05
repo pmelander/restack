@@ -13,9 +13,10 @@ and [mods](https://code.claude.com/docs/en/plugins/mods/overview)? The
 maintainer then decided to park the plugin install, focus on mods, open
 ADR-010's Python rule to TypeScript, and keep mods to usability only.
 
-**Implementation Status:** in progress. The band and `/restack-view band
-[on|off]` are built and tested, with `scripts/check_mods.py` and the CI job.
-The pane, `setup --mods` and `local_copies.py` are not yet built.
+**Implementation Status:** in progress. Built and tested: the band and
+`/restack-view band [on|off]`, `scripts/check_mods.py` and the CI job,
+`setup --mods` / `--no-mods` in both installers, and `local_copies.py`
+skipping an installed mod. Not yet built: the pane.
 
 **Accepted:** 2026-10-05, by the maintainer
 

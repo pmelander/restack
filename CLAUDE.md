@@ -477,6 +477,7 @@ matrices), `decisions-log.md` (every gate passed, with rationale), and
 ```bash
 ./setup                 # copy into ~/.claude/skills; the only install method
 ./setup --dry-run       # what would change, without writing
+./setup --mods          # also the mods (ADR-029), remembered; --no-mods removes them
 pip install -r requirements.txt   # optional; /restack-excel only
 ```
 

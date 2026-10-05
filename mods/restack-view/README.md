@@ -17,6 +17,17 @@ a prompt, and no skill depends on it: `/restack-journey where` gives the same
 answer wherever this mod is not loaded. `scripts/check_mods.py` holds its
 calls to that.
 
+## Install
+
+```bash
+./setup --mods          # Windows: .\setup.ps1 -Mods
+```
+
+It installs beside the skills, as `~/.claude/skills/restack-view`, and loads as
+`restack-view@skills-dir` in new sessions (`/reload-plugins` in an open one).
+The choice is remembered, so `/restack-upgrade` keeps it current.
+`./setup --no-mods` removes it.
+
 ## Commands
 
 | Command | Does |
