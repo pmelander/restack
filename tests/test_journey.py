@@ -55,16 +55,20 @@ def load_module():
 
 
 class ModFixtureCase(unittest.TestCase):
-    """The `band` journey is what the restack-view mod's tests read (ADR-029).
+    """The `band` and `lived` journeys are what the restack-view mod's tests read
+    (ADR-029). `lived` is in the shape a long engagement leaves: a sentence for
+    the terrain, a qualified phase label, dated Current Position subsections.
 
-    It has to be canonical by journey.py's own check, or the mod would be
+    Each has to be canonical by journey.py's own check, or the mod would be
     tested against a shape journey.py never writes.
     """
 
-    def test_band_fixture_is_canonical(self):
-        code, out = run("check", "--docs", str(FIXTURES / "band"), "--date", DATE)
-        self.assertEqual(code, 0, out)
-        self.assertNotIn("not canonical", out)
+    def test_mod_fixtures_are_canonical(self):
+        for name in ("band", "lived"):
+            with self.subTest(fixture=name):
+                code, out = run("check", "--docs", str(FIXTURES / name), "--date", DATE)
+                self.assertEqual(code, 0, out)
+                self.assertNotIn("not canonical", out)
 
 
 class JourneyCase(unittest.TestCase):

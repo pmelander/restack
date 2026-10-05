@@ -40,14 +40,68 @@ const isSeparator = (line: string): boolean => {
   return line.trim().startsWith('|') && cells.every(c => /^:?-{2,}:?$/.test(c))
 }
 
-// A bold header field, `**Name:** value`. A template placeholder (`[...]`) is
-// no value.
-const field = (text: string, name: string): string | undefined => {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const m = text.match(new RegExp(`^\\*\\*${escaped}:\\*\\*\\s*(.+?)\\s*$`, 'm'))
+// A bold field, `**Name:** value`, also as a list item and with a qualifier
+// in the label, as a long journey writes them: `- **Next move (D1 = A):** ...`,
+// `**Current Phase (2026-10-03, end of session):** ...`. The first match in
+// `text` wins. A template placeholder (`[...]`) is no value.
+const field = (text: string, ...names: string[]): string | undefined => {
+  const label = names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const m = text.match(new RegExp(`^(?:\\s*-\\s+)?\\*\\*(?:${label})(?: \\([^)]*\\))?:\\*\\*\\s*(.+?)\\s*$`, 'mi'))
   const value = m?.[1]
 
   return value === undefined || value === '' || value.startsWith('[') ? undefined : value
+}
+
+// The header: everything above the first `##` heading, so a `Previous phase
+// line` further down is never read as the phase.
+const header = (text: string): string => {
+  const all = lines(text)
+  const end = all.findIndex(l => l.startsWith('## '))
+
+  return (end < 0 ? all : all.slice(0, end)).join('\n')
+}
+
+// The current position: the `## Current Position` section, and of its dated
+// `###` subsections only the first, the newest, because each supersedes the
+// ones below it. Never a superseded position.
+const currentPosition = (text: string): string => {
+  const all = lines(text)
+  const start = all.findIndex(l => /^##\s+current position\b/i.test(l))
+  if (start < 0) return ''
+  const rest = all.slice(start + 1)
+  const end = rest.findIndex(l => l.startsWith('## '))
+  const section = end < 0 ? rest : rest.slice(0, end)
+  const subs = section.map((l, i) => (l.startsWith('### ') ? i : -1)).filter(i => i >= 0)
+  if (subs.length === 0) return section.join('\n')
+  const newestEnd = subs[1] ?? section.length
+
+  return [...section.slice(0, subs[0]), ...section.slice(subs[0], newestEnd)].join('\n')
+}
+
+// A free-text field cut to its first clause, so one long sentence cannot take
+// the whole band.
+const MAX_FIELD = 32
+const compact = (value: string | undefined): string | undefined => {
+  if (value === undefined) return undefined
+  const clause = value.split(/\. |: |; | — | – |, | \(/)[0].replace(/[.\s]+$/, '').trim()
+  if (clause === '') return undefined
+
+  return clause.length > MAX_FIELD ? clause.slice(0, MAX_FIELD - 1) + '…' : clause
+}
+
+// The template's terrain terms, in the order the field names them:
+// "Greenfield service, but its quote-time half is brownfield" is
+// `Greenfield/Brownfield`. A field with none of them is cut to its first clause.
+const TERRAINS = ['Greenfield', 'Brownfield', 'Minefield', 'Ongoing Evolution']
+const terrainOf = (value: string | undefined): string | undefined => {
+  if (value === undefined) return undefined
+  const found: string[] = []
+  for (const m of value.matchAll(/\b(greenfield|brownfield|minefield|ongoing evolution)\b/gi)) {
+    const term = TERRAINS.find(t => t.toLowerCase() === m[1].toLowerCase())
+    if (term !== undefined && !found.includes(term)) found.push(term)
+  }
+
+  return found.length > 0 ? found.join('/') : compact(value)
 }
 
 // The first ReStack command in a line: a code span if there is one, else the
@@ -157,12 +211,14 @@ export function readJourney(files: Files): View | null {
   const decisions = files.log === undefined ? undefined : readLog(files.log)
   if (typeof decisions === 'string') return { kind: 'not-canonical', file: 'decisions-log.md' }
 
+  const head = header(files.state)
+  const position = currentPosition(files.state)
   const journey: Journey = {
     kind: 'journey',
-    terrain: field(files.state, 'Terrain Type'),
-    phase: field(files.state, 'Current Phase'),
-    confidence: confidenceOf(field(files.state, 'Confidence level')),
-    next: command(field(files.state, "What's next")),
+    terrain: terrainOf(field(head, 'Terrain Type')),
+    phase: compact(field(head, 'Current Phase')),
+    confidence: confidenceOf(field(position, 'Confidence level')),
+    next: command(field(position, "What's next", 'Next move')),
     asks: register?.asks,
     open: register?.open,
     decisions,

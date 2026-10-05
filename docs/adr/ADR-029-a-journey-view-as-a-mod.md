@@ -239,6 +239,19 @@ nothing else changes.
    - **What it cannot read, it does not guess.** A legacy file or an
      unknown shape shows `journey files are not canonical: /restack-journey
      migrate`, and nothing else.
+   - **The header fields are free text, and the band says so briefly.**
+     `journey.py` fixes the files' structure, not what a field says, and a
+     long engagement writes sentences. The first live run showed a terrain
+     sentence filling the whole band. So the terrain shows the template's
+     terms in the order the field names them (`Greenfield/Brownfield`), and
+     any other field shows its first clause, capped at 32 characters. The
+     header is read above the first `##` only, so a `Previous phase line`
+     is never the phase. A label may carry a qualifier
+     (`**Current Phase (2026-10-03):**`). The next move and the confidence
+     come from the newest Current Position subsection only, and the next
+     move is read from `What's next` or `Next move`. The `lived` fixture
+     holds all of this, including a superseded subsection whose
+     `What's next` must not be read.
 5. **`setup` installs the mod only on request, as a skills-directory
    plugin.**
    - `setup --mods` (`.\setup.ps1 -Mods`) copies `mods/restack-view/` to

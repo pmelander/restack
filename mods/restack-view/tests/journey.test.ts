@@ -69,6 +69,46 @@ test('a template placeholder is no value', () => {
   expect(readJourney({ state })).toMatchObject({ terrain: undefined, phase: 'Stressor Analysis' })
 })
 
+// The shape a long engagement leaves, from a field report of the first live
+// run: the terrain a sentence, the phase label qualified, the position dated.
+test('a lived-in journey: terms, first clauses, and only the newest position', () => {
+  const view = readJourney(filesOf('lived'))
+  expect(view).toMatchObject({
+    kind: 'journey',
+    terrain: 'Greenfield/Brownfield',
+    phase: 'Documentation/Review',
+    next: '/restack-design-review complete',
+  })
+  // The superseded subsection's `What's next` and `Confidence level` are not read.
+  expect(view).toMatchObject({ confidence: undefined })
+  expect(bandText(view!)).toBe(
+    'Greenfield/Brownfield · Documentation/Review · next /restack-design-review complete · 2 asks · 3 open · 1 decision',
+  )
+})
+
+test('a terrain with no template term is cut to its first clause', () => {
+  const state = FIXTURES.band['journey-state.md'].replace(
+    '**Terrain Type:** Brownfield',
+    '**Terrain Type:** A replatform of the depot estate, with a vendor-run controller fleet underneath',
+  )
+  expect(readJourney({ state })).toMatchObject({ terrain: 'A replatform of the depot estate' })
+})
+
+test('a long first clause is capped', () => {
+  const state = FIXTURES.band['journey-state.md'].replace(
+    '**Current Phase:** Stressor Analysis',
+    '**Current Phase:** Stressor analysis of the offline unlock path across every depot',
+  )
+  const phase = (readJourney({ state }) as { phase?: string }).phase ?? ''
+  expect(phase.length).toBe(32)
+  expect(phase.endsWith('…')).toBe(true)
+})
+
+test('a phase line further down is never read as the phase', () => {
+  const state = FIXTURES.lived['journey-state.md'].replace(/^\*\*Current Phase.*$/m, '')
+  expect(readJourney({ state })).toMatchObject({ phase: undefined })
+})
+
 test('CRLF files read the same as LF', () => {
   const crlf = (s: string) => s.replace(/\n/g, '\r\n')
   const files = filesOf('band')
