@@ -1,6 +1,6 @@
 # ADR-028: Adopted Residuals Are Challenged by Removal, and Candidates Are Found by What Actors Share
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Date:** 2026-10-05
 
