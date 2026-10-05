@@ -10,7 +10,13 @@ engagement and the residuals proposed between them, with the arithmetic known:
   the shared actors, 1 cell newly 1, 2 cells gone with NS;
 - residuals: R1 is right; R2 states 3 cells and lists 4, claims a cell that
   was 0, shares S-1 × RS with R1, and claims a cell in the removed NS column;
-- broken.md is scored on a scale; unfinished.md has margins nobody filled in.
+- broken.md is scored on a scale; unfinished.md has margins nobody filled in;
+- iteration 3 (ADR-028): 12 stressors × 8 actors, total 23. EB, SS and RJ
+  share one event cluster (groups-iter3.md): 9 cells on 6 rows, against a
+  most-hit single actor of 4. Removing RJ (classify-rj.md, substitute OC,
+  claims residuals-iter2.md): 5 cells leave, 1 comes back on OC, S-1 × RS
+  re-opens; S-4 × RS stays cleared (R4 claims it too), S-12 × OC is circular,
+  S-3 × BG names an actor the matrix no longer has. Net 23 → 20.
 
 The script must never change a score: only `totals --write` writes, and only
 the margins.
@@ -155,6 +161,107 @@ class Claims(unittest.TestCase):
             self.assertIn("except 1 whose actor was removed: S-5 × NS", out)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+def scratch_file(name: str, text: str) -> tuple[Path, Path]:
+    tmp = Path(tempfile.mkdtemp(prefix="restack-matrix-"))
+    (tmp / name).write_text(text, encoding="utf-8")
+    return tmp, tmp / name
+
+
+class Rollup(unittest.TestCase):
+
+    def test_a_group_outranks_the_most_hit_actor(self):
+        code, out = run("rollup", "matrix-iter3.md", "--groups", "groups-iter3.md")
+        self.assertEqual(code, 1, out)
+        self.assertIn("Most-hit single actors: CA 4, LC 3, PR 3, EB 3, SS 3", out)
+        self.assertIn("| event cluster | EB 3, SS 3, RJ 3 | 9 | 6 | CA 4 | **yes** |", out)
+        self.assertIn("| on-call tooling | RJ 3, OC 2 | 5 | 3 | CA 4 | no |", out)
+
+    def test_rows_crossing_the_group_and_shared_members(self):
+        out = run("rollup", "matrix-iter3.md", "--groups", "groups-iter3.md")[1]
+        self.assertIn("event cluster: rows crossing two or more of its actors (2)", out)
+        self.assertIn("  - S-8 (EB, SS, RJ)\n  - S-10 (EB, RJ)", out)
+        self.assertIn("In more than one group: RJ (event cluster, on-call tooling)", out)
+
+    def test_no_group_outranks(self):
+        tmp, groups = scratch_file("g.md", "| Group | Actors |\n|---|---|\n| on-call tooling | RJ, OC |\n")
+        try:
+            code, out = run("rollup", "matrix-iter3.md", "--groups", str(groups))
+            self.assertEqual(code, 0, out)
+            self.assertIn("| on-call tooling | RJ 3, OC 2 | 5 | 3 | CA 4 | no |", out)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_prose_is_ignored_and_an_unknown_actor_is_refused(self):
+        tmp, groups = scratch_file("g.md", "Declared on 2026-10-05: what these share.\n"
+                                           "- cluster: EB, XX\n")
+        try:
+            code, out = run("rollup", "matrix-iter3.md", "--groups", str(groups))
+            self.assertEqual(code, 2)
+            self.assertIn("not actors in matrix-iter3.md: XX", out)
+            groups.write_text("Only prose here: nothing to group.\n", encoding="utf-8")
+            self.assertEqual(run("rollup", "matrix-iter3.md", "--groups", str(groups))[0], 2)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class Ablate(unittest.TestCase):
+
+    FULL = ("ablate", "matrix-iter3.md", "--remove", "RJ", "--residuals", "R5",
+            "--claims", "residuals-iter2.md", "--classify", "classify-rj.md")
+
+    def test_complete_ablation(self):
+        code, out = run(*self.FULL, "--substitute", "OC", "--aspiration", "CA")
+        self.assertEqual(code, 0, out)
+        self.assertIn("Baseline: Scoring baseline: D5.\n  the file also says: scored pre-D6", out)
+        for row in ("| S-8 | P | inherit | 1 | 1 | a cluster outage still stops whoever replays |",
+                    "| S-9 | P | vanish | 3 (the row) | — |",
+                    "| S-10 | C | morph | 1 | 0 (OC already 1) |",
+                    "| S-12 | C | vanish | 0 (the row) | — |"):
+            self.assertIn(row, out)
+        self.assertIn("Net, a forecast: 5 cell(s) leave, 1 come back on OC, 1 re-open: 23 → 20 (-3)", out)
+        self.assertIn("by lens: C -1, O +1, P -3", out)
+        self.assertIn("on CA, the aspiration's column: -1", out)
+        self.assertIn("To re-score on OC: S-10 (morph)", out)
+
+    def test_re_open_set_is_the_unique_contribution(self):
+        out = run(*self.FULL, "--substitute", "OC")[1]
+        self.assertIn("no remaining residual claims (1): S-1 × RS", out)
+        self.assertIn("S-4 × RS: also claimed by R4", out)
+        self.assertIn("S-12 × OC: the row vanishes with the removal (circular credit)", out)
+        self.assertIn("S-3 × BG: BG is not an actor in matrix-iter3.md", out)
+
+    def test_a_new_substitute_takes_every_moving_row(self):
+        out = run(*self.FULL, "--substitute", "MB")[1]
+        self.assertIn("Substitute: MB (a new actor)", out)
+        self.assertIn("5 cell(s) leave, 2 come back on MB, 1 re-open: 23 → 21 (-2)", out)
+
+    def test_a_dropped_intention_brings_nothing_back(self):
+        out = run(*self.FULL, "--substitute", "none")[1]
+        self.assertIn("Substitute: none.", out)
+        self.assertIn("5 cell(s) leave, 0 come back on no substitute, 1 re-open: 23 → 19 (-4)", out)
+
+    def test_incomplete_ablation_says_what_is_missing(self):
+        code, out = run("ablate", "matrix-iter3.md", "--remove", "RJ")
+        self.assertEqual(code, 1)
+        self.assertIn("Substitute: not named", out)
+        self.assertIn("Re-open set: not computed", out)
+        self.assertIn("provisional: 3 row(s) unclassified", out)
+        self.assertIn("Rows to classify (3), one line each in the --classify file:\n"
+                      "  S-8: inherit | vanish | morph — <why>", out)
+
+    def test_ablate_writes_nothing(self):
+        before = {p.name: p.read_bytes() for p in FIXTURES.iterdir()}
+        run(*self.FULL, "--substitute", "OC")
+        self.assertEqual(before, {p.name: p.read_bytes() for p in FIXTURES.iterdir()})
+
+    def test_usage_errors(self):
+        self.assertEqual(run("ablate", "matrix-iter3.md", "--remove", "XX")[0], 2)
+        self.assertEqual(run("ablate", "matrix-iter3.md", "--remove", "RJ", "--residuals", "R5")[0], 2)
+        self.assertEqual(run("ablate", "matrix-iter3.md", "--remove", "RJ", "--residuals", "R9",
+                             "--claims", "residuals-iter2.md")[0], 2)
+        self.assertEqual(run("ablate", "matrix-iter3.md", "--remove", "RJ", "--substitute", "RJ")[0], 2)
 
 
 class Usage(unittest.TestCase):

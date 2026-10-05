@@ -237,8 +237,8 @@ The build, not this ADR, does these. Each is pending until it ships.
 |---|---|---|
 | `skills/restack-stressor/SKILL.md.tmpl` | the `ablate` command, its steps and gates | pending |
 | `skills/restack-stressor/sections/ablation.md` | substitute, subtree, classification, re-open set, topology read, baseline | pending |
-| `skills/restack-stressor/scripts/matrix.py` | `rollup`, `ablate` | pending |
-| `tests/test_matrix.py`, `tests/fixtures/matrix/` | invented fixtures: an overlapping claim, a circular row, a grouped substrate | pending |
+| `skills/restack-stressor/scripts/matrix.py` | `rollup`, `ablate` | done 2026-10-05; checked against the reference engagement's pilot: `rollup` gives its hub (35 cells on 24 rows, against 21), `ablate` the pilot's re-open set |
+| `tests/test_matrix.py`, `tests/fixtures/matrix/` | invented fixtures: an overlapping claim, a circular row, a grouped substrate | done 2026-10-05 (iteration 3 of the synthetic engagement) |
 | `templates/` | an ablation report template, vendored into stressor | pending |
 | `skills/restack-journey/SKILL.md.tmpl` | the gate row; the four triggers | pending |
 | `skills/restack-adr/SKILL.md.tmpl` | the "challenged by removal" line on a kept residual | pending |

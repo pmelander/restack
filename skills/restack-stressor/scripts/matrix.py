@@ -5,6 +5,9 @@ The architect scores the matrix; this script never does. It does the parts a
 person or a model gets wrong by hand over a 150-row matrix: the row and column
 totals, the comparison between iterations against the right stressor set, and
 whether every cell a residual claims to clear was a 1 to begin with (ADR-025).
+For a challenge by removal it does the arithmetic and leaves the judgement in
+the files the architect writes: which actors share a substrate, and what
+happens to each row when an actor goes (ADR-028).
 
     python matrix.py totals MATRIX [--write]
         margins checked (or filled with --write), unknown cells, reading aids
@@ -12,6 +15,11 @@ whether every cell a residual claims to clear was a 1 to begin with (ADR-025).
         per-actor before/after, cells cleared and added, both totals
     python matrix.py claims RESIDUALS BEFORE [--after AFTER]
         each residual's claimed cells checked against the matrix
+    python matrix.py rollup MATRIX --groups GROUPS
+        columns summed by the substrate they share, ranked against single actors
+    python matrix.py ablate MATRIX --remove COLS [--residuals R,R --claims FILE...]
+                                   [--classify FILE] [--substitute ACTOR|none] [--aspiration COL]
+        a removal scored: what vanishes, what moves, what re-opens, the net (ADR-028)
 
 Reads any layout the toolkit has produced: `| Stressor | Lens | A | B | Σ |`,
 `| # | Stressor | A | B | TOTAL |`, dots or zeros for empty cells. A cell is
@@ -333,10 +341,14 @@ def compare(before: Path, after: Path) -> tuple[list[str], bool]:
 
 RESIDUAL_HEADING = re.compile(r"^#{2,4}\s+(R-?[\w.]+)\b(.*)$")
 CLAIM_LINE = re.compile(r"(S-\d+[a-z]?)\s*(?::\s*|\(\s*)([A-Za-z][\w/]*(?:\s*,\s*[A-Za-z][\w/]*)*)")
+ACTOR_CODE = re.compile(r"[A-Z][A-Z0-9]{0,5}")
 
 
-def parse_claims(path: Path, actors: list[str]) -> dict[str, dict]:
-    """Residual -> {stated: N or None, cells: [(S, actor)], outside: [(S, actor)]}."""
+def parse_claims(path: Path, actors: list[str], keep_unknown: bool = False) -> dict[str, dict]:
+    """Residual -> {stated: N or None, cells: [(S, actor)], outside: [(S, actor)]}.
+
+    With keep_unknown, a claim on an actor code this matrix doesn't have is kept
+    too: an actor removed since the claim was written is a fact about the claim."""
     known = set(actors)
     out: dict[str, dict] = {}
     current = None
@@ -366,7 +378,7 @@ def parse_claims(path: Path, actors: list[str]) -> dict[str, dict]:
         outside = bool(re.search(r"outside the cluster", line, re.IGNORECASE))
         for s, cols in CLAIM_LINE.findall(line):
             for col in (c.strip() for c in cols.split(",")):
-                if col in known:
+                if col in known or (keep_unknown and ACTOR_CODE.fullmatch(col)):
                     out[current]["outside" if outside else "cells"].append((s, col))
     return {k: v for k, v in out.items() if v["stated"] is not None or v["cells"] or v["outside"]}
 
@@ -438,6 +450,272 @@ def claims(residuals: Path, before: Path, after: Path | None) -> tuple[list[str]
 
 
 # --------------------------------------------------------------------------
+# rollup
+
+
+GROUP_LINE = re.compile(r"^\s*(?:[-*]\s+)?([^:|]+?)\s*:\s*(.+?)\s*$")
+
+
+def parse_groups(path: Path, actors: list[str]) -> dict[str, list[str]]:
+    """`name: A, B, C` per line, or a two-column table `| name | A, B, C |`.
+
+    A line is a group only if every member looks like an actor (a column of the
+    matrix, or an actor code), so prose around the groups is ignored. A code
+    that isn't in the matrix is kept, and refused by the caller."""
+    known = set(actors)
+    groups: dict[str, list[str]] = {}
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        text = strip_md(line)
+        if not text or text.startswith("#"):
+            continue
+        if text.startswith("|"):
+            cells = split_row(text)
+            if len(cells) != 2:
+                continue
+            name, cols = cells
+        else:
+            m = GROUP_LINE.match(text)
+            if not m:
+                continue
+            name, cols = m.group(1), m.group(2)
+        members = [c for c in re.split(r"[,\s]+", cols.strip().rstrip(".")) if c]
+        if members and all(c in known or ACTOR_CODE.fullmatch(c) for c in members):
+            groups[name.strip()] = members
+    return groups
+
+
+def rollup(path: Path, groups_path: Path) -> tuple[list[str], bool]:
+    m = Matrix(path)
+    grid = m.cells()
+    groups = parse_groups(groups_path, m.actors)
+    if not groups:
+        raise UsageError(f"{groups_path}: no group found (one `name: A, B, C` per line)")
+    unknown = sorted({a for cols in groups.values() for a in cols if a not in m.actors})
+    if unknown:
+        raise UsageError(f"{groups_path}: not actors in {path.name}: {', '.join(unknown)}")
+
+    def hit(row: dict, actor: str) -> bool:
+        v = row.get(actor)
+        return bool(v and v[0])
+
+    col_sum = {a: sum(hit(r, a) for r in grid.values()) for a in m.actors}
+    ranked = sorted(m.actors, key=lambda a: -col_sum[a])
+    out = [f"{path.name}: {len(grid)} stressors × {len(m.actors)} actors, total "
+           f"{sum(col_sum.values())}; {len(groups)} group(s) from {groups_path.name}",
+           "Most-hit single actors: " + ", ".join(f"{a} {col_sum[a]}" for a in ranked[:5])]
+    out.append("\n| Group | Actors | Cells | Rows | Most-hit actor outside it | Outranks it |")
+    out.append("|---|---|---|---|---|---|")
+    flagged = False
+    crossing: dict[str, list[str]] = {}
+    member_of: dict[str, list[str]] = collections.defaultdict(list)
+    for name, cols in groups.items():
+        for a in cols:
+            member_of[a].append(name)
+        rows = [k for k, r in grid.items() if any(hit(r, a) for a in cols)]
+        crossing[name] = [f"{k} ({', '.join(a for a in cols if hit(r, a))})"
+                          for k, r in grid.items() if sum(hit(r, a) for a in cols) >= 2]
+        outside = [a for a in ranked if a not in cols]
+        top = outside[0] if outside else None
+        beats = bool(top) and len(rows) > col_sum[top]
+        flagged |= beats
+        out.append(f"| {name} | {', '.join(f'{a} {col_sum[a]}' for a in cols)} | "
+                   f"{sum(col_sum[a] for a in cols)} | {len(rows)} | "
+                   f"{f'{top} {col_sum[top]}' if top else '—'} | {'**yes**' if beats else 'no'} |")
+    out.append("\nRows, not cells, are the comparison: a single actor's cells are its rows, "
+               "and a group's cells count a row once per member it hits.")
+    for name, rows in crossing.items():
+        if rows:
+            out.append(f"\n{name}: rows crossing two or more of its actors ({len(rows)}), the "
+                       f"common-mode candidates the columns hide:")
+            out += [f"  - {r}" for r in rows[:20]] + (["  - ..."] if len(rows) > 20 else [])
+    shared = {a: g for a, g in member_of.items() if len(g) > 1}
+    if shared:
+        out.append("\nIn more than one group: "
+                   + "; ".join(f"{a} ({', '.join(g)})" for a, g in shared.items()))
+    out.append("\nA group that outranks the most-hit actor is a candidate for `ablate` (ADR-028). "
+               "The grouping is yours: a substrate nobody declared stays hidden.")
+    return out, flagged
+
+
+# --------------------------------------------------------------------------
+# ablate
+
+
+CLASS_LINE = re.compile(r"^\s*(?:[-*]\s+|\|\s*)?([^\s:|]+)\s*[:|]\s*(vanish|inherit|morph)\b"
+                        r"[\s|:—–-]*(.*?)[\s|]*$", re.IGNORECASE)
+
+
+def parse_classes(path: Path) -> dict[str, tuple[str, str]]:
+    """Row -> (vanish | inherit | morph, reason): `S-8: inherit — why` per line,
+    or a table row `| S-8 | inherit | why |`."""
+    out = {}
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        m = CLASS_LINE.match(strip_md(line))
+        if m:
+            out[m.group(1)] = (m.group(2).lower(), m.group(3).strip())
+    return out
+
+
+def lens_of(m: Matrix, cells: list[str]) -> str:
+    for k in m.label_cols:
+        if m.header[k].lower() == "lens":
+            return re.sub(r"\s*[,/]\s*", "/", strip_md(cells[k])) or "—"
+    return "—"
+
+
+def ablate(path: Path, remove: list[str], residuals: list[str], claim_files: list[Path],
+           classify: Path | None, substitute: str | None,
+           aspiration: str | None) -> tuple[list[str], bool]:
+    m = Matrix(path)
+    grid = m.cells()
+    lens = {m.key(c): lens_of(m, c) for _, c in m.rows}
+    order = {k: n for n, k in enumerate(grid)}
+    bad = [c for c in remove + ([aspiration] if aspiration else []) if c not in m.actors]
+    if bad:
+        raise UsageError(f"not actors in {path.name}: {', '.join(bad)}")
+    if substitute in remove:
+        raise UsageError(f"the substitute {substitute} is one of the actors being removed")
+    if bool(residuals) != bool(claim_files):
+        raise UsageError("--residuals and --claims go together: the residuals being removed, "
+                         "and the files that record what every residual clears")
+
+    def v(row: str, actor: str | None) -> int:
+        x = grid.get(row, {}).get(actor) if actor else None
+        return 1 if x and x[0] else 0
+
+    total = sum(v(r, a) for r in grid for a in m.actors)
+    classes = parse_classes(classify) if classify else {}
+    touching = [r for r in grid if any(v(r, a) for a in remove)]
+    rows = [r for r in grid if r in touching or r in classes]
+    unclassified = [r for r in touching if r not in classes]
+    stray = [r for r in classes if r not in grid]
+    vanish = {r for r in rows if classes.get(r, ("",))[0] == "vanish"}
+    dropped = substitute == "none"
+    existing = substitute in m.actors
+    flagged = bool(unclassified or stray)
+
+    out = [f"Ablation of {', '.join(remove)} on {path.name}: {len(grid)} stressors × "
+           f"{len(m.actors)} actors, total {total}"]
+    base = next((re.match(r"(.*?scoring baseline\W*[^.]*\.?)", strip_md(l), re.I).group(1)
+                 for l in m.lines if re.search(r"scoring baseline", l, re.I)), None)
+    pre = sorted(set(re.findall(r"scored pre-D\d+", strip_md("\n".join(m.lines)))),
+                 key=lambda s: int(s.split("D")[-1]))
+    out.append(f"Baseline: {base}" if base else
+               f"Baseline: not stated in {path.name}. Name the decisions taken since it was "
+               f"scored before quoting the net (ADR-028 §6).")
+    if pre:
+        out.append(f"  the file also says: {', '.join(pre)}")
+    if residuals:
+        out.append(f"Residuals removed: {', '.join(residuals)} (claims from "
+                   f"{', '.join(f.name for f in claim_files)})")
+    if dropped:
+        out.append("Substitute: none. The intentions these actors carried are dropped, "
+                   "and the brief must say so.")
+    elif substitute:
+        out.append(f"Substitute: {substitute} ({'an actor in the matrix' if existing else 'a new actor'})")
+    else:
+        flagged = True
+        out.append("Substitute: not named. Every intention needs a carrier, or `--substitute none` "
+                   "to say it is dropped (ADR-028 §2). Nothing is counted as moving.")
+
+    removed: collections.Counter = collections.Counter()
+    back: collections.Counter = collections.Counter()
+    asp = 0
+    rescore = []
+    out.append(f"\n| Row | Lens | Class | Cells leaving | Back on {substitute or 'the substitute'} | Why |")
+    out.append("|---|---|---|---|---|---|")
+    for r in rows:
+        cls, why = classes.get(r, ("", ""))
+        here = sum(v(r, a) for a in remove)
+        if cls == "vanish":
+            gone = sum(v(r, a) for a in m.actors)
+            asp -= v(r, aspiration)
+            leaving, returning = f"{gone} (the row)", "—"
+        else:
+            gone = here
+            if aspiration in remove:
+                asp -= v(r, aspiration)
+            leaving, returning = str(gone), "—"
+            if cls in ("inherit", "morph") and here and substitute and not dropped:
+                add = 0 if existing and v(r, substitute) else 1
+                back[lens[r]] += add
+                asp += add if aspiration == substitute else 0
+                returning = str(add) + (f" ({substitute} already 1)" if not add else "")
+            if cls == "morph":
+                rescore.append(r)
+        removed[lens[r]] += gone
+        out.append(f"| {r} | {lens[r]} | {cls or '**unclassified**'} | {leaving} | {returning} | {why} |")
+
+    reopened = 0
+    if claim_files:
+        claimed: dict[str, set] = collections.defaultdict(set)
+        for f in claim_files:
+            for name, r in parse_claims(f, m.actors, keep_unknown=True).items():
+                claimed[name] |= set(r["cells"] + r["outside"])
+        missing = [n for n in residuals if n not in claimed]
+        if missing:
+            raise UsageError(f"not found in the claims files: {', '.join(missing)}")
+        others: dict[tuple, list[str]] = collections.defaultdict(list)
+        for name, cells in claimed.items():
+            if name not in residuals:
+                for c in cells:
+                    others[c].append(name)
+        cut = sorted(set().union(*(claimed[n] for n in residuals)),
+                     key=lambda c: (order.get(c[0], len(order)), c[0], c[1]))
+        reopen, not_back = [], []
+        for s, a in cut:
+            if s not in grid:
+                not_back.append(f"{s} × {a}: {s} is not a stressor in {path.name}")
+            elif a not in m.actors:
+                not_back.append(f"{s} × {a}: {a} is not an actor in {path.name}")
+            elif a in remove:
+                not_back.append(f"{s} × {a}: {a} is being removed")
+            elif s in vanish:
+                not_back.append(f"{s} × {a}: the row vanishes with the removal (circular credit)")
+            elif (s, a) in others:
+                not_back.append(f"{s} × {a}: also claimed by {', '.join(others[(s, a)])}")
+            elif v(s, a):
+                not_back.append(f"{s} × {a}: already 1")
+            else:
+                reopen.append(f"{s} × {a}")
+                back[lens[s]] += 1
+                asp += 1 if a == aspiration else 0
+        reopened = len(reopen)
+        out.append(f"\nRe-open set: cells {', '.join(residuals)} cleared that no remaining residual "
+                   f"claims ({reopened}): " + (", ".join(reopen) if reopen else "none"))
+        if not_back:
+            out.append(f"Claimed, and not re-opened ({len(not_back)}):")
+            out += [f"  - {n}" for n in not_back]
+    else:
+        flagged = True
+        out.append("\nRe-open set: not computed. Pass --residuals and --claims (ADR-028 §4); without "
+                   "it the net counts only what leaves.")
+
+    leaving_total, back_total = sum(removed.values()), sum(back.values())
+    net = back_total - leaving_total
+    out.append(f"\nNet, a forecast: {leaving_total} cell(s) leave, {back_total - reopened} come back on "
+               f"{substitute if substitute and not dropped else 'no substitute'}, {reopened} re-open: "
+               f"{total} → {total + net} ({net:+d})")
+    lenses = sorted(set(removed) | set(back))
+    out.append("  by lens: " + ", ".join(f"{x} {back[x] - removed[x]:+d}" for x in lenses))
+    if aspiration:
+        out.append(f"  on {aspiration}, the aspiration's column: {asp:+d}")
+    if unclassified:
+        out.append(f"  provisional: {len(unclassified)} row(s) unclassified, counted as leaving "
+                   f"their removed columns with nothing back")
+    if rescore:
+        out.append(f"To re-score on {substitute}: {', '.join(rescore)} (morph)")
+    out.append("The rows the substitute brings with it are named, not scored here: generate and walk "
+               "them before the brief quotes a final number.")
+    if unclassified:
+        out.append(f"\nRows to classify ({len(unclassified)}), one line each in the --classify file:")
+        out += [f"  {r}: inherit | vanish | morph — <why>" for r in unclassified]
+    if stray:
+        out.append(f"\nClassified but not stressors in {path.name}: {', '.join(stray)}")
+    return out, flagged
+
+
+# --------------------------------------------------------------------------
 
 
 def main(argv: list[str]) -> int:
@@ -458,22 +736,45 @@ def main(argv: list[str]) -> int:
     p.add_argument("residuals")
     p.add_argument("before")
     p.add_argument("--after")
+    p = sub.add_parser("rollup")
+    p.add_argument("matrix")
+    p.add_argument("--groups", required=True)
+    p = sub.add_parser("ablate")
+    p.add_argument("matrix")
+    p.add_argument("--remove", required=True)
+    p.add_argument("--residuals", dest="removed_residuals")
+    p.add_argument("--claims", nargs="+", default=[])
+    p.add_argument("--classify")
+    p.add_argument("--substitute")
+    p.add_argument("--aspiration")
     try:
         args = parser.parse_args(argv)
     except SystemExit as exc:
         return 0 if exc.code == 0 else 2
+
+    def names(value: str | None) -> list[str]:
+        return [x.strip() for x in (value or "").split(",") if x.strip()]
+
     try:
-        for name in ("matrix", "before", "after", "residuals"):
-            value = getattr(args, name, None)
+        files = [getattr(args, n, None) for n in ("matrix", "before", "after", "residuals",
+                                                   "groups", "classify")]
+        for value in files + list(getattr(args, "claims", [])):
             if value and not Path(value).is_file():
                 raise UsageError(f"no such file: {value}")
         if args.command == "totals":
             out, flagged = totals(Path(args.matrix), args.write)
         elif args.command == "compare":
             out, flagged = compare(Path(args.before), Path(args.after))
-        else:
+        elif args.command == "claims":
             out, flagged = claims(Path(args.residuals), Path(args.before),
                                   Path(args.after) if args.after else None)
+        elif args.command == "rollup":
+            out, flagged = rollup(Path(args.matrix), Path(args.groups))
+        else:
+            out, flagged = ablate(Path(args.matrix), names(args.remove), names(args.removed_residuals),
+                                  [Path(f) for f in args.claims],
+                                  Path(args.classify) if args.classify else None,
+                                  args.substitute, args.aspiration)
     except UsageError as exc:
         print(f"matrix: {exc}", file=sys.stderr)
         return 2
