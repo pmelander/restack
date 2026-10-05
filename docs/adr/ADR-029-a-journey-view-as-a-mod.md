@@ -61,18 +61,65 @@ constraint.
 
 ### A mod is a plugin, and the plugin install is parked
 
-There are three ways to load a mod:
+There are four ways to load a mod:
 
-| Way | Persistent | Needs a marketplace |
-|---|---|---|
-| `claude plugin install <mod>@<marketplace>` | yes | yes |
-| `claude --plugin-dir <dir>` | one session | no |
-| `CLAUDE_CODE_PLUGIN_DIRS` in `env` in `~/.claude/settings.json` | yes, terminal and Desktop | no |
+| Way | Id | Persistent | Needs |
+|---|---|---|---|
+| `claude plugin install <mod>@<marketplace>` | `<name>@<marketplace>` | yes | a marketplace |
+| `claude --plugin-dir <dir>` | `<name>@inline` | one session | a flag |
+| `CLAUDE_CODE_PLUGIN_DIRS` in `env` in `~/.claude/settings.json` | `<name>@inline` | yes | a settings edit |
+| a plugin directory saved under `~/.claude/skills/` | `<name>@skills-dir` | yes | nothing else |
 
-The third way loads a directory the same way `--plugin-dir` does, in every
-session. The docs give it for "apps you can't pass a flag to", which covers
-the Desktop app. It needs no marketplace and no change to how the skills
-install.
+The fourth way is the one ReStack already uses for its skills. A directory
+under `~/.claude/skills/` that has `.claude-plugin/plugin.json` loads as a
+plugin, in place, in every session, in the terminal and the Desktop app. It
+is on unless its manifest sets `defaultEnabled: false` or a settings file
+sets `"<name>@skills-dir": false`. It needs no marketplace, no settings edit
+and no change to how the skills install.
+
+### A working example: `headroom`
+
+The maintainer's own `headroom` mod is installed exactly this way, in
+`~/.claude/skills/headroom/`. It is not part of ReStack. It draws the context
+window, rate limits and cost above the prompt, and it has the shape a band
+mod should have:
+
+- **TSX.** The module is `hooks/register.tsx`. Elements come from
+  `$.ui.resolve(e)` and are written as JSX, typed with `Register` and
+  `EngineInterface` from `claude-code`.
+- **Typed state.** `types/index.d.ts`, named by `types` in the manifest,
+  declares the data shapes and the `PluginState` atoms. `tsconfig.json`
+  extends the declarations Claude Code generates into
+  `.claude-plugin/types/`, which is git-ignored.
+- **Refresh outside the render.** `refresh()` builds a snapshot and writes
+  it to a `$.state` atom, behind a re-entrancy guard. The `ui.render` hook
+  only reads it, so a write redraws without `$.ui.invalidate`. Refresh runs
+  on `session.measure`, which fires after each turn. A few `$.clock.after`
+  retries cover a session whose first data is not ready yet.
+- **A toggle that persists.** `/headroom [on|off]` toggles with no argument,
+  prints usage on a bad one, and keeps the choice in `$.store`, restored at
+  `session.start`.
+- **A band that steps aside.** It returns `next(e)` while a survey is up,
+  when it is off, and when it has nothing to show. It drops rows in
+  priority order to fit `e.props.maxRows`. It draws a padded monospace line
+  in the terminal and fixed `Box` columns on the Desktop's proportional
+  font.
+- **Tests per surface.** The same tests run for `terminal` and `desktop`,
+  with `mock.store`, `mock.clock` at a fixed time, the data call stubbed,
+  and the drawn tree read as text. One test checks what is dropped when only
+  one row fits.
+
+It also shows two gaps a second band mod must not repeat:
+
+- **It replaces the band rather than sharing it.** A tree returned from
+  `AbovePrompt` replaces what the mods after it draw. To share the band, a
+  mod puts `await next(e)` among its own children. With two band mods
+  installed and neither composing, only one shows, depending on load order.
+- **It loses its state after `/clear`.** `/clear`, `/resume` and `/branch`
+  reset every `$.state` value, and `session.start` does not fire again. The
+  stored "off" is forgotten until the next session. The fix the docs give
+  is a `classic.SessionStart` hook filtered on `source: clear | resume |
+  fork` that reloads from `$.store`.
 
 Packaging all of ReStack as a marketplace plugin was analysed and is
 **parked** (decision point 8). It would rename every command
@@ -88,8 +135,8 @@ managed settings and deny rules, and allows everything else. An
 organisation can stop a user's mod from loading with:
 
 - `allowManagedModsOnly`
-- `disableSideloadFlags`, which rejects `--plugin-dir`. It is expected to
-  stop `CLAUDE_CODE_PLUGIN_DIRS` too; the docs do not say.
+- a marketplace allowlist that does not include `skills-dir`, which stops
+  plugins saved under `~/.claude/skills/` from loading
 - `disableAllHooks`
 
 A policy mod can also refuse a mod whose calls include something it blocks.
@@ -107,8 +154,12 @@ nothing else changes.
      the one bare import Claude Code allows. No `package.json`, no
      `node_modules`, no build step.
    - **It ships in its own directory, `mods/restack-view/`,** and works
-     when that directory is the only thing installed. It never sits under
-     `skills/`.
+     when that directory is the only thing installed. In this repository it
+     never sits under `skills/`, which is for `SKILL.md` skills. Installed,
+     it sits beside them.
+   - **It follows `headroom`'s shape:** a `.tsx` hooks module, a
+     `types/index.d.ts` named in the manifest, a `tsconfig.json` extending
+     the generated declarations, and `.claude-plugin/types/` git-ignored.
    - **Everything a skill runs stays Python and standard library.** A
      skill never calls the mod, and the mod never replaces a helper.
 2. **A mod is a view, never a dependency.**
@@ -121,7 +172,8 @@ nothing else changes.
      `claude plugin validate` is the contract, and CI fails on any call
      outside this list: `$.fs.read`, `$.fs.stat`, `$.fs.exists`, `$.ui.*`,
      `$.command.register`, `$.prompt.fill`, `$.store.get`, `$.store.set`,
-     `$.session.cwd`. It makes no `$.fs.write`, `$.process.*`, `$.http.*`,
+     `$.session.cwd`, `$.clock.after`, `$.clock.now`, and its own `$.state`
+     atoms. It makes no `$.fs.write`, `$.process.*`, `$.http.*`,
      `$.model.*`, `$.prompt.submit` or `$.session.send` calls, and has no
      `tool.call`, `tool.check` or `prompt.submit` hooks.
    - **The mod's own store holds only its preferences**, such as the band
@@ -142,39 +194,50 @@ nothing else changes.
    - **One button, "Put the next command in the prompt",** fills the prompt
      box with the next command. The architect reads it and presses Enter.
      The mod never submits.
-   - **It reads again when a turn ends** and when the pane opens, comparing
-     file modification times. It never polls on a timer.
+   - **It reads again after each turn** (`session.measure`) and when the
+     pane opens, comparing file modification times first. The snapshot goes
+     into a `$.state` atom, and the render only reads it. It never polls;
+     the only timers are `headroom`'s few warm-up retries at session start.
+   - **It shares the band.** Its tree includes `await next(e)`, so a band
+     mod such as `headroom` still draws. It steps aside while a survey is up,
+     and returns `next(e)` alone when it is off or there is no journey.
+   - **It survives `/clear`.** A `classic.SessionStart` hook on `clear`,
+     `resume` and `fork` reloads the band preference and the snapshot.
 4. **The mod reads the canonical files itself.** It parses the shape
    `journey.py` writes ([ADR-023](ADR-023-journey-files-written-by-a-helper.md)):
    the bold header fields, the *Current Position* block, the register's
    table and its `## Status lines`, and the decisions log. It does not run
    `journey.py`, so it needs no `$.process` call, which keeps it out of the
    most common policy refusal and keeps the calls a reviewer approves small.
-   - **The parser is pinned to the journey fixtures.** The mod's tests read
-     `tests/fixtures/journey/`, which `tests/test_journey.py` already runs
-     `journey.py` against. A change to the canonical shape that does not
-     reach the mod fails a test.
+   - **The parser is pinned to the journey fixtures.** A mod test cannot
+     read files itself: a stub answers `$.fs.read`, as `headroom`'s test
+     stubs its data call. So `gen_skills.py` renders
+     `tests/fixtures/journey/` into `mods/restack-view/tests/fixtures.ts`,
+     and `--check` fails on drift. These are the same files
+     `tests/test_journey.py` runs `journey.py` against. A change to the
+     canonical shape that does not reach the mod fails a test.
    - **What it cannot read, it does not guess.** A legacy file or an
      unknown shape shows `journey files are not canonical: /restack-journey
      migrate`, and nothing else.
-5. **`setup` installs the mod only on request.**
+5. **`setup` installs the mod only on request, as a skills-directory
+   plugin.**
    - `setup --mods` (`.\setup.ps1 -Mods`) copies `mods/restack-view/` to
-     `~/.restack/mods/restack-view/`. It then adds that absolute path to
-     `env.CLAUDE_CODE_PLUGIN_DIRS` in `~/.claude/settings.json`, keeping
-     every other entry and every other setting, and backs the file up
-     first. `--dry-run` shows the settings change before anything is
-     written.
-   - **Once registered, every later `setup` refreshes the copy**, so the mod
+     `~/.claude/skills/restack-view/`, where it loads as
+     `restack-view@skills-dir`. That is the directory and prefix `setup`
+     already owns, so nothing outside `restack-*` is written, and no
+     settings file is touched.
+   - **Once installed, every later `setup` refreshes the copy**, so the mod
      updates with the skills and `/restack-upgrade` needs no change.
-     `setup --no-mods` removes the entry and the copy.
-   - **The settings edit is done by a standard-library Python helper**,
-     `scripts/settings_env.py`, which both setup scripts call. Windows
-     PowerShell 5.1 is not trusted to rewrite JSON. Without Python, setup
-     prints the line to add by hand and does not edit the file.
-   - **This is the only write outside `restack-*`.** It touches one key,
-     only entries under `~/.restack/mods/`, only on request, and the tests
-     cover it. ADR-011's safety property is extended, not broken (see the
-     accounting).
+     `setup --no-mods` removes it.
+   - **`setup` must know it is a mod, not a skill.** Its "refuse a broken
+     tree" check expects `SKILL.md`, and its "removed upstream" loop deletes
+     any `restack-*` folder missing from `skills/`. Both learn that a
+     `restack-*` folder holding `.claude-plugin/plugin.json` and present in
+     `mods/` is a mod. `local_copies.py` learns the same, so ADR-024 never
+     reports it as an old copy.
+   - **Developing it does not touch the install.** The maintainer runs
+     `claude --plugin-dir mods/restack-view`, whose `@inline` copy takes
+     precedence over the installed `@skills-dir` one for that session.
 6. **Mods are tested in CI.** The workflow installs the Claude Code CLI, then
    runs:
    - `claude plugin validate --strict --json mods/restack-view`, with a
@@ -212,7 +275,7 @@ nothing else changes.
 | # | Question | Options | Answer |
 |---|---|---|---|
 | O1 | **Is the band on by default?** | (a) On whenever a journey is present, with `/restack-view band off` remembered in the mod's store. (b) Off until `/restack-view band on`. | **(a).** The band is the point: the state is visible without asking. One line is cheap, and turning it off is one command. |
-| O2 | **Does `setup` install the mod by default?** | (a) Only with `--mods`. (b) By default, with `--no-mods` to skip it. | **(a), for now.** It is the first write to `~/.claude/settings.json`, and the first TypeScript. Revisit making it the default after a release of field use. |
+| O2 | **Does `setup` install the mod by default?** | (a) Only with `--mods`. (b) By default, with `--no-mods` to skip it. | **(a), for now.** It is ReStack's first TypeScript, and the first code that runs inside Claude Code. Revisit making it the default after a release of field use. |
 | O3 | **Parse in TypeScript, or ask `journey.py`?** | (a) The mod parses the canonical files (decision point 4). (b) Add `journey.py status --json` and have the mod run it with `$.process.run`. | **(a).** One source of truth for the *shape*, pinned by shared fixtures. (b) has one parser, but adds `$.process.run`, which is the call reviewers refuse first. |
 | O4 | **Command name** | `/restack-view`, `/rv`, or `/restack` | **`/restack-view`.** It does not collide with a skill and stays in the `restack-` namespace that ADR-009 reserved. |
 
@@ -222,11 +285,13 @@ nothing else changes.
 |---|---|---|---|---|
 | ADR-010 | A skill works when its directory is the only thing installed | holds, and applies to the mod | A runtime path that was never installed | The mod ships in `mods/restack-view/` and is loaded from its own copy |
 | CLAUDE.md, from ADR-010 | Standard library only | holds for Python; **amended**: mods are TypeScript with no packages | A script people skip because it needs an install | Claude Code loads `.ts` itself. Only `claude-code` may be imported. |
-| CLAUDE.md, from ADR-010 | Reference scripts by their installed path | holds; the mod is registered by absolute path | A path that resolves only from a checkout | `setup --mods` writes the installed path; the test checks it |
+| CLAUDE.md, from ADR-010 | Reference scripts by their installed path | holds; the mod references nothing outside itself | A path that resolves only from a checkout | Claude Code finds the mod in `~/.claude/skills/`. Its module imports only its own files. |
 | CLAUDE.md, from ADR-010 | Test what the script does | holds; `claude plugin test` in CI | A check that proves a path exists, not that it works | Same, for the mod |
-| ADR-011 | `setup` touches only `restack-*` | **extended**: plus one settings key, its `~/.restack/mods/` entries, on request | `setup` damaging another suite | The edit keeps every other entry and setting, backs up first, shows in `--dry-run`, and is tested |
-| ADR-011 | Installation by reference, with consent | holds | Changing every session on an implied instruction | `--mods` is explicit; without it nothing is registered |
-| ADR-019 | The install is a copy in the profile | holds | Work in progress leaking into sessions | The mod is a copy in `~/.restack/mods/`. The maintainer tests with `claude --plugin-dir mods/restack-view`. |
+| ADR-011 | `setup` touches only `restack-*` | holds | `setup` damaging another suite | The mod installs as `~/.claude/skills/restack-view/`, inside the prefix. No settings file is written. |
+| ADR-011 | Refuse a broken tree; remove skills deleted upstream | holds, taught about mods | Installing a skill Claude Code ignores; a command lingering | A `restack-*` folder from `mods/` with a manifest is a mod, not a broken skill, and is removed only by `--no-mods` or when it leaves `mods/` |
+| ADR-011 | Installation by reference, with consent | holds | Changing every session on an implied instruction | `--mods` is explicit; without it nothing is copied |
+| ADR-019 | The install is a copy in the profile | holds | Work in progress leaking into sessions | The mod is a copy in `~/.claude/skills/`. The maintainer tests with `claude --plugin-dir mods/restack-view`. |
+| ADR-024 | Report and retire old ReStack copies | holds | A stale copy answering in place of the install | `local_copies.py` recognises the installed mod, so it is never reported as an old copy |
 | ADR-023 | The journey files are written only by `journey.py` | holds, reinforced | A write that changes a status on the architect's behalf | The mod cannot write: no `$.fs.write` (decision point 2), checked in CI |
 | ADR-022 | The architect owns the decisions | holds | A tool making a call the architect answers for | The mod never submits; the button fills the prompt and stops |
 
@@ -253,14 +318,15 @@ nothing else changes.
   The mods API is new, and its events and methods can change between
   Claude Code releases. The tested-version line in the README is the
   warning, and a failing CI run is the alarm.
-- **`setup` now edits `~/.claude/settings.json`.** It is opt-in and
-  narrow, but it is the first write outside the skills directory, and a
-  bug there affects every session.
+- **`setup` has a second kind of thing to manage.** Its tree check, its
+  "removed upstream" loop and `local_copies.py` all treat a `restack-*`
+  folder as a skill today. A mistake there could delete the mod, or report
+  it as stale.
 - **It may not load where ReStack is used most.** An organisation with
-  `allowManagedModsOnly` or `disableSideloadFlags` sees nothing. The
-  answer there is the organisation's mod channel: a managed directory
-  marketplace, which needs the parked packaging work or the mod's own
-  marketplace entry.
+  `allowManagedModsOnly`, or a marketplace allowlist without `skills-dir`,
+  sees nothing. The answer there is the organisation's mod channel: a
+  managed directory marketplace, which needs the parked packaging work or
+  the mod's own marketplace entry.
 - **The band reads the files after every turn.** The reads are small and
   check modification times first. The cost is not zero, but it is local
   and quick.
@@ -269,7 +335,7 @@ nothing else changes.
 
 - No skill changes. No command is renamed.
 - `/restack-upgrade` needs no change. It runs the clone's `setup`, which
-  refreshes the mod when it is registered.
+  refreshes the mod when it is installed.
 - VS Code chat, `claude -p` and cloud sessions get the skills and no view,
   which is what they have today.
 
@@ -279,14 +345,14 @@ To do in the change that implements this.
 
 | Document | What this decision invalidates | Change |
 |---|---|---|
-| `mods/restack-view/` | does not exist | new: `.claude-plugin/plugin.json`, `hooks/hooks.json`, `hooks/register.ts`, `tests/*.test.ts`, README |
-| `scripts/settings_env.py` | does not exist | new, standard library: add and remove one `CLAUDE_CODE_PLUGIN_DIRS` entry, with a backup |
-| `setup`, `setup.ps1` | skills only | `--mods` / `--no-mods` (`-Mods` / `-NoMods`); refresh a registered copy; dry-run output |
-| `tests/test_setup.py` | | `--mods`, `--no-mods`, an existing `CLAUDE_CODE_PLUGIN_DIRS` kept, other settings kept, backup written, scratch `HOME` only |
+| `mods/restack-view/` | does not exist | new: `.claude-plugin/plugin.json`, `hooks/hooks.json`, `hooks/register.tsx`, `types/index.d.ts`, `tsconfig.json`, `tests/*.test.ts`, `.gitignore` for `.claude-plugin/types/`, README |
+| `scripts/gen_skills.py` | renders skills only | renders `tests/fixtures/journey/` into `mods/restack-view/tests/fixtures.ts`; `--check` covers it |
+| `setup`, `setup.ps1` | skills only | `--mods` / `--no-mods` (`-Mods` / `-NoMods`); refresh an installed mod; the tree check and the "removed upstream" loop recognise a mod; dry-run output |
+| `skills/restack-upgrade/scripts/local_copies.py` | every `restack-*` folder is a skill | the installed mod is not an old copy |
+| `tests/test_setup.py`, `tests/test_local_copies.py` | | `--mods`, `--no-mods`, a plain `setup` keeping and refreshing an installed mod, a mod never reported as an old copy, scratch `HOME` only |
 | `.github/workflows/skills.yml` | Python checks only | install the Claude Code CLI; `claude plugin validate` with the calls allowlist; `claude plugin test` |
 | `scripts/check_skills.py` | | a mod under `skills/` fails; a `package.json` in `mods/` fails |
 | ADR-010 | "standard library only" as the whole language rule | amended-by banner |
-| ADR-011 | the safety property's scope | amended-by banner |
 | CLAUDE.md | structure, the scripts rules, build commands | `mods/` in the tree; the mod rules beside the script rules; `claude plugin test` |
 | INSTALL.md, README.md, QUICKREF.md, GETTING_STARTED.md, CHANGELOG.md | | the view, `setup --mods`, `/restack-view`, what turns it off |
 
@@ -309,10 +375,22 @@ To do in the change that implements this.
   version needs a version bump and `claude plugin update` to change, so
   `setup` and `/restack-upgrade` would have to drive Claude Code's plugin
   CLI as well.
-- **Why rejected:** `CLAUDE_CODE_PLUGIN_DIRS` loads the copy `setup` already
-  maintains, with no second update path. Revisit if sideloading proves
+- **Why rejected:** a skills-directory plugin loads the copy `setup` already
+  maintains, with no second update path. Revisit if `skills-dir` proves
   blocked where ReStack is used, since a marketplace entry is also the
   route into an organisation's managed directory.
+
+### Register the mod in `CLAUDE_CODE_PLUGIN_DIRS`
+
+- **Pros:** the mod can live anywhere, such as `~/.restack/mods/`, away
+  from the skills.
+- **Cons:** `setup` would edit `~/.claude/settings.json`, merging into a
+  value the user may already set, for the first time outside `restack-*`.
+  That needs a JSON helper, because Windows PowerShell 5.1 cannot be
+  trusted to rewrite the file, plus a backup and its own tests.
+- **Why rejected:** `~/.claude/skills/` already loads plugins, and `setup`
+  already owns `restack-*` there. This ADR's first draft took this route
+  before `headroom` showed the simpler one.
 
 ### A status line script instead of a mod
 
