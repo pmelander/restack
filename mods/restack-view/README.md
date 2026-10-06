@@ -37,14 +37,56 @@ The choice is remembered, so `/restack-upgrade` keeps it current.
 
 ## The pane
 
-Four tabs, `1` to `4`. Esc closes it.
+Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.
 
 | Tab | Shows | Whole list in |
 |---|---|---|
-| Position | the header fields and the newest Current Position subsection | `/restack-journey where` |
-| Asks | open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
-| Assumptions | open rows: status, the belief, what would settle it | `assumptions-register.md` |
+| Position | the rhythm strip, then the header fields and the newest Current Position subsection | `/restack-journey where` |
+| Asks | a waiting bar per recipient, then open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
+| Assumptions | the register by status as one bar, a lookup of what rests on a belief, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
+| Matrix | the newest impact matrix as a heatmap, with residual claims and its staleness | `docs/stressor-analysis/` |
+
+**The Matrix tab** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md))
+draws the newest `docs/stressor-analysis/matrix-<date>[-iter<n>].md` as
+`matrix.py` reads it, flipped: one lane per actor, one character per stressor.
+`■` is a mark, orange for a hit and violet for an unknown, which counts as 1;
+`·` is empty. There is no severity scale, because scoring is binary. As many
+stressors are shown as the pane can draw: `p` and `n` page through, and a
+ruler above names every tenth. A lens strip runs above the lanes. Each lane
+ends with its actor's total over the whole matrix, its unknowns, and its
+claimed cells. Cells the same iteration's residuals claim are dimmed, and the
+Select shows all residuals, none, or one. The title says when the matrix is
+stale: scored before a decision that changed the actor set, and not marked
+`scored pre-D<n>`, as `trace.py` decides it. `s` sorts stressors and actors
+by total, as a reading aid. A matrix `matrix.py` would reject is not drawn:
+the tab names the problem instead.
+
+**The rhythm** (Position tab): the journey history as a strip, one cell a
+day from its first entry to today, or a week when the days do not fit. A cell
+takes the colour of its commands' family: discover, stressor and events,
+decisions, documentation and trace, review, or other. `█` marks a day with a
+gate. Empty days stay empty, so the parked stretches show without a label.
+Under it are the history's own counts: entries, iterations and gates. There
+is no expected range: that belongs to `/restack-journey review`.
+
+**What rests on a belief** (Assumptions tab): type an assumption's ID, such
+as `A-12`, and press Enter. The row is shown, then every ID its *Depends on
+it* cell names, resolved where a source holds it: an ADR to its title from
+`docs/adr/`, a residual to its heading, a decision to its heading, a
+stressor to its hits in the matrix the Matrix tab shows, another assumption
+to its row. What no source holds is marked `not found`. Names that are not
+IDs, such as `LLD-03`, are listed as written. Last come the open rows that
+rest on this one. Nothing is read until you press Enter.
+
+**The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
+a meter per recipient, filled in proportion to the busiest recipient's open
+asks and coloured by age, oldest on the left: teal 0–6 days, purple 7–29,
+orange 30 and more. Age counts from the last send, or from registration when
+an ask was never sent; the counts beside each meter say which. The status
+meter shows every row of the register by status. Both use theme colours, so
+they follow light and dark, and neither is a verdict: there is no red for
+late and no green for done.
 
 **Put the next command in the prompt** (`n`, on Position) puts the next move in
 the prompt box and closes the pane. You read it and press Enter: the mod never

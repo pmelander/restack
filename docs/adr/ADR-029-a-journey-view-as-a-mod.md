@@ -178,7 +178,7 @@ nothing else changes.
    - **It never writes, decides or submits.** The `calls:` line of
      `claude plugin validate` is the contract, and CI fails on any call
      outside this list: `$.fs.read`, `$.fs.stat`, `$.fs.exists`,
-     `$.fs.ancestors`, `$.ui.*`, `$.command.register`, `$.prompt.read`,
+     `$.fs.ancestors`, `$.fs.list` (added by ADR-030), `$.ui.*`, `$.command.register`, `$.prompt.read`,
      `$.prompt.fill`, `$.store.get`, `$.store.set`, `$.session.root`,
      `$.session.cwd`, `$.session.surfaces`, `$.clock.after`, `$.clock.now`, and its own `$.state`
      atoms. It makes no `$.fs.write`, `$.process.*`, `$.http.*`,

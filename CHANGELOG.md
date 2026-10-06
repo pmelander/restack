@@ -7,9 +7,44 @@ individual skills carry their own `version:` in frontmatter.
 
 A read-only journey view as a Claude Code mod
 ([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band and the
-pane, installed on request with `./setup --mods`.
+pane, installed on request with `./setup --mods`. The pane starts drawing
+what the text hides ([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)),
+beginning with the waiting bars.
 
 ### Added
+
+- **The Matrix tab**: the newest impact matrix, flipped and drawn as text.
+  One lane per actor, one character per stressor (`■` a mark, `·` empty),
+  paged to the width of the pane with `p` and `n`. Hit, unknown or empty,
+  never a severity; a lens strip and a ruler above the lanes; each lane's
+  total, unknowns and claimed cells at its end. Residual claims are dimmed,
+  per residual or all; the staleness stamp is in the title, by `trace.py`'s
+  BASE rule; `s` sorts by total. Text in the terminal; on the Desktop, whose
+  text is proportional, the same lanes as shapes on an exact grid. A matrix
+  `matrix.py` would reject is not drawn, only named. It is read as
+  `matrix.py` reads it, which was checked against its fixtures and five
+  real matrices.
+- **The rhythm strip**, on the Position tab: the journey history one cell a
+  day (or a week) to today, coloured by command family, gates marked, empty
+  days left empty, with the history's own counts of entries, iterations and
+  gates. Older histories are read too: commands without the `restack-`
+  prefix, gates mentioned mid-line.
+- **What rests on a belief**, on the Assumptions tab: type `A-12` and press
+  Enter for the row, every ID its *Depends on it* cell names (ADRs,
+  residuals, decisions, stressors, assumptions), each resolved where a source
+  holds it or marked `not found`, the names that are not IDs as written, and
+  the open rows that rest on it. ADR lists are read as engagements write
+  them: `ADR-0005, 0025, 0026–0031` is seven ADRs.
+- **A banner** at the top of the pane: the ReStack logo in an 80s sunset
+  fade, because a mod can.
+- **Waiting bars** in the pane, drawn as headroom draws its meters. The
+  Asks tab opens with one meter per recipient, filled in proportion to the
+  busiest recipient's asks and coloured by age, oldest first: teal 0–6
+  days, purple 7–29, orange 30+, aged from the last send or from
+  registration when never sent. The Assumptions tab opens with the whole
+  register as one meter by status. Sends are read as `journey.py asks`
+  reads them, `unasked` included. No colour is a verdict: the
+  traffic-light keys are never used, and a test holds that.
 
 - **The `/restack-view` pane**: Position, Asks, Assumptions and Decisions
   tabs, read from the same files as the band. One button puts the next
@@ -39,6 +74,14 @@ pane, installed on request with `./setup --mods`.
 
 ### Changed
 
+- **The pane, restyled for reading** (maintainer: it read too compact,
+  especially with a lot of text). Headed sections, `OPEN ASSUMPTIONS · 3` in
+  the accent, with content indented under them; a rule under the tabs. Rows
+  are items: the id in its own column, the status beside it, the text
+  wrapping below it, a blank line between items. The header fields are an
+  aligned two-column list, and the lookup's tree has room between branches.
+  Long lists stop at sixty items and say where the rest is.
+
 - **The band reads a lived-in journey**, not only the template: a terrain
   sentence shows its terms (`Greenfield/Brownfield`), other fields their first
   clause, and the next move comes from the newest Current Position subsection
@@ -50,6 +93,9 @@ pane, installed on request with `./setup --mods`.
 
 ### Decided
 
+- ADR-030: four views for the pane (waiting bars, the matrix heatmap, what
+  rests on an assumption, the journey's rhythm); an iteration trend chart is
+  rejected, because raw totals across changing actor sets mislead.
 - ADR-029: mods are views; ADR-010 is amended to allow TypeScript for them;
   packaging ReStack as a marketplace plugin is parked.
 

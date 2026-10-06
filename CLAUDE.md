@@ -343,6 +343,10 @@ on languages). The rules:
    and git-ignored.
 5. **It shares the band** (`await next(e)` among its children) and reloads its
    state on `classic.SessionStart` after `/clear`, `/resume` and `/branch`.
+6. **Every pane view is laid out by `hooks/layout.tsx`**: headed sections
+   (`HEADING · count` in the accent), items in a fixed id column, label and
+   value fields, a blank line between everything. A new view uses them, so
+   the pane spaces alike and reads well with a lot of text.
 
 ### Adding Compliance Packs
 

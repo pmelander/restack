@@ -8,13 +8,38 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
+import type { MatrixFile, MatrixState } from '../types'
+import { drawBanner } from './banner.tsx'
+import { askBars, bandParts, bandText, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey.ts'
+import { fields, items, rule, section } from './layout.tsx'
 import type { Files } from './journey.ts'
+import {
+  adrFiles,
+  assumptionNumber,
+  decisionTitles,
+  lookup,
+  lookupLines,
+  parseRefs,
+  residualTitles,
+  titleOf,
+} from './refs.ts'
+import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix.ts'
+import { drawMatrix } from './matrix-view.tsx'
+import { rhythm } from './rhythm.ts'
+import type { Entry } from './rhythm.ts'
+import { drawRhythm, stripWidth } from './rhythm-view.tsx'
+import { drawAskBars, drawStatusBar } from './waiting.tsx'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
 const detail = atom({ plugin: 'restack-view', key: 'detail' } as const, null)
 const isBandOn = atom({ plugin: 'restack-view', key: 'isBandOn' } as const, true)
 const tab = atom({ plugin: 'restack-view', key: 'tab' } as const, 'position')
+const matrix = atom({ plugin: 'restack-view', key: 'matrix' } as const, null)
+const matrixPick = atom({ plugin: 'restack-view', key: 'matrixPick' } as const, null)
+const residualPick = atom({ plugin: 'restack-view', key: 'residualPick' } as const, '*')
+const isSortedByTotal = atom({ plugin: 'restack-view', key: 'isSortedByTotal' } as const, false)
+const matrixOffset = atom({ plugin: 'restack-view', key: 'matrixOffset' } as const, 0)
+const lookupResult = atom({ plugin: 'restack-view', key: 'lookup' } as const, null)
 
 const PANE = 'restack-view'
 // The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
@@ -80,13 +105,29 @@ async function readOnce($: EngineInterface): Promise<void> {
       lastSeen = ''
       await update($, view, () => null)
       await update($, detail, () => null)
+      await update($, matrix, () => null)
       return
     }
     const names = Object.entries(FILES)
     const times = await Promise.all(
       names.map(([, name]) => $.fs.stat(join(dir, name)).then(s => s.mtimeMs, () => -1)),
     )
-    const seen = dir + '|' + times.join('|')
+    // The matrices sit beside the journey, in docs/stressor-analysis/. Listed
+    // every time; the one shown is read again only when it or its residuals change.
+    const stressorDir = join(dir.replace(/[\\/]journey$/, ''), 'stressor-analysis')
+    const entries = await $.fs.list(stressorDir).catch(() => [])
+    const mtimeOf = (name: string): number => entries.find(x => x.name === name)?.mtimeMs ?? -1
+    const matrices = matrixFiles(entries.filter(x => x.kind === 'file').map(x => x.name))
+    const pick = await read($, matrixPick)
+    const shown = matrices.find(f => f.name === pick) ?? matrices[0]
+    const seen = [
+      dir,
+      ...times,
+      matrices.map(f => f.name).join(','),
+      shown?.name ?? '',
+      shown === undefined ? -1 : mtimeOf(shown.name),
+      shown === undefined ? -1 : mtimeOf(residualsFor(shown.name)),
+    ].join('|')
     if (seen === lastSeen) return
 
     const files: Files = {}
@@ -95,12 +136,108 @@ async function readOnce($: EngineInterface): Promise<void> {
     }
     const next = readJourney(files)
     const nextDetail = readDetail(files)
+    const nextMatrix =
+      shown === undefined
+        ? { files: matrices }
+        : await matrixState($, stressorDir, matrices, shown, files.log ?? '', mtimeOf(residualsFor(shown.name)) >= 0)
     await update($, view, () => next)
     await update($, detail, () => nextDetail)
+    await update($, matrix, () => nextMatrix)
     lastSeen = seen
   } catch {
     // A file moved mid-read, or the session is not bound yet: keep the last view.
   }
+}
+
+// The shown matrix, its residuals' claims and its staleness; or the first
+// problem matrix.py would report, and no grid.
+async function matrixState(
+  $: EngineInterface,
+  dir: string,
+  files: MatrixFile[],
+  shown: MatrixFile,
+  log: string,
+  hasResiduals: boolean,
+): Promise<MatrixState> {
+  const text = await $.fs.read(join(dir, shown.name))
+  const { grid, problems } = readMatrix(text)
+  if (grid === undefined || problems.length > 0) return { files, file: shown.name, problem: problems[0] }
+  const residualsFile = residualsFor(shown.name)
+  const claims = hasResiduals ? readClaims(await $.fs.read(join(dir, residualsFile)), grid.actors) : []
+
+  return {
+    files,
+    file: shown.name,
+    grid: {
+      ...grid,
+      file: shown.name,
+      claims,
+      residualsFile: hasResiduals ? residualsFile : undefined,
+      ...staleness(text, actorSetChanges(log)),
+    },
+  }
+}
+
+// The Assumptions tab's lookup: what rests on one assumption (ADR-030, view 3).
+// Read on Enter, not on every refresh, and only what the row cites: the ADRs
+// it names, the residual files newest first until every residual it names is
+// found, the decisions log if it names a decision, and the matrix the Matrix
+// tab shows for its stressors.
+async function runLookup($: EngineInterface, input: string): Promise<void> {
+  const dir = await journeyDir($)
+  if (dir === undefined) {
+    await update($, lookupResult, () => ({ kind: 'error' as const, message: NO_JOURNEY }))
+    return
+  }
+  const docs = dir.replace(/[\\/]journey$/, '')
+  const rows = registerRows(await $.fs.read(join(dir, FILES.register)).catch(() => ''))
+  if (typeof rows === 'string') {
+    const message = 'assumptions-register.md is not canonical: /restack-journey migrate'
+    await update($, lookupResult, () => ({ kind: 'error' as const, message }))
+    return
+  }
+  const n = assumptionNumber(input)
+  const row = n === undefined ? undefined : rows.find(r => assumptionNumber(r.id) === n)
+  const refs = parseRefs(row?.depends ?? '')
+
+  const adrs = new Map<number, { file: string; title?: string }>()
+  if (refs.adrs.length > 0) {
+    const listed = await $.fs.list(join(docs, 'adr')).catch(() => [])
+    const files = adrFiles(listed.filter(x => x.kind === 'file').map(x => x.name))
+    for (const a of refs.adrs) {
+      const file = files.get(a)
+      if (file === undefined) continue
+      adrs.set(a, { file, title: titleOf(await $.fs.read(join(docs, 'adr', file)).catch(() => '')) })
+    }
+  }
+
+  const residuals = new Map<string, { file: string; title: string }>()
+  if (refs.residuals.length > 0) {
+    const listed = await $.fs.list(join(docs, 'stressor-analysis')).catch(() => [])
+    const names = matrixFiles(listed.map(x => x.name.replace(/^residuals-/, 'matrix-')))
+      .map(f => f.name.replace(/^matrix-/, 'residuals-'))
+      .filter(name => listed.some(x => x.name === name))
+    for (const name of names) {
+      if (refs.residuals.every(r => residuals.has(r))) break
+      const titles = residualTitles(await $.fs.read(join(docs, 'stressor-analysis', name)).catch(() => ''))
+      for (const r of refs.residuals) {
+        const title = titles.get(r)
+        if (!residuals.has(r) && title !== undefined) residuals.set(r, { file: name, title })
+      }
+    }
+  }
+
+  const decisions = refs.decisions.length > 0 ? decisionTitles(await $.fs.read(join(dir, FILES.log)).catch(() => '')) : new Map<number, string>()
+  const grid = (await read($, matrix))?.grid
+  const result = lookup(input, rows, { adrs, residuals, decisions, grid })
+  await update($, lookupResult, () => result)
+}
+
+// The Matrix tab's Select: show another matrix from its first stressor, then read it.
+async function pickMatrix($: EngineInterface, name: string): Promise<void> {
+  await update($, matrixPick, () => name)
+  await update($, matrixOffset, () => 0)
+  await refresh($)
 }
 
 // The pane's one button. It never submits, and never writes over a draft:
@@ -212,19 +349,109 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
-    const { Box, Text, Button, Markdown } = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown, Select, Svg, Input } = $.ui.resolve(e)
     const current = await read($, view)
     const lists = await read($, detail)
     const open = await read($, tab)
+    const banner = drawBanner({ Box, Text, Svg }, e.surface, e.props.bodyColumns)
 
-    if (current === null) return <Text dimColor>{NO_JOURNEY}</Text>
+    if (current === null) {
+      return (
+        <Box flexDirection="column" paddingLeft={1} paddingRight={1} rowGap={1}>
+          {banner}
+          <Text dimColor>{NO_JOURNEY}</Text>
+        </Box>
+      )
+    }
     if (current.kind === 'not-canonical' || lists === null) {
-      return <Text color="warning">{bandText(current)}</Text>
+      return (
+        <Box flexDirection="column" paddingLeft={1} paddingRight={1} rowGap={1}>
+          {banner}
+          <Text color="warning">{bandText(current)}</Text>
+        </Box>
+      )
     }
     const command = current.next
+    const els = { Box, Text }
+    const sectionEls = { Box, Text, Markdown }
+    const width = e.props.bodyColumns
+    // The width inside a section: the frame's padding and the section's indent.
+    const inner = Math.max(20, width - 4)
+    // Ages are counted to now, not to the last read: a day passes without a file changing.
+    const now = open === 'asks' || open === 'position' ? await $.clock.now() : 0
+    const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, now) : []
+    // The strip runs to today, not to the last read: a quiet day is part of the rhythm.
+    const strip =
+      open === 'position'
+        ? rhythm(lists.history as Entry[], new Date(now).toISOString().slice(0, 10), stripWidth(inner, e.surface))
+        : null
+    const found = open === 'assumptions' ? await read($, lookupResult) : null
+    const lookupView =
+      found === null ? null : (
+        <Box flexDirection="column">
+          {lookupLines(found).map((line, i) =>
+            line.tone === 'head' ? (
+              <Text key={`lookup-${i}`} bold wrap="wrap">
+                {line.text}
+              </Text>
+            ) : line.tone === 'missing' ? (
+              <Text key={`lookup-${i}`} italic dimColor wrap="wrap">
+                {line.text}
+              </Text>
+            ) : line.tone === 'found' ? (
+              <Text key={`lookup-${i}`} wrap="wrap">
+                {line.text}
+              </Text>
+            ) : (
+              <Text key={`lookup-${i}`} dimColor wrap="wrap">
+                {line.text}
+              </Text>
+            ),
+          )}
+        </Box>
+      )
+    const matrixPicks = {
+      residual: await read($, residualPick),
+      isSortedByTotal: await read($, isSortedByTotal),
+      offset: await read($, matrixOffset),
+      onFile: (name: string) => {
+        void pickMatrix($, name)
+      },
+      onResidual: (value: string) => {
+        void update($, residualPick, () => value)
+      },
+      onSort: () => {
+        void update($, isSortedByTotal, value => !value)
+        void update($, matrixOffset, () => 0)
+      },
+      onPage: (offset: number) => {
+        void update($, matrixOffset, () => offset)
+      },
+    }
+
+    const body = sectionsOf(lists, open).map(s =>
+      section(
+        sectionEls,
+        s.key,
+        s.title,
+        s.count,
+        s.items !== undefined ? (
+          items(sectionEls, `${s.key}-items`, s.items, s.more)
+        ) : s.fields !== undefined ? (
+          fields(sectionEls, `${s.key}-fields`, s.fields)
+        ) : s.markdown !== undefined ? (
+          <Markdown key={`${s.key}-md`} text={s.markdown} />
+        ) : (
+          <Text dimColor>{s.empty}</Text>
+        ),
+      ),
+    )
+    const registerRowsCount = lists.statuses.reduce((a, [, n]) => a + n, 0)
 
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" paddingLeft={1} paddingRight={1}>
+        {banner}
+        {banner === null ? null : <Text> </Text>}
         <Box flexDirection="row" columnGap={3}>
           {TABS.map(([name, label], i) => (
             <Button
@@ -237,14 +464,55 @@ export const register: Register = on => {
             />
           ))}
         </Box>
+        {rule(sectionEls, width - 2)}
         <Text> </Text>
-        {open === 'position' && command !== undefined && (
-          <Box flexDirection="row" columnGap={1}>
-            <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
-            <Text dimColor>{command}</Text>
-          </Box>
-        )}
-        <Markdown key={`body-${open}`} text={tabText(lists, open)} />
+        {open === 'position' && strip !== null && section(sectionEls, 'rhythm', 'Rhythm', undefined, drawRhythm(els, strip, e.surface))}
+        {open === 'position' &&
+          command !== undefined &&
+          section(
+            sectionEls,
+            'next',
+            'Next move',
+            undefined,
+            <Box flexDirection="row" columnGap={2} flexWrap="wrap">
+              <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
+              <Text bold color="suggestion">
+                {command}
+              </Text>
+            </Box>,
+          )}
+        {bars.length > 0 && section(sectionEls, 'waiting', 'Waiting', lists.asks.length, drawAskBars(els, bars, e.surface, inner))}
+        {open === 'assumptions' &&
+          section(sectionEls, 'register', 'The register', registerRowsCount, drawStatusBar(els, lists.statuses, e.surface, inner))}
+        {open === 'assumptions' &&
+          section(
+            sectionEls,
+            'lookup',
+            'What rests on a belief',
+            undefined,
+            <Box flexDirection="column" rowGap={1}>
+              <Input
+                key="lookup"
+                label="Assumption"
+                placeholder="such as A-12, then Enter"
+                value=""
+                submitLabel="look up"
+                onSubmit={value => {
+                  void runLookup($, value)
+                }}
+              />
+              {lookupView}
+            </Box>,
+          )}
+        {open === 'matrix'
+          ? section(
+              sectionEls,
+              'matrix',
+              'Impact matrix',
+              undefined,
+              drawMatrix({ Box, Text, Button, Select, Svg }, await read($, matrix), matrixPicks, e.surface, inner),
+            )
+          : body}
       </Box>
     )
   })

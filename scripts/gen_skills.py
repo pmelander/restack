@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SKILLS = ROOT / "skills"
 PREAMBLE = ROOT / "scripts" / "preamble"
 JOURNEY_FIXTURES = ROOT / "tests" / "fixtures" / "journey"
+MATRIX_FIXTURES = ROOT / "tests" / "fixtures" / "matrix"
 # A mod's tests cannot read files, so the journeys journey.py is tested against
 # are rendered into a module the mod's tests import (ADR-029, decision point 4).
 MOD_FIXTURES = ROOT / "mods" / "restack-view" / "tests" / "fixtures.ts"
@@ -233,7 +234,7 @@ def render(template_path: Path) -> str:
 
 
 def render_mod_fixtures() -> str:
-    """tests/fixtures/journey/<name>/journey/<file> as one TypeScript module."""
+    """tests/fixtures/journey/ and tests/fixtures/matrix/ as one TypeScript module."""
     journeys: dict[str, dict[str, str]] = {}
     for path in sorted(JOURNEY_FIXTURES.glob("*/journey/*.md")):
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
@@ -249,6 +250,12 @@ def render_mod_fixtures() -> str:
         for file, text in files.items():
             out.append(f"    {json.dumps(file)}: {json.dumps(text, ensure_ascii=False)},")
         out.append("  },")
+    out.append("}")
+    # The matrices matrix.py is tested against, for the Matrix tab (ADR-030).
+    out += ["", "export const MATRIX_FIXTURES: Readonly<Record<string, string>> = {"]
+    for path in sorted(MATRIX_FIXTURES.glob("*.md")):
+        text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+        out.append(f"  {json.dumps(path.name)}: {json.dumps(text, ensure_ascii=False)},")
     out.append("}")
     return "\n".join(out) + "\n"
 
