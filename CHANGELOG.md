@@ -13,12 +13,14 @@ beginning with the waiting bars.
 
 ### Added
 
-- **Waiting bars** in the pane. The Asks tab opens with one bar per
-  recipient, one glyph per open ask, aged from its last send or from
-  registration when never sent (`░` 0–6 days, `▒` 7–29, `█` 30+); colour
-  means sent. The Assumptions tab opens with the whole register as one bar
-  by status. Sends are read as `journey.py asks` reads them, `unasked`
-  included. No colour is a verdict.
+- **Waiting bars** in the pane, drawn as headroom draws its meters. The
+  Asks tab opens with one meter per recipient, filled in proportion to the
+  busiest recipient's asks and coloured by age, oldest first: teal 0–6
+  days, purple 7–29, orange 30+, aged from the last send or from
+  registration when never sent. The Assumptions tab opens with the whole
+  register as one meter by status. Sends are read as `journey.py asks`
+  reads them, `unasked` included. No colour is a verdict: the
+  traffic-light keys are never used, and a test holds that.
 
 - **The `/restack-view` pane**: Position, Asks, Assumptions and Decisions
   tabs, read from the same files as the band. One button puts the next

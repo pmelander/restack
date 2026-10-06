@@ -124,12 +124,19 @@ no skill depends on them, and every number matches the script that owns it.
 - **Assumptions, one stacked bar** of the register's statuses: Open, Partly
   resolved, Resolved by design (test pending), Resolved, Withdrawn and
   Superseded, with counts.
-- **Block glyphs in `Text`**, the same on both surfaces, with headroom's
-  Desktop width allowance.
-- **Neither colour nor glyph is a judgement.** On the ask bars the glyph's
-  density is the age (`░` 0–6 days, `▒` 7–29, `█` 30+) and the colour is
-  only whether the ask was sent; the status bar uses a muted categorical
-  palette. There is no red for "late", no green for "done", and no
+- **Drawn as headroom draws its meters:** lower half blocks (`▄`) in
+  `Text`, theme colour keys that follow light and dark, and the empty track
+  as the same block dimmed. The same on both surfaces, with headroom's
+  Desktop width allowance. Each recipient's meter fills in proportion to the
+  busiest recipient's asks, split by age with the oldest on the left. Sent
+  and never asked are counted beside it.
+- **Colour is vivid and never a judgement** (maintainer, 2026-10-06, after
+  the first version read as too muted). Age runs cool to warm: `planMode`
+  teal for 0–6 days, `autoAccept` purple for 7–29, `claude` orange for 30+.
+  Statuses take the same family: Open orange, Partly resolved purple, by
+  design teal, Resolved `ide` blue, the rest grey. The traffic-light keys
+  (`success`, `warning`, `error`) are never used. A test fails if one
+  appears, so there is no red for "late", no green for "done", and no
   "at risk".
 
 ### 3. What rests on a belief: a lookup on the **Assumptions** tab

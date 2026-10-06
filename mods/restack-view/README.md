@@ -47,11 +47,13 @@ Four tabs, `1` to `4`. Esc closes it.
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
 
 **The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
-one glyph per open ask, oldest first. Its density is its age, counted from the
-last send, or from registration when it was never sent: `░` 0–6 days, `▒`
-7–29, `█` 30 and more. Colour means it was sent; plain means never asked. The
-status bar shows every row of the register by status. Neither is a verdict:
-there is no red for late and no green for done.
+a meter per recipient, filled in proportion to the busiest recipient's open
+asks and coloured by age, oldest on the left: teal 0–6 days, purple 7–29,
+orange 30 and more. Age counts from the last send, or from registration when
+an ask was never sent; the counts beside each meter say which. The status
+meter shows every row of the register by status. Both use theme colours, so
+they follow light and dark, and neither is a verdict: there is no red for
+late and no green for done.
 
 **Put the next command in the prompt** (`n`, on Position) puts the next move in
 the prompt box and closes the pane. You read it and press Enter: the mod never

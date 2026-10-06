@@ -21,14 +21,30 @@ const textOf = (node: unknown): string => {
   return own + ('children' in el ? textOf(el.children) : '')
 }
 
+// Every `color` in the tree, with whether that element is dimmed.
+const colorsOf = (node: unknown, out: Array<[string, boolean]> = []): Array<[string, boolean]> => {
+  if (Array.isArray(node)) node.forEach(n => colorsOf(n, out))
+  else if (node !== null && typeof node === 'object') {
+    const el = node as { children?: unknown; props?: { color?: unknown; dimColor?: unknown } }
+    if (typeof el.props?.color === 'string') out.push([el.props.color, el.props.dimColor === true])
+    colorsOf(el.children, out)
+  }
+
+  return out
+}
+
+// headroom's traffic-light keys: a verdict, which ADR-030 rules out.
+const VERDICT_COLORS = ['success', 'warning', 'error']
+
 type Seen = { filled: string[]; toasts: string[]; opened: string[]; closed: string[] }
 
 // The engine, for a project at /work holding the named fixture, drawn on `surface`.
-const stub = (on: On, surface: string, fixture: string | null, draft = ''): Seen => {
+const stub = (on: On, surface: string, fixture: string | null | Record<string, string>, draft = ''): Seen => {
   const seen: Seen = { filled: [], toasts: [], opened: [], closed: [] }
   mock.store(on)
   mock.clock(on, { now: Date.parse('2026-04-20T12:00:00Z') })
-  const files: Readonly<Record<string, string>> = fixture === null ? {} : FIXTURES[fixture]
+  const files: Readonly<Record<string, string>> =
+    fixture === null ? {} : typeof fixture === 'string' ? FIXTURES[fixture] : fixture
   const nameOf = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/journey\/([^/]+)$/)?.[1]
   const has = (path: string) => {
     const name = nameOf(path)
@@ -148,10 +164,29 @@ for (const surface of SURFACES) {
     await ui.press({ key: 'tab-asks' })
     const tree = textOf(await ui.drawn())
     expect(tree).toContain('Depot operations')
-    expect(tree).toContain('1 never asked · oldest 41 d')
-    expect(tree).toContain('1 sent · oldest 18 d')
-    expect(tree).toContain('░ 0–6 d')
-    expect(tree.indexOf('oldest 41 d')).toBeLessThan(tree.indexOf('### Depot operations'))
+    expect(tree).toContain('1 · never asked 1 · 41 d')
+    expect(tree).toContain('1 · sent 1 · 18 d')
+    expect(tree).toContain('7–29 d')
+    expect(tree.indexOf('41 d')).toBeLessThan(tree.indexOf('### Depot operations'))
+
+    // One colour per age bucket (41, 18 and 5 days), and no verdicts.
+    const colors = colorsOf(await ui.drawn())
+    for (const key of ['claude', 'autoAccept', 'planMode']) expect(colors.map(([c]) => c)).toContain(key)
+    for (const key of VERDICT_COLORS) expect(colors.map(([c]) => c)).not.toContain(key)
+  })
+
+  test(`a recipient with fewer asks draws a shorter meter on the dimmed track, on ${surface}`, async ($, on) => {
+    // A second ask for Depot operations: its meter is full, the others half.
+    const row = '| A-8 | Depots hold spare lockers | survey | Ask Depot operations: the spare count | R1 | Open | 2026-04-12 |'
+    const register = FIXTURES.asks['assumptions-register.md']
+      .replace('\n\n## Status lines', `\n${row}\n\n## Status lines`)
+      .concat('- A-8 · Open · 2026-04-12 · registered\n')
+    stub(on, surface, { ...FIXTURES.asks, 'assumptions-register.md': register })
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    await ui.press({ key: 'tab-asks' })
+    expect(textOf(await ui.drawn())).toContain('2 · never asked 2 · 41 d')
+    expect(colorsOf(await ui.drawn())).toContainEqual(['inactive', true])
   })
 
   test(`the Assumptions tab opens with the register by status, on ${surface}`, async ($, on) => {
@@ -163,6 +198,9 @@ for (const surface of SURFACES) {
     expect(tree).toContain(' Open 4')
     expect(tree).toContain(' Resolved by design (test pending) 1')
     expect(tree).toContain('7 rows in the register')
+    const colors = colorsOf(await ui.drawn()).map(([c]) => c)
+    for (const key of ['claude', 'autoAccept', 'planMode', 'ide']) expect(colors).toContain(key)
+    for (const key of VERDICT_COLORS) expect(colors).not.toContain(key)
   })
 
   test(`no bars on the Position and Decisions tabs, on ${surface}`, async ($, on) => {
