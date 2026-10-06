@@ -288,10 +288,12 @@ for (const surface of SURFACES) {
     expect(tree).toContain(' · scored at D2 · stale: D5 changed the actor set')
     expect(colorsOf(await ui.drawn())).toContainEqual(['claude', false])
     expect(tree).toContain('claimed by residuals-2026-04-10-iter1.md')
-    // The same text on both surfaces: one lane per actor, the window named.
+    // One lane per actor, the window named: as text in the terminal, and on
+    // the Desktop as shapes in an Svg, its labels in the source.
     expect(tree).toContain('S-1 … S-5 (1–5 of 5 stressors)')
-    expect(tree).toContain('RS')
-    expect(tree).toContain('3 claimed')
+    const drawn = surface === 'terminal' ? tree : JSON.stringify(await ui.drawn())
+    expect(drawn).toContain('RS')
+    expect(drawn).toContain('3 claimed')
     expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   })
 

@@ -350,7 +350,7 @@ export const register: Register = on => {
         {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
         {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
         {open === 'matrix' ? (
-          drawMatrix({ Box, Text, Button, Select }, await read($, matrix), matrixPicks, e.surface, width)
+          drawMatrix({ Box, Text, Button, Select, Svg }, await read($, matrix), matrixPicks, e.surface, width)
         ) : (
           <Markdown key={`body-${open}`} text={tabText(lists, open)} />
         )}

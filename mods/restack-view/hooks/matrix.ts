@@ -370,3 +370,66 @@ export function runs<T>(items: T[]): Array<[T, number]> {
 
   return out
 }
+
+// --- the Desktop's lanes ----------------------------------------------------------
+//
+// The Desktop's text is proportional and has no monospace option, so `■` and
+// `·` drift apart and no lane lines up (maintainer, 2026-10-06). There the same
+// window is drawn as shapes on an exact grid: squares for marks, dots for empty,
+// labels in a monospace face. Not interactive, so no frame and no white box.
+
+const PITCH = 8
+const LANE = 14
+const LABEL_PX = 48
+const TOP = 30
+const INK = '#9aa0a6'
+const DOT = '#5c6066'
+
+const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+const MARK_FILL: Record<Exclude<Mark, 'empty'>, string> = {
+  hit: COLOR.hit,
+  unknown: COLOR.unknown,
+  claimed: COLOR.claimed,
+}
+
+export function laneSvg(win: Window): string {
+  const n = win.ids.length
+  const right = LABEL_PX + n * PITCH + 8
+  const width = right + 150
+  const height = TOP + win.lanes.length * LANE + 4
+  const parts: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"`,
+    ` font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11">`,
+    `<text x="0" y="8" fill="${INK}">lens</text>`,
+  ]
+  win.lens.forEach((color, i) => {
+    parts.push(`<rect x="${LABEL_PX + i * PITCH}" y="2" width="${PITCH}" height="6" fill="${color}"/>`)
+  })
+  for (let i = 0; i < n; i += 10) {
+    parts.push(`<text x="${LABEL_PX + i * PITCH}" y="22" fill="${INK}">${esc(win.ids[i])}</text>`)
+  }
+  win.lanes.forEach((lane, row) => {
+    const y = TOP + row * LANE
+    const label = lane.total > 0 ? '#d0d3d8' : DOT
+    parts.push(`<text x="0" y="${y + 9}" fill="${label}" font-weight="700">${esc(lane.actor)}</text>`)
+    lane.marks.forEach((mark, i) => {
+      const x = LABEL_PX + i * PITCH
+      parts.push(
+        mark === 'empty'
+          ? `<rect x="${x + 3}" y="${y + 4}" width="2" height="2" fill="${DOT}"/>`
+          : `<rect x="${x + 1}" y="${y + 1}" width="${PITCH - 2}" height="${PITCH - 2}" rx="1" fill="${MARK_FILL[mark]}"/>`,
+      )
+    })
+    const extra = [
+      lane.unknown > 0 ? `<tspan fill="${COLOR.unknown}"> (${lane.unknown}?)</tspan>` : '',
+      lane.claimed > 0 ? `<tspan fill="${COLOR.claimed}"> ${lane.claimed} claimed</tspan>` : '',
+    ].join('')
+    parts.push(
+      `<text x="${right}" y="${y + 9}" fill="${label}" font-weight="700">${String(lane.total).padStart(3, '\u2007')}${extra}</text>`,
+    )
+  })
+  parts.push('</svg>')
+
+  return parts.join('')
+}

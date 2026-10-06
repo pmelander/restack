@@ -19,7 +19,8 @@ beginning with the waiting bars.
   never a severity; a lens strip and a ruler above the lanes; each lane's
   total, unknowns and claimed cells at its end. Residual claims are dimmed,
   per residual or all; the staleness stamp is in the title, by `trace.py`'s
-  BASE rule; `s` sorts by total. The same text on both surfaces. A matrix
+  BASE rule; `s` sorts by total. Text in the terminal; on the Desktop, whose
+  text is proportional, the same lanes as shapes on an exact grid. A matrix
   `matrix.py` would reject is not drawn, only named. It is read as
   `matrix.py` reads it, which was checked against its fixtures and five
   real matrices.

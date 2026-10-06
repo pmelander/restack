@@ -90,9 +90,15 @@ no skill depends on them, and every number matches the script that owns it.
 - **Flipped, and drawn as text** (maintainer, 2026-10-06). One lane per
   actor, one character per stressor: `■` for a mark, `·` for empty. The
   lanes run across, and only as many stressors as the pane can draw are
-  shown, paged with `p` and `n`. The same `Text` draws on both surfaces,
-  with headroom's Desktop width allowance. A lane of dots with a 0 total is a
+  shown, paged with `p` and `n`. A lane of dots with a 0 total is a
   suspicious zero, visible as one.
+- **The terminal draws the lanes as `Text`,** which is monospace there.
+  **The Desktop draws the same window as an `Svg`** of shapes on an exact
+  grid: squares for marks, dots for empty, labels in a monospace face. The
+  Desktop's `Text` is proportional and has no font option, so as text the
+  lanes drifted apart and nothing lined up (maintainer, 2026-10-06). The
+  `Svg` is not interactive, so it is drawn without a frame. Both read one
+  `flippedWindow`, so the surfaces cannot disagree about the data.
 - **One mark per cell, three states:** hit (`1`), unknown (`?`, `1?`), empty.
   No severity scale, because there is none. A lens strip runs above the
   lanes, one colour per stressor, and a ruler names every tenth stressor.

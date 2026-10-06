@@ -11,6 +11,7 @@ import {
   COLOR,
   EMPTY,
   flippedWindow,
+  laneSvg,
   HIT,
   matrixFiles,
   order,
@@ -175,4 +176,18 @@ test('the ruler names every tenth stressor where it fits', () => {
 test('runs group equal neighbours', () => {
   expect(runs(['a', 'a', 'b', 'a'])).toEqual([['a', 2], ['b', 1], ['a', 1]])
   expect(runs([])).toEqual([])
+})
+
+test('on the Desktop the lanes are shapes on an exact grid, labelled in monospace', () => {
+  const g = gridOf('matrix-iter1.md', 'residuals-iter1.md')
+  const { rows, cols } = order(g, false)
+  const svg = laneSvg(flippedWindow(g, rows, cols, claimedCells(g, '*'), 0, 100))
+  // 5 lens cells, and one shape per stressor in each of 4 lanes.
+  expect(svg.match(/<rect /g)!.length).toBe(5 + 4 * 5)
+  expect(svg).toContain('font-family="ui-monospace, Menlo, Consolas, monospace"')
+  expect(svg).toContain('>RS</text>')
+  expect(svg).toContain('3 claimed')
+  expect(svg).toContain('(1?)')
+  expect(svg).toContain(`fill="${COLOR.claimed}"`)
+  expect(svg).not.toContain('currentColor')
 })

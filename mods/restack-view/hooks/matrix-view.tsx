@@ -1,15 +1,16 @@
 // The Matrix tab's drawing (ADR-030, view 1), flipped and as text: one lane
 // per actor, one character per stressor, as many stressors as the pane draws,
-// paged with `p` and `n`. The same Text on both surfaces. Data from matrix.ts;
+// paged with `p` and `n`. Text in the terminal; on the Desktop, whose text is
+// proportional, the same lanes as shapes in an Svg (laneSvg). Data from matrix.ts;
 // the callbacks come from the hook, so nothing here touches `$`.
 
 import type { Elements, RenderSurface } from 'claude-code'
 
 import type { MatrixState } from '../types'
-import { claimedCells, COLOR, fileLabel, flippedWindow, order, runs } from './matrix.ts'
+import { claimedCells, COLOR, fileLabel, flippedWindow, laneSvg, order, runs } from './matrix.ts'
 import type { Mark } from './matrix.ts'
 
-type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select'>
+type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select' | 'Svg'>
 
 export type MatrixPicks = {
   residual: string
@@ -29,16 +30,12 @@ const MARK_COLOR: Record<Mark, string | undefined> = {
   empty: undefined,
 }
 const TOTAL_WIDTH = 5
-// Block and geometric glyphs measure wider than a cell in the Desktop's
-// proportional font; drawing a little under the column count keeps a lane on
-// one line (headroom's measurement).
-const DESKTOP_SLACK = 0.85
 
 const NONE_YET =
   'No impact matrix scored yet. /restack-stressor analyze writes one to docs/stressor-analysis/, and it is drawn here.'
 
 export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPicks, surface: RenderSurface, columns: number) {
-  const { Box, Text, Button, Select } = els
+  const { Box, Text, Button, Select, Svg } = els
   if (state === null || state.files.length === 0) return <Text dimColor>{NONE_YET}</Text>
 
   const fileSelect =
@@ -71,7 +68,7 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
 
   // The lane's width: what is left of the pane after the actor code and the total.
   const label = Math.max(4, ...grid.actors.map(a => a.length)) + 1
-  const room = Math.floor((columns - label - TOTAL_WIDTH - 1) * (surface === 'desktop' ? DESKTOP_SLACK : 1))
+  const room = columns - label - TOTAL_WIDTH - 1
   const win = flippedWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room))
 
   const stamp =
@@ -141,40 +138,46 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
       </Box>
       {pager}
       <Text> </Text>
-      <Text wrap="truncate">
-        <Text dimColor>{pad('lens', label)}</Text>
-        {runs(win.lens).map(([color, n], i) => (
-          <Text key={`lens-${i}`} color={color}>
-            {'▄'.repeat(n)}
-          </Text>
-        ))}
-      </Text>
-      <Text dimColor wrap="truncate">
-        {' '.repeat(label) + win.ruler}
-      </Text>
-      {win.lanes.map(lane => (
-        <Text key={`lane-${lane.actor}`} wrap="truncate">
-          <Text bold={lane.total > 0} dimColor={lane.total === 0}>
-            {pad(lane.actor, label)}
-          </Text>
-          {runs(lane.marks).map(([mark, n], i) =>
-            MARK_COLOR[mark] === undefined ? (
-              <Text key={`m-${i}`} dimColor>
-                {GLYPH[mark].repeat(n)}
+      {surface === 'desktop' ? (
+        <Svg source={laneSvg(win)} alt={`Impact matrix ${grid.file}, ${win.ids[0]} to ${win.ids[win.ids.length - 1]}, one lane per actor`} />
+      ) : (
+        <Box flexDirection="column">
+          <Text wrap="truncate">
+            <Text dimColor>{pad('lens', label)}</Text>
+            {runs(win.lens).map(([color, n], i) => (
+              <Text key={`lens-${i}`} color={color}>
+                {'▄'.repeat(n)}
               </Text>
-            ) : (
-              <Text key={`m-${i}`} color={MARK_COLOR[mark]}>
-                {GLYPH[mark].repeat(n)}
-              </Text>
-            ),
-          )}
-          <Text bold={lane.total > 0} dimColor={lane.total === 0}>
-            {` ${String(lane.total).padStart(TOTAL_WIDTH - 1)}`}
+            ))}
           </Text>
-          {lane.unknown > 0 ? <Text color={COLOR.unknown}>{` (${lane.unknown}?)`}</Text> : null}
-          {lane.claimed > 0 ? <Text color={COLOR.claimed}>{` ${lane.claimed} claimed`}</Text> : null}
-        </Text>
-      ))}
+          <Text dimColor wrap="truncate">
+            {' '.repeat(label) + win.ruler}
+          </Text>
+          {win.lanes.map(lane => (
+            <Text key={`lane-${lane.actor}`} wrap="truncate">
+              <Text bold={lane.total > 0} dimColor={lane.total === 0}>
+                {pad(lane.actor, label)}
+              </Text>
+              {runs(lane.marks).map(([mark, n], i) =>
+                MARK_COLOR[mark] === undefined ? (
+                  <Text key={`m-${i}`} dimColor>
+                    {GLYPH[mark].repeat(n)}
+                  </Text>
+                ) : (
+                  <Text key={`m-${i}`} color={MARK_COLOR[mark]}>
+                    {GLYPH[mark].repeat(n)}
+                  </Text>
+                ),
+              )}
+              <Text bold={lane.total > 0} dimColor={lane.total === 0}>
+                {` ${String(lane.total).padStart(TOTAL_WIDTH - 1)}`}
+              </Text>
+              {lane.unknown > 0 ? <Text color={COLOR.unknown}>{` (${lane.unknown}?)`}</Text> : null}
+              {lane.claimed > 0 ? <Text color={COLOR.claimed}>{` ${lane.claimed} claimed`}</Text> : null}
+            </Text>
+          ))}
+        </Box>
+      )}
       <Text> </Text>
       <Text wrap="wrap">
         <Text color={COLOR.hit}>■</Text>
