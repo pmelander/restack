@@ -74,6 +74,14 @@ beginning with the waiting bars.
 
 ### Changed
 
+- **The pane, restyled for reading** (maintainer: it read too compact,
+  especially with a lot of text). Headed sections, `OPEN ASSUMPTIONS · 3` in
+  the accent, with content indented under them; a rule under the tabs. Rows
+  are items: the id in its own column, the status beside it, the text
+  wrapping below it, a blank line between items. The header fields are an
+  aligned two-column list, and the lookup's tree has room between branches.
+  Long lists stop at sixty items and say where the rest is.
+
 - **The band reads a lived-in journey**, not only the template: a terrain
   sentence shows its terms (`Greenfield/Brownfield`), other fields their first
   clause, and the next move comes from the newest Current Position subsection
