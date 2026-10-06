@@ -118,6 +118,8 @@ declare module 'claude-code' {
       // '*' every residual's claims dimmed, '-' none, or one residual's id.
       residualPick: string
       isSortedByTotal: boolean
+      // The first stressor of the Matrix tab's window.
+      matrixOffset: number
     }
   }
 }

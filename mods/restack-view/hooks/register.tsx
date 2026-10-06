@@ -24,6 +24,7 @@ const matrix = atom({ plugin: 'restack-view', key: 'matrix' } as const, null)
 const matrixPick = atom({ plugin: 'restack-view', key: 'matrixPick' } as const, null)
 const residualPick = atom({ plugin: 'restack-view', key: 'residualPick' } as const, '*')
 const isSortedByTotal = atom({ plugin: 'restack-view', key: 'isSortedByTotal' } as const, false)
+const matrixOffset = atom({ plugin: 'restack-view', key: 'matrixOffset' } as const, 0)
 
 const PANE = 'restack-view'
 // The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
@@ -162,9 +163,10 @@ async function matrixState(
   }
 }
 
-// The Matrix tab's Select: show another matrix, then read it.
+// The Matrix tab's Select: show another matrix from its first stressor, then read it.
 async function pickMatrix($: EngineInterface, name: string): Promise<void> {
   await update($, matrixPick, () => name)
+  await update($, matrixOffset, () => 0)
   await refresh($)
 }
 
@@ -277,7 +279,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
-    const { Box, Text, Button, Markdown, Select, Raster, Svg } = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown, Select, Svg } = $.ui.resolve(e)
     const current = await read($, view)
     const lists = await read($, detail)
     const open = await read($, tab)
@@ -307,6 +309,7 @@ export const register: Register = on => {
     const matrixPicks = {
       residual: await read($, residualPick),
       isSortedByTotal: await read($, isSortedByTotal),
+      offset: await read($, matrixOffset),
       onFile: (name: string) => {
         void pickMatrix($, name)
       },
@@ -315,6 +318,10 @@ export const register: Register = on => {
       },
       onSort: () => {
         void update($, isSortedByTotal, value => !value)
+        void update($, matrixOffset, () => 0)
+      },
+      onPage: (offset: number) => {
+        void update($, matrixOffset, () => offset)
       },
     }
 
@@ -343,7 +350,7 @@ export const register: Register = on => {
         {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
         {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
         {open === 'matrix' ? (
-          drawMatrix({ Box, Text, Button, Select, Raster, Svg }, await read($, matrix), matrixPicks, e.surface, width)
+          drawMatrix({ Box, Text, Button, Select }, await read($, matrix), matrixPicks, e.surface, width)
         ) : (
           <Markdown key={`body-${open}`} text={tabText(lists, open)} />
         )}

@@ -231,7 +231,7 @@ export const residualsFor = (matrix: string): string => matrix.replace(/^matrix-
 
 export const fileLabel = (f: MatrixFile): string => (f.iter === undefined ? f.date : `iteration ${f.iter} · ${f.date}`)
 
-// --- drawing, as data ---------------------------------------------------------
+// --- order and overlay ----------------------------------------------------------
 
 // The order to draw: the file's own, or by total as a reading aid (rows and
 // columns both, ties kept in file order). The order never changes a cell.
@@ -257,92 +257,116 @@ export function claimedCells(grid: MatrixGrid, pick: string): Set<string> {
   return set
 }
 
-// 24-bit colours: a Raster takes 0x00RRGGBB, and an Svg the same as hex. Fixed
-// rather than theme keys because a Raster has no theme. Cells are vivid, lens
-// bands muted; none of them is a verdict (ADR-030).
+// --- drawing, as data -----------------------------------------------------------
+//
+// The matrix is drawn flipped, as text (maintainer, 2026-10-06, after the first
+// version, a full grid as an image, shrank a 152 × 30 matrix past reading on
+// the Desktop): one lane per actor, one character per stressor, and only as
+// many stressors as the pane can draw, paged. Text draws the same on both
+// surfaces, so there is one renderer.
+
+// Colours as Text takes them. Cells are vivid, lens bands muted; none of them
+// is a verdict (ADR-030).
 export const COLOR = {
-  hit: 0xff8a5c,
-  unknown: 0xc78cff,
-  claimed: 0x7a4636,
-  lens: { O: 0x4a7fbf, V: 0x7f6fbf, C: 0x3f8f86, P: 0x9f8a4f, X: 0x777777 } as Record<string, number>,
-  lensOther: 0x5a5a5a,
-  none: 0x01000000,
+  hit: '#ff8a5c',
+  unknown: '#c78cff',
+  claimed: '#7a4636',
+  lens: { O: '#4a7fbf', V: '#7f6fbf', C: '#3f8f86', P: '#9f8a4f', X: '#777777' } as Record<string, string>,
+  lensOther: '#5a5a5a',
 }
 
-const cellColor = (grid: MatrixGrid, r: number, c: number, claimed: Set<string>): number | undefined => {
-  const row = grid.rows[r]
-  const v = row.cells[c]
-  if (v === EMPTY) return undefined
-  if (claimed.has(`${row.id}|${grid.actors[c]}`)) return COLOR.claimed
+export type Mark = 'hit' | 'unknown' | 'claimed' | 'empty'
 
-  return v === UNKNOWN ? COLOR.unknown : COLOR.hit
+export type Lane = {
+  actor: string
+  // One mark per stressor in the window, in drawing order.
+  marks: Mark[]
+  // Over the whole matrix, not the window: the actor's column.
+  total: number
+  unknown: number
+  claimed: number
 }
 
-const lensColor = (lens: string | undefined): number =>
+export type Window = {
+  // Indices into the drawing order of stressors: [start, end).
+  start: number
+  end: number
+  count: number
+  // The stressors in the window, and each one's lens colour.
+  ids: string[]
+  lens: string[]
+  // Every tenth stressor named, at its column; spaces between.
+  ruler: string
+  lanes: Lane[]
+}
+
+export const lensColor = (lens: string | undefined): string =>
   lens === undefined ? COLOR.lensOther : (COLOR.lens[lens.toUpperCase()] ?? COLOR.lensOther)
 
-// Two stressor rows per terminal row, as half blocks: the top row is the
-// foreground of `▀`, the bottom row its background. One lens column, a gap,
-// then each actor column `width` cells wide: its first cell drawn, the rest a
-// gap, so columns read apart.
-export function rasterCells(grid: MatrixGrid, rows: number[], cols: number[], claimed: Set<string>, width: number) {
-  const columns = 2 + cols.length * width
-  const lines = Math.ceil(rows.length / 2)
-  const words: number[] = []
-  for (let line = 0; line < lines; line++) {
-    const top = rows[line * 2]
-    const bottom = rows[line * 2 + 1]
-    const pair = (a: number | undefined, b: number | undefined) => {
-      if (a === undefined && b === undefined) words.push(0x20, COLOR.none, COLOR.none)
-      else if (a === undefined) words.push(0x2584, b!, COLOR.none)
-      else words.push(0x2580, a, b ?? COLOR.none)
-    }
-    pair(lensColor(grid.rows[top].lens), bottom === undefined ? undefined : lensColor(grid.rows[bottom].lens))
-    pair(undefined, undefined)
-    for (const c of cols) {
-      pair(cellColor(grid, top, c, claimed), bottom === undefined ? undefined : cellColor(grid, bottom, c, claimed))
-      for (let k = 1; k < width; k++) pair(undefined, undefined)
-    }
-  }
+const markOf = (grid: MatrixGrid, r: number, c: number, claimed: Set<string>): Mark => {
+  const row = grid.rows[r]
+  const v = row.cells[c]
+  if (v === EMPTY) return 'empty'
+  if (claimed.has(`${row.id}|${grid.actors[c]}`)) return 'claimed'
 
-  return { columns, rows: lines, cells: new Uint8Array(Uint32Array.from(words).buffer).toBase64() }
+  return v === UNKNOWN ? 'unknown' : 'hit'
 }
 
-const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`
-const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+// The stressors from `offset`, as many as `width` characters hold, one lane
+// per actor. `rows` and `cols` are the drawing order from `order`. The offset
+// is clamped, so a window is never empty while the matrix is not.
+export function flippedWindow(
+  grid: MatrixGrid,
+  rows: number[],
+  cols: number[],
+  claimed: Set<string>,
+  offset: number,
+  width: number,
+): Window {
+  const count = rows.length
+  const size = Math.max(1, Math.min(width, count))
+  const start = Math.max(0, Math.min(offset, count - size))
+  const end = Math.min(count, start + size)
+  const shown = rows.slice(start, end)
 
-export const SVG_LIMIT = 131_072
+  // A label every tenth stressor, where it fits before the next one.
+  const ruler = Array.from({ length: shown.length }, () => ' ')
+  for (let i = 0; i < shown.length; i += 10) {
+    const id = grid.rows[shown[i]].id
+    if (i + id.length > shown.length) break
+    for (let k = 0; k < id.length; k++) ruler[i + k] = id[k]
+  }
 
-// The Desktop's drawing: only the marked cells, each with a tooltip, a lens
-// band, rotated actor codes above, column totals below, every fifth row named.
-export function svgSource(grid: MatrixGrid, rows: number[], cols: number[], claimed: Set<string>, withTitles = true): string {
-  const cw = 12
-  const ch = 7
-  const left = 56
-  const top = 46
-  const width = left + 10 + cols.length * cw + 8
-  const height = top + rows.length * ch + 24
-  const parts: string[] = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="ui-monospace, monospace" font-size="9">`,
-  ]
-  cols.forEach((c, j) => {
-    const x = left + 10 + j * cw + cw / 2
-    parts.push(`<text transform="translate(${x},${top - 4}) rotate(-60)" fill="#8a8f98">${esc(grid.actors[c])}</text>`)
-    parts.push(`<text x="${x}" y="${top + rows.length * ch + 14}" text-anchor="middle" fill="#8a8f98">${grid.colTotals[c]}</text>`)
-  })
-  rows.forEach((r, i) => {
-    const y = top + i * ch
-    const row = grid.rows[r]
-    parts.push(`<rect x="${left}" y="${y}" width="6" height="${ch - 1}" fill="${hex(lensColor(row.lens))}"/>`)
-    if (i % 5 === 0) parts.push(`<text x="${left - 4}" y="${y + ch}" text-anchor="end" fill="#8a8f98">${esc(row.id)}</text>`)
-    cols.forEach((c, j) => {
-      const color = cellColor(grid, r, c, claimed)
-      if (color === undefined) return
-      const rect = `x="${left + 10 + j * cw + 1}" y="${y}" width="${cw - 2}" height="${ch - 1}" fill="${hex(color)}"`
-      parts.push(withTitles ? `<rect ${rect}><title>${esc(`${row.id} × ${grid.actors[c]}`)}</title></rect>` : `<rect ${rect}/>`)
-    })
-  })
-  parts.push('</svg>')
+  return {
+    start,
+    end,
+    count,
+    ids: shown.map(r => grid.rows[r].id),
+    lens: shown.map(r => lensColor(grid.rows[r].lens)),
+    ruler: ruler.join('').trimEnd(),
+    lanes: cols.map(c => {
+      const all = grid.rows.map((_, r) => markOf(grid, r, c, claimed))
 
-  return parts.join('')
+      return {
+        actor: grid.actors[c],
+        marks: shown.map(r => markOf(grid, r, c, claimed)),
+        total: grid.colTotals[c],
+        unknown: grid.rows.filter(row => row.cells[c] === UNKNOWN).length,
+        claimed: all.filter(m => m === 'claimed').length,
+      }
+    }),
+  }
+}
+
+// Consecutive equal items as one run, so a lane is a handful of Text elements
+// rather than one per stressor.
+export function runs<T>(items: T[]): Array<[T, number]> {
+  const out: Array<[T, number]> = []
+  for (const m of items) {
+    const last = out[out.length - 1]
+    if (last !== undefined && last[0] === m) last[1] += 1
+    else out.push([m, 1])
+  }
+
+  return out
 }

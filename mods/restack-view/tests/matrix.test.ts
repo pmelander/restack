@@ -10,14 +10,14 @@ import {
   claimedCells,
   COLOR,
   EMPTY,
+  flippedWindow,
   HIT,
   matrixFiles,
   order,
-  rasterCells,
   readClaims,
   readMatrix,
+  runs,
   staleness,
-  svgSource,
   UNKNOWN,
 } from '../hooks/matrix.ts'
 import { FIXTURES, MATRIX_FIXTURES } from './fixtures.ts'
@@ -117,37 +117,62 @@ test('sorting by total reorders rows and columns, and changes no cell', () => {
   expect(sorted.cols).toEqual([1, 2, 0, 3])
 })
 
-test('the raster packs two stressors per line as half blocks, claimed cells dimmed', () => {
-  const g = gridOf('matrix-iter1.md', 'residuals-iter1.md')
+test('flipped: one lane per actor, one mark per stressor, totals over the whole matrix', () => {
+  const g = gridOf('matrix-iter1.md')
   const { rows, cols } = order(g, false)
-  const r = rasterCells(g, rows, cols, claimedCells(g, '-'), 1)
-  expect([r.columns, r.rows]).toEqual([6, 3])
-  const words = new Uint32Array(Uint8Array.fromBase64(r.cells).buffer)
-  const at = (line: number, column: number) => Array.from(words.slice((line * 6 + column) * 3, (line * 6 + column) * 3 + 3))
-  // Line 0 is S-1 over S-2. CA: hit over empty. RS: hit over hit.
-  expect(at(0, 2)).toEqual([0x2580, COLOR.hit, COLOR.none])
-  expect(at(0, 3)).toEqual([0x2580, COLOR.hit, COLOR.hit])
-  // LC: empty over hit draws the lower half only.
-  expect(at(0, 4)).toEqual([0x2584, COLOR.hit, COLOR.none])
-  // Line 2 is S-5 alone: LC unknown.
-  expect(at(2, 4)).toEqual([0x2580, COLOR.unknown, COLOR.none])
-  // The lens band: O over C.
-  expect(at(0, 0)).toEqual([0x2580, COLOR.lens.O, COLOR.lens.C])
-
-  const all = rasterCells(g, rows, cols, claimedCells(g, '*'), 1)
-  const claimed = new Uint32Array(Uint8Array.fromBase64(all.cells).buffer)
-  // S-1 × RS is claimed by R1 and R2: dimmed.
-  expect(claimed[(0 * 6 + 3) * 3 + 1]).toBe(COLOR.claimed)
-  const r1 = new Set([...claimedCells(g, 'R1')])
-  expect(r1.has('S-5|LC')).toBe(false)
+  const w = flippedWindow(g, rows, cols, claimedCells(g, '-'), 0, 100)
+  expect([w.start, w.end, w.count]).toEqual([0, 5, 5])
+  expect(w.ids).toEqual(['S-1', 'S-2', 'S-3', 'S-4', 'S-5'])
+  expect(w.lens).toEqual([COLOR.lens.O, COLOR.lens.C, COLOR.lens.O, COLOR.lens.C, COLOR.lens.X])
+  expect(w.lanes.map(l => l.actor)).toEqual(['CA', 'RS', 'LC', 'NS'])
+  expect(w.lanes[0].marks).toEqual(['hit', 'empty', 'empty', 'empty', 'hit'])
+  expect(w.lanes[3].marks).toEqual(['empty', 'empty', 'hit', 'empty', 'unknown'])
+  expect(w.lanes.map(l => [l.total, l.unknown])).toEqual([[2, 0], [4, 0], [3, 1], [2, 1]])
+  expect(w.ruler).toBe('S-1')
 })
 
-test('the Desktop drawing marks only the scored cells, each with its name', () => {
+test('claimed cells are marked as claimed, and counted per actor', () => {
+  const g = gridOf('matrix-iter1.md', 'residuals-iter1.md')
+  const { rows, cols } = order(g, false)
+  // RS: S-1, S-2 and S-4 are claimed (R1, and R2 for S-1); S-5 is not.
+  const all = flippedWindow(g, rows, cols, claimedCells(g, '*'), 0, 100).lanes[1]
+  expect(all.marks).toEqual(['claimed', 'claimed', 'empty', 'claimed', 'hit'])
+  expect(all.claimed).toBe(3)
+  // R2 alone claims only S-1 × RS in that lane.
+  expect(flippedWindow(g, rows, cols, claimedCells(g, 'R2'), 0, 100).lanes[1].marks).toEqual([
+    'claimed', 'hit', 'empty', 'hit', 'hit',
+  ])
+  expect(flippedWindow(g, rows, cols, claimedCells(g, '-'), 0, 100).lanes[1].claimed).toBe(0)
+})
+
+test('the window is as wide as the pane draws, and paging is clamped', () => {
   const g = gridOf('matrix-iter3.md')
   const { rows, cols } = order(g, false)
-  const svg = svgSource(g, rows, cols, claimedCells(g, '-'))
-  // 23 hits, plus 12 lens bands.
-  expect(svg.match(/<rect /g)!.length).toBe(23 + 12)
-  expect(svg).toContain('<title>S-8 × EB</title>')
-  expect(svg).not.toContain('currentColor')
+  const at = (offset: number, width: number) => {
+    const w = flippedWindow(g, rows, cols, new Set(), offset, width)
+
+    return [w.start, w.end, w.lanes[0].marks.length]
+  }
+  expect(at(0, 5)).toEqual([0, 5, 5])
+  expect(at(5, 5)).toEqual([5, 10, 5])
+  // Past the end, the window keeps its width and ends at the last stressor.
+  expect(at(10, 5)).toEqual([7, 12, 5])
+  expect(at(99, 5)).toEqual([7, 12, 5])
+  expect(at(0, 500)).toEqual([0, 12, 12])
+})
+
+test('the ruler names every tenth stressor where it fits', () => {
+  const g = gridOf('matrix-iter3.md')
+  const { rows, cols } = order(g, false)
+  // S-11 at column 10 needs four columns; twelve hold it only from 14.
+  expect(flippedWindow(g, rows, cols, new Set(), 0, 12).ruler).toBe('S-1')
+  const wide = gridOf('matrix-iter3.md')
+  const extra = { ...wide, rows: [...wide.rows, ...wide.rows.map(r => ({ ...r, id: r.id + 'b' }))] }
+  const order2 = order(extra, false)
+  expect(flippedWindow(extra, order2.rows, order2.cols, new Set(), 0, 24).ruler).toBe('S-1       S-11      S-9b')
+})
+
+test('runs group equal neighbours', () => {
+  expect(runs(['a', 'a', 'b', 'a'])).toEqual([['a', 2], ['b', 1], ['a', 1]])
+  expect(runs([])).toEqual([])
 })

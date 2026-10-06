@@ -1,30 +1,44 @@
-// The Matrix tab's drawing (ADR-030, view 1): a Raster in the terminal, an Svg
-// on the Desktop, the staleness stamp in the title. Data from matrix.ts; the
-// callbacks come from the hook, so nothing here touches `$`.
+// The Matrix tab's drawing (ADR-030, view 1), flipped and as text: one lane
+// per actor, one character per stressor, as many stressors as the pane draws,
+// paged with `p` and `n`. The same Text on both surfaces. Data from matrix.ts;
+// the callbacks come from the hook, so nothing here touches `$`.
 
 import type { Elements, RenderSurface } from 'claude-code'
 
 import type { MatrixState } from '../types'
-import { claimedCells, COLOR, fileLabel, order, rasterCells, SVG_LIMIT, svgSource } from './matrix.ts'
+import { claimedCells, COLOR, fileLabel, flippedWindow, order, runs } from './matrix.ts'
+import type { Mark } from './matrix.ts'
 
-type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select' | 'Raster' | 'Svg'>
+type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select'>
 
 export type MatrixPicks = {
   residual: string
   isSortedByTotal: boolean
+  offset: number
   onFile: (name: string) => void
   onResidual: (pick: string) => void
   onSort: () => void
+  onPage: (offset: number) => void
 }
 
-const LABEL_WIDTH = 8
-const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`
+const GLYPH: Record<Mark, string> = { hit: '■', unknown: '■', claimed: '■', empty: '·' }
+const MARK_COLOR: Record<Mark, string | undefined> = {
+  hit: COLOR.hit,
+  unknown: COLOR.unknown,
+  claimed: COLOR.claimed,
+  empty: undefined,
+}
+const TOTAL_WIDTH = 5
+// Block and geometric glyphs measure wider than a cell in the Desktop's
+// proportional font; drawing a little under the column count keeps a lane on
+// one line (headroom's measurement).
+const DESKTOP_SLACK = 0.85
 
 const NONE_YET =
   'No impact matrix scored yet. /restack-stressor analyze writes one to docs/stressor-analysis/, and it is drawn here.'
 
 export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPicks, surface: RenderSurface, columns: number) {
-  const { Box, Text, Button, Select, Raster, Svg } = els
+  const { Box, Text, Button, Select } = els
   if (state === null || state.files.length === 0) return <Text dimColor>{NONE_YET}</Text>
 
   const fileSelect =
@@ -55,6 +69,11 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
   const { rows, cols } = order(grid, picks.isSortedByTotal)
   const claimed = claimedCells(grid, picks.residual)
 
+  // The lane's width: what is left of the pane after the actor code and the total.
+  const label = Math.max(4, ...grid.actors.map(a => a.length)) + 1
+  const room = Math.floor((columns - label - TOTAL_WIDTH - 1) * (surface === 'desktop' ? DESKTOP_SLACK : 1))
+  const win = flippedWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room))
+
   const stamp =
     grid.baseline === undefined
       ? { text: ' · no scoring baseline', isStale: grid.stale.length > 0 }
@@ -63,21 +82,6 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
         : grid.marked.length > 0
           ? { text: ` · scored at D${grid.baseline}, marked scored pre-D${grid.marked.join(', pre-D')}`, isStale: false }
           : { text: ` · scored at D${grid.baseline}`, isStale: false }
-  const title = (
-    <Text wrap="wrap">
-      <Text bold>{file ? fileLabel(file) : grid.file}</Text>
-      {` · ${grid.rows.length} × ${grid.actors.length} · ${grid.total} cells`}
-      {grid.unknown > 0 ? ` (${grid.unknown} unknown)` : ''}
-      {/* Stale is a fact about the file, said where the eye lands first. */}
-      {stamp.isStale ? (
-        <Text bold color="claude">
-          {stamp.text}
-        </Text>
-      ) : (
-        <Text dimColor>{stamp.text}</Text>
-      )}
-    </Text>
-  )
 
   const residualSelect =
     grid.claims.length > 0 ? (
@@ -93,10 +97,17 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
         onSelect={value => picks.onResidual(value)}
       />
     ) : null
-  const controls = (
+
+  const isPaged = win.count > win.end - win.start
+  const pager = (
     <Box flexDirection="row" columnGap={2} flexWrap="wrap">
-      {fileSelect}
-      {residualSelect}
+      {isPaged && win.start > 0 ? (
+        <Button key="matrix-prev" label="◀ previous" hotkey="p" plain onPress={() => picks.onPage(Math.max(0, win.start - (win.end - win.start)))} />
+      ) : null}
+      <Text dimColor>{`${win.ids[0]} … ${win.ids[win.ids.length - 1]} (${win.start + 1}–${win.end} of ${win.count} stressors)`}</Text>
+      {isPaged && win.end < win.count ? (
+        <Button key="matrix-next" label="next ▶" hotkey="n" plain onPress={() => picks.onPage(win.end)} />
+      ) : null}
       <Button
         key="matrix-sort"
         label={picks.isSortedByTotal ? 'File order' : 'Sort by total'}
@@ -107,86 +118,79 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
     </Box>
   )
 
-  const legend = (
-    <Text wrap="wrap">
-      <Text color={hex(COLOR.hit)}>■</Text>
-      <Text dimColor> hit  </Text>
-      <Text color={hex(COLOR.unknown)}>■</Text>
-      <Text dimColor> unknown (counts as 1)  </Text>
-      {grid.claims.length > 0 ? <Text color={hex(COLOR.claimed)}>■</Text> : null}
-      {grid.claims.length > 0 ? <Text dimColor>{` claimed by ${grid.residualsFile}  `}</Text> : null}
-      <Text dimColor>lens </Text>
-      {Object.entries(COLOR.lens).map(([lens, c]) => (
-        <Text key={`lens-${lens}`}>
-          <Text color={hex(c)}>▌</Text>
-          <Text dimColor>{`${lens} `}</Text>
-        </Text>
-      ))}
-    </Text>
-  )
-
-  if (surface === 'desktop') {
-    let source = svgSource(grid, rows, cols, claimed)
-    if (source.length > SVG_LIMIT) source = svgSource(grid, rows, cols, claimed, false)
-    const drawing =
-      source.length > SVG_LIMIT ? (
-        <Text dimColor>Too many marked cells to draw here; the terminal draws it whole.</Text>
-      ) : (
-        <Svg source={source} alt={`Impact matrix ${grid.file}: ${grid.rows.length} stressors by ${grid.actors.length} actors`} isInteractive />
-      )
-
-    return (
-      <Box flexDirection="column">
-        {title}
-        {controls}
-        <Text> </Text>
-        {drawing}
-        {legend}
-      </Box>
-    )
-  }
-
-  // Terminal: each actor column as wide as its code needs, down to one cell.
-  const longest = Math.max(...grid.actors.map(a => a.length))
-  const fixed = LABEL_WIDTH + 2 + 8
-  const fits = (w: number) => fixed + cols.length * w <= columns
-  const cw = [Math.min(4, longest + 1), 3, 2, 1].find(fits) ?? 1
-  const raster = rasterCells(grid, rows, cols, claimed, cw)
-  const lines = raster.rows
-  const pad = (s: string, n: number) => (s.length > n ? s.slice(0, n) : s.padEnd(n))
-  const header = ' '.repeat(LABEL_WIDTH + 2) + cols.map(c => pad(grid.actors[c], cw)).join('')
-  const footer = ' '.repeat(LABEL_WIDTH + 2) + cols.map(c => pad(String(grid.colTotals[c]), cw)).join('')
-  const labels = Array.from({ length: lines }, (_, i) => pad(grid.rows[rows[i * 2]].id, LABEL_WIDTH)).join('\n')
-  const totals = Array.from({ length: lines }, (_, i) => {
-    const bottom = rows[i * 2 + 1]
-
-    return `${grid.rows[rows[i * 2]].total}${bottom === undefined ? '' : ` ${grid.rows[bottom].total}`}`
-  }).join('\n')
+  const pad = (s: string, n: number) => (s.length >= n ? s.slice(0, n) : s.padEnd(n))
 
   return (
     <Box flexDirection="column">
-      {title}
-      {controls}
-      <Text> </Text>
-      {cw >= Math.min(longest, 2) ? (
-        <Text dimColor wrap="truncate">
-          {header}
-        </Text>
-      ) : (
-        <Text dimColor wrap="wrap">{`Columns, left to right: ${cols.map(c => grid.actors[c]).join(' ')}`}</Text>
-      )}
-      <Box flexDirection="row">
-        <Box width={LABEL_WIDTH} flexShrink={0}>
-          <Text dimColor>{labels}</Text>
-        </Box>
-        <Raster key="matrix-grid" columns={raster.columns} rows={raster.rows} cells={raster.cells} />
-        <Box marginLeft={1}>
-          <Text dimColor>{totals}</Text>
-        </Box>
+      <Text wrap="wrap">
+        <Text bold>{file ? fileLabel(file) : grid.file}</Text>
+        {` · ${grid.rows.length} stressors × ${grid.actors.length} actors · ${grid.total} cells`}
+        {grid.unknown > 0 ? ` (${grid.unknown} unknown)` : ''}
+        {/* Stale is a fact about the file, said where the eye lands first. */}
+        {stamp.isStale ? (
+          <Text bold color="claude">
+            {stamp.text}
+          </Text>
+        ) : (
+          <Text dimColor>{stamp.text}</Text>
+        )}
+      </Text>
+      <Box flexDirection="row" columnGap={2} flexWrap="wrap">
+        {fileSelect}
+        {residualSelect}
       </Box>
-      <Text wrap="truncate">{footer}</Text>
-      <Text dimColor>{'Two stressors per line: the upper half of each cell is the first, the lower half the second.'}</Text>
-      {legend}
+      {pager}
+      <Text> </Text>
+      <Text wrap="truncate">
+        <Text dimColor>{pad('lens', label)}</Text>
+        {runs(win.lens).map(([color, n], i) => (
+          <Text key={`lens-${i}`} color={color}>
+            {'▄'.repeat(n)}
+          </Text>
+        ))}
+      </Text>
+      <Text dimColor wrap="truncate">
+        {' '.repeat(label) + win.ruler}
+      </Text>
+      {win.lanes.map(lane => (
+        <Text key={`lane-${lane.actor}`} wrap="truncate">
+          <Text bold={lane.total > 0} dimColor={lane.total === 0}>
+            {pad(lane.actor, label)}
+          </Text>
+          {runs(lane.marks).map(([mark, n], i) =>
+            MARK_COLOR[mark] === undefined ? (
+              <Text key={`m-${i}`} dimColor>
+                {GLYPH[mark].repeat(n)}
+              </Text>
+            ) : (
+              <Text key={`m-${i}`} color={MARK_COLOR[mark]}>
+                {GLYPH[mark].repeat(n)}
+              </Text>
+            ),
+          )}
+          <Text bold={lane.total > 0} dimColor={lane.total === 0}>
+            {` ${String(lane.total).padStart(TOTAL_WIDTH - 1)}`}
+          </Text>
+          {lane.unknown > 0 ? <Text color={COLOR.unknown}>{` (${lane.unknown}?)`}</Text> : null}
+          {lane.claimed > 0 ? <Text color={COLOR.claimed}>{` ${lane.claimed} claimed`}</Text> : null}
+        </Text>
+      ))}
+      <Text> </Text>
+      <Text wrap="wrap">
+        <Text color={COLOR.hit}>■</Text>
+        <Text dimColor> hit  </Text>
+        <Text color={COLOR.unknown}>■</Text>
+        <Text dimColor> unknown (counts as 1)  </Text>
+        {grid.claims.length > 0 ? <Text color={COLOR.claimed}>■</Text> : null}
+        {grid.claims.length > 0 ? <Text dimColor>{` claimed by ${grid.residualsFile}  `}</Text> : null}
+        <Text dimColor>· empty   lens </Text>
+        {Object.entries(COLOR.lens).map(([lens, c]) => (
+          <Text key={`lens-key-${lens}`}>
+            <Text color={c}>▄</Text>
+            <Text dimColor>{`${lens} `}</Text>
+          </Text>
+        ))}
+      </Text>
     </Box>
   )
 }

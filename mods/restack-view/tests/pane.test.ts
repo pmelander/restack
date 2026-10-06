@@ -284,20 +284,15 @@ for (const surface of SURFACES) {
     stub(on, surface, { ...FIXTURES.band, 'decisions-log.md': LOG_WITH_D5 }, '', ANALYSIS)
     const ui = await openMatrix($, surface)
     const tree = textOf(await ui.drawn())
-    expect(tree).toContain('iteration 1 · 2026-04-10 · 5 × 4 · 11 cells (2 unknown)')
+    expect(tree).toContain('iteration 1 · 2026-04-10 · 5 stressors × 4 actors · 11 cells (2 unknown)')
     expect(tree).toContain(' · scored at D2 · stale: D5 changed the actor set')
     expect(colorsOf(await ui.drawn())).toContainEqual(['claude', false])
     expect(tree).toContain('claimed by residuals-2026-04-10-iter1.md')
-    if (surface === 'terminal') {
-      const raster = (await ui.find({ type: 'Raster' })) as { props: { columns: number; rows: number } }
-      expect(raster.props.rows).toBe(3)
-      expect(tree).toContain('S-1')
-    } else {
-      // Two Svgs on the Desktop, the banner and the matrix: read the matrix's from the tree.
-      const drawn = JSON.stringify(await ui.drawn())
-      expect(drawn).toContain('Impact matrix matrix-2026-04-10-iter1.md: 5 stressors by 4 actors')
-      expect(drawn).toContain('<title>S-5 × LC</title>')
-    }
+    // The same text on both surfaces: one lane per actor, the window named.
+    expect(tree).toContain('S-1 … S-5 (1–5 of 5 stressors)')
+    expect(tree).toContain('RS')
+    expect(tree).toContain('3 claimed')
+    expect(await ui.find({ type: 'Raster' })).toBeUndefined()
   })
 
   test(`the Select shows an older matrix, and a rejected one only as its problem, on ${surface}`, async ($, on) => {
@@ -307,6 +302,19 @@ for (const surface of SURFACES) {
     const tree = textOf(await ui.drawn())
     expect(tree).toContain('matrix-2026-04-01.md: 1 × Locker = 2: scoring is 0 or 1. Not drawn')
     expect(await ui.find({ type: 'Raster' })).toBeUndefined()
+  })
+
+  test(`a matrix wider than the pane pages, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band', '', { 'matrix-2026-04-12-iter3.md': MATRIX_FIXTURES['matrix-iter3.md'] })
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, bodyColumns: 20 } })
+    await ui.press({ key: 'tab-matrix' })
+    expect(textOf(await ui.drawn())).toContain('S-1 … S-10 (1–10 of 12 stressors)')
+    expect(await ui.find({ key: 'matrix-prev' })).toBeUndefined()
+    await ui.press({ key: 'matrix-next' })
+    expect(textOf(await ui.drawn())).toContain('S-3 … S-12 (3–12 of 12 stressors)')
+    await ui.press({ key: 'matrix-prev' })
+    expect(textOf(await ui.drawn())).toContain('(1–10 of 12 stressors)')
   })
 
   test(`sorting by total is a toggle, on ${surface}`, async ($, on) => {

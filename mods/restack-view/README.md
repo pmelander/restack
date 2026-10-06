@@ -49,16 +49,18 @@ Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.
 
 **The Matrix tab** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md))
 draws the newest `docs/stressor-analysis/matrix-<date>[-iter<n>].md` as
-`matrix.py` reads it: one mark per cell, orange for a hit and violet for an
-unknown, which counts as 1. There is no severity scale, because scoring is
-binary. A band at the left gives each row's lens. Cells the same iteration's
-residuals claim are dimmed. The Select shows all residuals, none, or one. The
-title says when the matrix is stale: scored before a decision that changed
-the actor set, and not marked `scored pre-D<n>`, as `trace.py` decides it.
-`s` sorts rows and columns by total, as a reading aid. In the terminal two
-stressors share a line, the upper and lower half of each cell. On the
-Desktop it is an image with each cell named on hover. A matrix `matrix.py`
-would reject is not drawn: the tab names the problem instead.
+`matrix.py` reads it, flipped: one lane per actor, one character per stressor.
+`■` is a mark, orange for a hit and violet for an unknown, which counts as 1;
+`·` is empty. There is no severity scale, because scoring is binary. As many
+stressors are shown as the pane can draw: `p` and `n` page through, and a
+ruler above names every tenth. A lens strip runs above the lanes. Each lane
+ends with its actor's total over the whole matrix, its unknowns, and its
+claimed cells. Cells the same iteration's residuals claim are dimmed, and the
+Select shows all residuals, none, or one. The title says when the matrix is
+stale: scored before a decision that changed the actor set, and not marked
+`scored pre-D<n>`, as `trace.py` decides it. `s` sorts stressors and actors
+by total, as a reading aid. A matrix `matrix.py` would reject is not drawn:
+the tab names the problem instead.
 
 **The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
 a meter per recipient, filled in proportion to the busiest recipient's open

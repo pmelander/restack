@@ -87,12 +87,18 @@ no skill depends on them, and every number matches the script that owns it.
 
 ### 1. The matrix heatmap: a new **Matrix** tab
 
+- **Flipped, and drawn as text** (maintainer, 2026-10-06). One lane per
+  actor, one character per stressor: `■` for a mark, `·` for empty. The
+  lanes run across, and only as many stressors as the pane can draw are
+  shown, paged with `p` and `n`. The same `Text` draws on both surfaces,
+  with headroom's Desktop width allowance. A lane of dots with a 0 total is a
+  suspicious zero, visible as one.
 - **One mark per cell, three states:** hit (`1`), unknown (`?`, `1?`), empty.
-  No severity scale, because there is none. Each row carries its lens
-  (O, V, C, P, X) as a coloured band at the left edge.
-- **Margins:** column totals under the grid and row totals at the right,
-  counted as `matrix.py totals` counts them, with unknowns included and also
-  counted separately.
+  No severity scale, because there is none. A lens strip runs above the
+  lanes, one colour per stressor, and a ruler names every tenth stressor.
+- **Margins:** each lane ends with its actor's total over the whole matrix,
+  counted as `matrix.py totals` counts it, with its unknowns and its claimed
+  cells beside it.
 - **Residual overlay:** cells a residual claims to clear are drawn in a
   second, dimmer colour, read from the residuals file of the same iteration
   with `matrix.py claims`' rules. A `Select` picks one residual to highlight
@@ -107,13 +113,14 @@ no skill depends on them, and every number matches the script that owns it.
 - **Order:** the file's own row and column order by default. A button
   re-sorts both by total, as a reading aid. The order never implies a
   ranking the matrix does not hold.
-- **Terminal:** a `Raster`, one character per actor column, using upper
-  half blocks (`▀`) whose foreground and background colours carry two rows.
-  115 rows fit in 58 lines. Rows and column codes are labelled in `Text`
-  beside it.
-- **Desktop:** an `Svg`, drawing only the marked cells. 195 hits plus the
-  unknowns is a few hundred rects, well under the 131,072-character limit,
-  where one rect per cell would not be.
+- **Withdrawn: the grid as an image.** The first version drew stressors as
+  rows: a `Raster` in the terminal, two stressors per line, and an `Svg` on
+  the Desktop. On the reference engagement's 152 × 30 matrix the Desktop
+  scaled the image to fit the pane, about 1,060 pixels tall shrunk to 220.
+  The labels went past reading, and the interactive frame drew a white
+  box. Flipping the axes puts the long dimension across, where paging
+  handles it, and the short one down, where every actor gets a readable
+  label.
 - **A matrix `matrix.py` would reject** (a cell above 1, a total that does
   not add up) draws nothing but the problem and the command:
   `matrix-<date>-iter<n>.md: 3 cells scored above 1: python matrix.py totals`.
@@ -228,9 +235,10 @@ like-for-like figures to a canonical place the mod can read without guessing.
   not hold, is invisible to the view until it is taught. Mitigation: a
   matrix the view cannot read draws the problem and the command, never a
   partial grid.
-- **Two renderers for one view.** The heatmap is a `Raster` in the terminal
-  and an `Svg` on the Desktop, and each needs its own tests on its own
-  surface.
+- **A wide matrix is read a page at a time.** The flipped lanes show only
+  the stressors the pane can draw. On the reference engagement that is about
+  80 of 152 at a time in a full-width terminal, fewer when docked. Sorting
+  by total brings the most-hit stressors into the first page.
 - **The pane grows.** Five tabs and three controls. Every view must stay
   quiet when its data is absent, or the pane becomes the dashboard nobody
   reads.
@@ -277,8 +285,9 @@ like-for-like figures to a canonical place the mod can read without guessing.
 - **Pros:** any chart a plotting library can draw.
 - **Cons:** a dependency (ADR-010), a process call, and an `Image` element
   that exists only in the terminal.
-- **Why rejected:** block glyphs, `Raster` and `Svg` cover these four views
-  without any of that.
+- **Why rejected:** block glyphs and text cover these four views without any
+  of that. The one image the pane does draw is the banner's `Svg` on the
+  Desktop, where text has no monospace font to hold the art.
 
 ### The matrix as a severity heatmap
 

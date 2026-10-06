@@ -13,14 +13,16 @@ beginning with the waiting bars.
 
 ### Added
 
-- **The Matrix tab**: the newest impact matrix as a heatmap. Hit, unknown or
-  empty, never a severity; a lens band per row; residual claims dimmed,
-  selectable per residual; the staleness stamp in the title, by `trace.py`'s
-  BASE rule; sort by total. The terminal draws it as a `Raster`, two
-  stressors per line, and the Desktop as an `Svg` with each cell named on
-  hover. A matrix `matrix.py` would reject is not drawn, only named. It is
-  read as `matrix.py` reads it, which was checked against its fixtures and
-  five real matrices.
+- **The Matrix tab**: the newest impact matrix, flipped and drawn as text.
+  One lane per actor, one character per stressor (`■` a mark, `·` empty),
+  paged to the width of the pane with `p` and `n`. Hit, unknown or empty,
+  never a severity; a lens strip and a ruler above the lanes; each lane's
+  total, unknowns and claimed cells at its end. Residual claims are dimmed,
+  per residual or all; the staleness stamp is in the title, by `trace.py`'s
+  BASE rule; `s` sorts by total. The same text on both surfaces. A matrix
+  `matrix.py` would reject is not drawn, only named. It is read as
+  `matrix.py` reads it, which was checked against its fixtures and five
+  real matrices.
 - **A banner** at the top of the pane: the ReStack logo in an 80s sunset
   fade, because a mod can.
 - **Waiting bars** in the pane, drawn as headroom draws its meters. The
