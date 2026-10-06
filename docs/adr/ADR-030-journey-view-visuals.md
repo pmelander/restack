@@ -183,9 +183,9 @@ getting worse" when it means "more was stressed". That is the misreading the
 method exists to prevent. **Revisit** if `matrix.py compare` writes its
 like-for-like figures to a canonical place the mod can read without guessing.
 
-### Decisions still open
+### Decisions settled by the maintainer, 2026-10-06
 
-| # | Question | Options | Recommendation |
+| # | Question | Options | Answer |
 |---|---|---|---|
 | O1 | **Build order** | (a) Waiting, then the matrix, then the lookup, then the rhythm. (b) The matrix first. | **(a).** Waiting reuses the register parser already built, and ships in a slice. The matrix brings two new parsers, two renderers and the BASE rule; it is the most valuable and the largest. |
 | O2 | **The Matrix tab with no matrix** | (a) Hidden until `docs/stressor-analysis/` has one. (b) Shown, saying none is scored yet. | **(b).** A tab that appears later is a tab nobody finds. One line saying where the matrix will come from costs nothing. |
