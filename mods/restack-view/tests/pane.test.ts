@@ -27,6 +27,7 @@ type Seen = { filled: string[]; toasts: string[]; opened: string[]; closed: stri
 const stub = (on: On, surface: string, fixture: string | null, draft = ''): Seen => {
   const seen: Seen = { filled: [], toasts: [], opened: [], closed: [] }
   mock.store(on)
+  mock.clock(on, { now: Date.parse('2026-04-20T12:00:00Z') })
   const files: Readonly<Record<string, string>> = fixture === null ? {} : FIXTURES[fixture]
   const nameOf = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/journey\/([^/]+)$/)?.[1]
   const has = (path: string) => {
@@ -136,6 +137,41 @@ for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
     expect(textOf(await ui.drawn())).toContain('journey-state.md is not canonical: /restack-journey migrate')
     expect(await ui.find({ key: 'fill-next' })).toBeUndefined()
+  })
+}
+
+for (const surface of SURFACES) {
+  test(`the Asks tab opens with one waiting bar per recipient, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'asks')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    await ui.press({ key: 'tab-asks' })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('Depot operations')
+    expect(tree).toContain('1 never asked · oldest 41 d')
+    expect(tree).toContain('1 sent · oldest 18 d')
+    expect(tree).toContain('░ 0–6 d')
+    expect(tree.indexOf('oldest 41 d')).toBeLessThan(tree.indexOf('### Depot operations'))
+  })
+
+  test(`the Assumptions tab opens with the register by status, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'asks')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    await ui.press({ key: 'tab-assumptions' })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain(' Open 4')
+    expect(tree).toContain(' Resolved by design (test pending) 1')
+    expect(tree).toContain('7 rows in the register')
+  })
+
+  test(`no bars on the Position and Decisions tabs, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'asks')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    expect(textOf(await ui.drawn())).not.toContain('rows in the register')
+    await ui.press({ key: 'tab-decisions' })
+    expect(textOf(await ui.drawn())).not.toContain('never asked ·')
   })
 }
 

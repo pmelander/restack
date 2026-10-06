@@ -42,9 +42,16 @@ Four tabs, `1` to `4`. Esc closes it.
 | Tab | Shows | Whole list in |
 |---|---|---|
 | Position | the header fields and the newest Current Position subsection | `/restack-journey where` |
-| Asks | open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
-| Assumptions | open rows: status, the belief, what would settle it | `assumptions-register.md` |
+| Asks | a waiting bar per recipient, then open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
+| Assumptions | the register by status as one bar, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
+
+**The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
+one glyph per open ask, oldest first. Its density is its age, counted from the
+last send, or from registration when it was never sent: `░` 0–6 days, `▒`
+7–29, `█` 30 and more. Colour means it was sent; plain means never asked. The
+status bar shows every row of the register by status. Neither is a verdict:
+there is no red for late and no green for done.
 
 **Put the next command in the prompt** (`n`, on Position) puts the next move in
 the prompt box and closes the pane. You read it and press Enter: the mod never

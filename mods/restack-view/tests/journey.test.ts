@@ -6,7 +6,10 @@ import { expect, test } from 'claude-code/testing'
 
 import {
   BUDGET,
+  askBars,
   bandText,
+  bucketOf,
+  daysSince,
   budget,
   readDetail,
   readJourney,
@@ -181,4 +184,49 @@ test('a tab stays under the element limit and says where the rest is', () => {
   expect(text.length).toBeLessThan(BUDGET)
   expect(text).toMatch(/… \d+ more: \/restack-journey asks$/)
   expect(budget(['one', 'two'], 'elsewhere')).toBe('one\ntwo')
+})
+
+// --- waiting (ADR-030, view 2) ---------------------------------------------
+
+const NOW = Date.parse('2026-04-20T12:00:00Z')
+
+test('each open ask is aged from its last send, or from registration when never sent', () => {
+  const bars = askBars(readDetail(filesOf('asks'))!, NOW)
+  expect(bars.map(b => [b.recipient, b.cells.map(c => [c.id, c.isSent, c.days, c.bucket])])).toEqual([
+    ['Depot operations', [['A-1', false, 41, 2]]],
+    ['Locker vendor', [['A-2', true, 18, 1]]],
+    ['Locker vendor team', [['A-3', true, 5, 0]]],
+  ])
+  expect(bars[0]).toMatchObject({ never: 1, sent: 0, oldest: 41 })
+})
+
+test('a cancelled send ages the ask from its registration again', () => {
+  const register =
+    FIXTURES.asks['assumptions-register.md'] + '- A-2 · Open · 2026-04-03 · unasked Locker vendor: recorded in error\n'
+  const bar = askBars(readDetail({ ...filesOf('asks'), register })!, NOW).find(b => b.recipient === 'Locker vendor')!
+  expect(bar.cells).toEqual([{ id: 'A-2', isSent: false, days: 31, bucket: 2 }])
+})
+
+test('without status lines, the status date is the registration', () => {
+  const register = FIXTURES.band['assumptions-register.md'].split('## Status lines')[0]
+  const bar = askBars(readDetail({ ...filesOf('band'), register })!, NOW).find(b => b.recipient === 'Depot operations')!
+  expect(bar.cells[0]).toMatchObject({ id: 'A-1', isSent: false, days: 41 })
+})
+
+test('the age buckets are 0-6, 7-29 and 30 days and more; unknown is the oldest', () => {
+  expect([6, 7, 29, 30, undefined].map(bucketOf)).toEqual([0, 1, 1, 2, 2])
+  expect(daysSince('2026-04-20', NOW)).toBe(0)
+  expect(daysSince('2026-04-21', NOW)).toBe(0)
+  expect(daysSince('not a date', NOW)).toBeUndefined()
+})
+
+test('the register by status, in the vocabulary order, every row counted', () => {
+  expect(readDetail(filesOf('asks'))!.statuses).toEqual([
+    ['Open', 4],
+    ['Partly resolved', 1],
+    ['Resolved by design (test pending)', 1],
+    ['Resolved', 1],
+  ])
+  const register = FIXTURES.band['assumptions-register.md'].replace('| Resolved | 2026-04-01 |', '| Superseded by D2 | 2026-04-01 |')
+  expect(readDetail({ ...filesOf('band'), register })!.statuses).toContainEqual(['Superseded', 1])
 })

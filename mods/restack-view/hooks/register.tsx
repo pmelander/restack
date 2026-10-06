@@ -8,8 +8,9 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
+import { askBars, bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
 import type { Files } from './journey.ts'
+import { drawAskBars, drawStatusBar } from './waiting.tsx'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
 const detail = atom({ plugin: 'restack-view', key: 'detail' } as const, null)
@@ -222,6 +223,10 @@ export const register: Register = on => {
       return <Text color="warning">{bandText(current)}</Text>
     }
     const command = current.next
+    const els = { Box, Text }
+    const width = e.props.bodyColumns
+    // Ages are counted to now, not to the last read: a day passes without a file changing.
+    const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, await $.clock.now()) : []
 
     return (
       <Box flexDirection="column">
@@ -244,6 +249,8 @@ export const register: Register = on => {
             <Text dimColor>{command}</Text>
           </Box>
         )}
+        {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
+        {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
         <Markdown key={`body-${open}`} text={tabText(lists, open)} />
       </Box>
     )

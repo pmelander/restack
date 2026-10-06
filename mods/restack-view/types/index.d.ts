@@ -31,6 +31,10 @@ export type Ask = {
   status: string
   // `never asked`, or the last recorded send: `asked <whom> <date>`.
   sent: string
+  // The row's first status line: when it was registered (YYYY-MM-DD).
+  registered?: string
+  // The last recorded send, after any `unasked` (YYYY-MM-DD).
+  sentOn?: string
 }
 
 export type OpenRow = {
@@ -55,6 +59,8 @@ export type Detail = {
   asks: Ask[]
   open: OpenRow[]
   decisions: Decision[]
+  // Every row of the register by status, in the vocabulary's order.
+  statuses: Array<[string, number]>
 }
 
 export type Tab = 'position' | 'asks' | 'assumptions' | 'decisions'

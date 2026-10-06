@@ -7,9 +7,18 @@ individual skills carry their own `version:` in frontmatter.
 
 A read-only journey view as a Claude Code mod
 ([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band and the
-pane, installed on request with `./setup --mods`.
+pane, installed on request with `./setup --mods`. The pane starts drawing
+what the text hides ([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)),
+beginning with the waiting bars.
 
 ### Added
+
+- **Waiting bars** in the pane. The Asks tab opens with one bar per
+  recipient, one glyph per open ask, aged from its last send or from
+  registration when never sent (`░` 0–6 days, `▒` 7–29, `█` 30+); colour
+  means sent. The Assumptions tab opens with the whole register as one bar
+  by status. Sends are read as `journey.py asks` reads them, `unasked`
+  included. No colour is a verdict.
 
 - **The `/restack-view` pane**: Position, Asks, Assumptions and Decisions
   tabs, read from the same files as the band. One button puts the next
@@ -50,6 +59,9 @@ pane, installed on request with `./setup --mods`.
 
 ### Decided
 
+- ADR-030: four views for the pane (waiting bars, the matrix heatmap, what
+  rests on an assumption, the journey's rhythm); an iteration trend chart is
+  rejected, because raw totals across changing actor sets mislead.
 - ADR-029: mods are views; ADR-010 is amended to allow TypeScript for them;
   packaging ReStack as a marketplace plugin is parked.
 

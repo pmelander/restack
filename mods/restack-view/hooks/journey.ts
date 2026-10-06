@@ -325,19 +325,29 @@ export function readDetail(files: Files): Detail | null {
   const view = readJourney(files)
   if (view === null || view.kind !== 'journey' || files.state === undefined) return null
   const table = files.register === undefined ? undefined : registerTable(files.register)
-  const rows = table === undefined || typeof table === 'string' ? [] : table.rows.filter(isOpen)
-  const sends = table === undefined || typeof table === 'string' ? new Map() : sendsOf(table.statusLines)
+  const all = table === undefined || typeof table === 'string' ? [] : table.rows
+  const statusLines = table === undefined || typeof table === 'string' ? [] : table.statusLines
+  const sends = sendsOf(statusLines)
+  const registered = registeredOf(statusLines)
 
   const asks: Ask[] = []
   const open: OpenRow[] = []
-  for (const cells of rows) {
+  for (const cells of all.filter(isOpen)) {
     const id = rowId(cells)
     const status = stripMd(cells[5] ?? '')
     open.push({ id, status, assumption: cells[1] ?? '', validates: cells[3] ?? '' })
     const ask = askOf(cells)
     if (ask === undefined) continue
     const last = sends.get(id)?.at(-1)
-    asks.push({ id, status, ...ask, sent: last === undefined ? 'never asked' : `asked ${last[1]} ${last[0]}` })
+    asks.push({
+      id,
+      status,
+      ...ask,
+      sent: last === undefined ? 'never asked' : `asked ${last[1]} ${last[0]}`,
+      // Without a status line, the row's own status date is when it was registered.
+      registered: registered.get(id) ?? dateOf(cells[6]),
+      sentOn: last?.[0],
+    })
   }
 
   return {
@@ -347,7 +357,80 @@ export function readDetail(files: Files): Detail | null {
     asks,
     open,
     decisions: files.log === undefined ? [] : openDecisions(files.log),
+    statuses: statusCounts(all),
   }
+}
+
+const dateOf = (cell: string | undefined): string | undefined => cell?.match(/\d{4}-\d{2}-\d{2}/)?.[0]
+
+// Each row's first status line: when journey.py registered it.
+const registeredOf = (statusLines: string[]): Map<string, string> => {
+  const first = new Map<string, string>()
+  for (const line of statusLines) {
+    const m = line.match(STATUS_LINE)
+    if (!m || m[3] === '—') continue
+    const id = `A-${Number(m[1])}`
+    if (!first.has(id)) first.set(id, m[3])
+  }
+
+  return first
+}
+
+// The register's vocabulary, in journey.py's order, with every `Superseded by
+// D<n>` counted as one status. A status outside it is counted under its own name.
+const VOCABULARY = ['Open', 'Partly resolved', 'Resolved by design (test pending)', 'Resolved', 'Withdrawn', 'Superseded']
+const statusCounts = (rows: Cells[]): Array<[string, number]> => {
+  const counts = new Map<string, number>(VOCABULARY.map(v => [v, 0]))
+  for (const cells of rows) {
+    const raw = stripMd(cells[5] ?? '')
+    const known = /^superseded by d\d+$/i.test(raw) ? 'Superseded' : VOCABULARY.find(v => v.toLowerCase() === raw.toLowerCase())
+    const key = known ?? raw
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+
+  return [...counts.entries()].filter(([, n]) => n > 0)
+}
+
+// --- waiting (ADR-030, view 2) ---------------------------------------------
+
+const DAY_MS = 86_400_000
+
+// Whole days from a YYYY-MM-DD date to `nowMs`; never negative.
+export function daysSince(date: string | undefined, nowMs: number): number | undefined {
+  const at = date === undefined ? NaN : Date.parse(`${date}T00:00:00Z`)
+
+  return Number.isNaN(at) ? undefined : Math.max(0, Math.floor((nowMs - at) / DAY_MS))
+}
+
+// 0: 0–6 days, 1: 7–29, 2: 30 and more. Unknown age counts as the oldest.
+export type AgeBucket = 0 | 1 | 2
+export const bucketOf = (days: number | undefined): AgeBucket =>
+  days === undefined || days >= 30 ? 2 : days >= 7 ? 1 : 0
+
+export type AskCell = { id: string; isSent: boolean; days?: number; bucket: AgeBucket }
+export type AskBar = { recipient: string; cells: AskCell[]; never: number; sent: number; oldest?: number }
+
+// One bar per recipient, in the register's order: each open ask aged from its
+// last send, or from its registration when it was never sent. Oldest first.
+export function askBars(detail: Detail, nowMs: number): AskBar[] {
+  const bars = new Map<string, AskBar>()
+  for (const ask of detail.asks) {
+    const key = ask.recipient.toLowerCase()
+    const bar = bars.get(key) ?? { recipient: ask.recipient, cells: [], never: 0, sent: 0 }
+    const isSent = ask.sentOn !== undefined
+    const days = daysSince(isSent ? ask.sentOn : ask.registered, nowMs)
+    bar.cells.push({ id: ask.id, isSent, days, bucket: bucketOf(days) })
+    if (isSent) bar.sent += 1
+    else bar.never += 1
+    bars.set(key, bar)
+  }
+  for (const bar of bars.values()) {
+    bar.cells.sort((a, b) => (b.days ?? Infinity) - (a.days ?? Infinity))
+    const known = bar.cells.map(c => c.days).filter((d): d is number => d !== undefined)
+    bar.oldest = known.length > 0 ? Math.max(...known) : undefined
+  }
+
+  return [...bars.values()]
 }
 
 // One element's text stays under Claude Code's 10,000-character limit: items

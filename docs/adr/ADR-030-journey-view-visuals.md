@@ -1,6 +1,6 @@
 # ADR-030: The Journey View Draws What the Text Hides: the Matrix, the Waiting, What Rests on a Belief, and the Rhythm
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Date:** 2026-10-06
 
@@ -13,7 +13,10 @@ reference engagement at iteration 7: a 115 × 29 impact matrix, a 121 KB
 assumptions register, a 1,300-line decisions log. Anonymised: this
 repository is public.
 
-**Implementation Status:** not started
+**Implementation Status:** in progress: the waiting bars (O1: built first).
+The matrix, the lookup and the rhythm are not yet built.
+
+**Accepted:** 2026-10-06, by the maintainer
 
 **Review Date:** 2027-04-06
 
@@ -123,8 +126,11 @@ no skill depends on them, and every number matches the script that owns it.
   Superseded, with counts.
 - **Block glyphs in `Text`**, the same on both surfaces, with headroom's
   Desktop width allowance.
-- **Colour encodes age or status, never a judgement.** There is no red for
-  "late" and no "at risk".
+- **Neither colour nor glyph is a judgement.** On the ask bars the glyph's
+  density is the age (`░` 0–6 days, `▒` 7–29, `█` 30+) and the colour is
+  only whether the ask was sent; the status bar uses a muted categorical
+  palette. There is no red for "late", no green for "done", and no
+  "at risk".
 
 ### 3. What rests on a belief: a lookup on the **Assumptions** tab
 
