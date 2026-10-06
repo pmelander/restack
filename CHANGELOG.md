@@ -3,7 +3,7 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [Unreleased]
+## [2.17.1] — 2026-10-06
 
 ### Changed
 
