@@ -12,7 +12,8 @@ The install is a copy in `~/.claude/skills`; the clone can be deleted.
 later, no clone needed. A one-line notice appears at most once a
 day when a newer version is out; `/restack-upgrade off` turns it off.
 `./setup --mods` adds the journey band above the prompt and the `/restack-view`
-pane of open asks, assumptions and decisions; `/restack-view band off` hides the band. See [INSTALL.md](INSTALL.md).
+pane: position and rhythm, waiting asks, the register and what rests on an
+assumption, decisions, and the impact matrix; `/restack-view band off` hides the band. See [INSTALL.md](INSTALL.md).
 
 ---
 

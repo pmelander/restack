@@ -122,14 +122,19 @@ Neither is required — sixteen of the seventeen skills work without either, and
 pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
 npm i -g @openai/codex            # Codex CLI — a genuine outside voice
 codex login
-./setup --mods                    # the journey band above the prompt (Windows: .\setup.ps1 -Mods)
+./setup --mods                    # the journey band and pane (Windows: .\setup.ps1 -Mods)
 ```
 
-**The journey band** is a read-only mod that keeps where the journey stands on
-screen: terrain, phase, the next command, and the open asks, assumptions and
-decisions, without spending a turn to ask
-([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). No skill depends on
-it, and `/restack-journey where` answers the same wherever it is not loaded.
+**The journey band and pane** are a read-only mod. The band keeps where the
+journey stands on screen: terrain, phase, the next command, and the open asks,
+assumptions and decisions, without spending a turn to ask
+([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). `/restack-view` opens
+the pane, which draws what the text hides
+([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)): who the open asks are
+waiting on and for how long, the newest impact matrix one lane per actor, what
+an assumption's *Depends on it* cell resolves to, and the journey's rhythm by
+day. Counts and colours, never a verdict. No skill depends on it, and every
+view has a command that answers the same wherever it is not loaded.
 
 **Codex is what makes the second opinion worth having.** Without it the outside
 opinion still runs, using a fresh subagent — which removes conversation bias but
@@ -329,7 +334,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.16.0**. All seventeen skills are generated from templates with
+ReStack is at **v2.17.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 

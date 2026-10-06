@@ -3,13 +3,13 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [Unreleased]
+## [2.17.0] — 2026-10-06
 
 A read-only journey view as a Claude Code mod
 ([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)): the band and the
-pane, installed on request with `./setup --mods`. The pane starts drawing
-what the text hides ([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)),
-beginning with the waiting bars.
+pane, installed on request with `./setup --mods`. The pane draws what the
+text hides ([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)): the waiting
+bars, the impact matrix, what rests on a belief, and the journey's rhythm.
 
 ### Added
 
