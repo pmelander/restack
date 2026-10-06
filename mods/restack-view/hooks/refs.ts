@@ -194,7 +194,8 @@ export function lookupLines(result: Lookup): Array<{ text: string; tone: 'head' 
   if (result.kind === 'error') return [{ text: result.message, tone: 'plain' }]
   const out: Array<{ text: string; tone: 'head' | 'found' | 'missing' | 'plain' }> = [
     { text: `${result.id} · ${result.status} · ${result.assumption}`, tone: 'head' },
-    { text: `  settles it: ${result.validates}`, tone: 'plain' },
+    { text: `settles it: ${result.validates}`, tone: 'plain' },
+    { text: '', tone: 'plain' },
   ]
   const branches: Array<{ label: string; lines: Array<{ text: string; tone: 'found' | 'missing' | 'plain' }> }> = [
     ...result.groups.map(g => ({
@@ -213,6 +214,8 @@ export function lookupLines(result: Lookup): Array<{ text: string; tone: 'head' 
   if (branches.length === 0) out.push({ text: '└─ its Depends on it cell names nothing', tone: 'plain' })
   branches.forEach((b, i) => {
     const last = i === branches.length - 1
+    // A spacer between branches, so a long one does not run into the next.
+    if (i > 0) out.push({ text: '│', tone: 'plain' })
     out.push({ text: `${last ? '└─' : '├─'} ${b.label}`, tone: 'plain' })
     b.lines.forEach((l, j) => {
       out.push({ text: `${last ? '   ' : '│  '}${j === b.lines.length - 1 ? '└─' : '├─'} ${l.text}`, tone: l.tone })

@@ -7,6 +7,7 @@
 
 import type { Ask, Decision, Detail, Journey, OpenRow, Tab, View } from '../types'
 import { historyEntries } from './rhythm.ts'
+import type { Item } from './layout.tsx'
 
 export type Files = { state?: string; register?: string; log?: string }
 
@@ -460,45 +461,96 @@ export const TABS: ReadonlyArray<[Tab, string]> = [
   ['matrix', 'Matrix'],
 ]
 
-// A tab's body as markdown. Every list names the command that gives it whole.
-export function tabText(detail: Detail, tab: Tab): string {
-  // The Matrix tab draws, it does not list (matrix-view.tsx).
-  if (tab === 'matrix') return ''
-  if (tab === 'position') {
-    const fields = detail.header.map(([label, value]) => `- **${label}:** ${value}`)
-    const position = detail.position === '' ? ['No Current Position section.'] : detail.position.split('\n')
+// A tab's body as headed sections of items, for layout.tsx to space out.
+// Every list names where it is whole, and stops at MAX_ITEMS.
+export const MAX_ITEMS = 60
 
-    return budget([...fields, '', ...position], '/restack-journey where')
+export type TabSection = {
+  key: string
+  title: string
+  count?: number
+  // One of: items, label and value pairs, markdown, or a line saying there is nothing.
+  items?: Item[]
+  fields?: Array<[string, string]>
+  markdown?: string
+  empty?: string
+  more?: string
+}
+
+const capped = (list: Item[], where: string): { items: Item[]; more?: string } =>
+  list.length <= MAX_ITEMS
+    ? { items: list }
+    : { items: list.slice(0, MAX_ITEMS), more: `… ${list.length - MAX_ITEMS} more: ${where}` }
+
+export function sectionsOf(detail: Detail, tab: Tab): TabSection[] {
+  // The Matrix tab draws, it does not list (matrix-view.tsx).
+  if (tab === 'matrix') return []
+  if (tab === 'position') {
+    const position = detail.position === '' ? 'No Current Position section.' : detail.position
+
+    return [
+      { key: 'journey', title: 'Journey', fields: detail.header },
+      {
+        key: 'where',
+        title: 'Where we are',
+        markdown: budget(position.split('\n'), '/restack-journey where'),
+      },
+    ].filter(s => s.fields === undefined || s.fields.length > 0)
   }
   if (tab === 'asks') {
-    if (detail.asks.length === 0) return 'No open asks.'
+    if (detail.asks.length === 0) return [{ key: 'asks', title: 'Open asks', count: 0, empty: 'No open asks.' }]
     const groups = new Map<string, Ask[]>()
     for (const ask of detail.asks) {
       const key = ask.recipient.toLowerCase()
       groups.set(key, [...(groups.get(key) ?? []), ask])
     }
-    const items: string[] = []
-    for (const group of groups.values()) {
-      items.push(`### ${group[0].recipient} (${group.length})`)
-      for (const ask of group) items.push(`- **${ask.id}** · ${ask.status} · ${ask.sent} — ${ask.need}`)
-    }
 
-    return budget(items, '/restack-journey asks')
+    return [...groups.values()].map((group, i) => ({
+      key: `asks-${i}`,
+      title: group[0].recipient,
+      count: group.length,
+      ...capped(
+        group.map(ask => ({ id: ask.id, meta: `${ask.status} · ${ask.sent}`, lines: [ask.need] })),
+        '/restack-journey asks',
+      ),
+    }))
   }
   if (tab === 'assumptions') {
-    if (detail.open.length === 0) return 'No open assumptions.'
+    if (detail.open.length === 0) {
+      return [{ key: 'open', title: 'Open assumptions', count: 0, empty: 'No open assumptions.' }]
+    }
 
-    return budget(
-      detail.open.map(r => `- **${r.id}** · ${r.status} — ${r.assumption} *Settles it:* ${r.validates}`),
-      'docs/journey/assumptions-register.md',
-    )
+    return [
+      {
+        key: 'open',
+        title: 'Open assumptions',
+        count: detail.open.length,
+        ...capped(
+          detail.open.map(r => ({ id: r.id, meta: r.status, lines: [r.assumption, `*settles it:* ${r.validates}`] })),
+          'docs/journey/assumptions-register.md',
+        ),
+      },
+    ]
   }
-  if (detail.decisions.length === 0) return 'No open decisions.'
+  if (detail.decisions.length === 0) {
+    return [{ key: 'decisions', title: 'Open decisions', count: 0, empty: 'No open decisions.' }]
+  }
 
-  return budget(
-    detail.decisions.map(d => `- **${d.id}** · ${d.date} · ${d.question}${d.gate ? ` · gate: ${d.gate}` : ''}`),
-    'docs/journey/decisions-log.md',
-  )
+  return [
+    {
+      key: 'decisions',
+      title: 'Open decisions',
+      count: detail.decisions.length,
+      ...capped(
+        detail.decisions.map(d => ({
+          id: d.id,
+          meta: `${d.date}${d.gate ? ` · gate: ${d.gate}` : ''}`,
+          lines: [d.question],
+        })),
+        'docs/journey/decisions-log.md',
+      ),
+    },
+  ]
 }
 
 // --- every row, for the lookup (ADR-030, view 3) ----------------------------------

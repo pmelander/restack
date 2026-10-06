@@ -138,11 +138,12 @@ for (const surface of SURFACES) {
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-asks' })
-    expect(textOf(await ui.drawn())).toContain('### Depot operations (1)')
+    expect(textOf(await ui.drawn())).toContain('DEPOT OPERATIONS · 1')
     await ui.press({ key: 'tab-assumptions' })
     expect(textOf(await ui.drawn())).toContain('Reservation lookups stay under 50 ms')
     await ui.press({ key: 'tab-decisions' })
-    expect(textOf(await ui.drawn())).toContain('**D3**')
+    expect(textOf(await ui.drawn())).toContain('OPEN DECISIONS · 1')
+    expect(textOf(await ui.drawn())).toContain('D32026-04-18 · gate: brief')
     expect(await ui.find({ key: 'fill-next' })).toBeUndefined()
   })
 
@@ -187,7 +188,7 @@ for (const surface of SURFACES) {
     expect(tree).toContain('1 · never asked 1 · 41 d')
     expect(tree).toContain('1 · sent 1 · 18 d')
     expect(tree).toContain('7–29 d')
-    expect(tree.indexOf('41 d')).toBeLessThan(tree.indexOf('### Depot operations'))
+    expect(tree.indexOf('41 d')).toBeLessThan(tree.indexOf('DEPOT OPERATIONS'))
 
     // One colour per age bucket (41, 18 and 5 days), and no verdicts.
     const colors = colorsOf(await ui.drawn())
@@ -338,7 +339,9 @@ for (const surface of SURFACES) {
     await $.command.run({ command: 'restack-view', args: '' })
     const ui = await $.ui.mount({ ...PANE, surface })
     const tree = textOf(await ui.drawn())
-    expect(tree).toContain('rhythm')
+    expect(tree).toContain('RHYTHM')
+    expect(tree.indexOf('RHYTHM')).toBeLessThan(tree.indexOf('NEXT MOVE'))
+    expect(tree.indexOf('NEXT MOVE')).toBeLessThan(tree.indexOf('JOURNEY'))
     // The stub's clock is 2026-04-20: from the first entry, 2026-03-01, 51 days.
     expect(tree).toContain('3 entries · 2 iterations · 3 gates · 51 days, one cell a day')
     expect(tree).toContain('2026-03-01')

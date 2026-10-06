@@ -10,7 +10,8 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { MatrixFile, MatrixState } from '../types'
 import { drawBanner } from './banner.tsx'
-import { askBars, bandParts, bandText, readDetail, readJourney, registerRows, TABS, tabText } from './journey.ts'
+import { askBars, bandParts, bandText, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey.ts'
+import { fields, items, rule, section } from './layout.tsx'
 import type { Files } from './journey.ts'
 import {
   adrFiles,
@@ -356,7 +357,7 @@ export const register: Register = on => {
 
     if (current === null) {
       return (
-        <Box flexDirection="column">
+        <Box flexDirection="column" paddingLeft={1} paddingRight={1} rowGap={1}>
           {banner}
           <Text dimColor>{NO_JOURNEY}</Text>
         </Box>
@@ -364,7 +365,7 @@ export const register: Register = on => {
     }
     if (current.kind === 'not-canonical' || lists === null) {
       return (
-        <Box flexDirection="column">
+        <Box flexDirection="column" paddingLeft={1} paddingRight={1} rowGap={1}>
           {banner}
           <Text color="warning">{bandText(current)}</Text>
         </Box>
@@ -372,14 +373,17 @@ export const register: Register = on => {
     }
     const command = current.next
     const els = { Box, Text }
+    const sectionEls = { Box, Text, Markdown }
     const width = e.props.bodyColumns
+    // The width inside a section: the frame's padding and the section's indent.
+    const inner = Math.max(20, width - 4)
     // Ages are counted to now, not to the last read: a day passes without a file changing.
     const now = open === 'asks' || open === 'position' ? await $.clock.now() : 0
     const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, now) : []
     // The strip runs to today, not to the last read: a quiet day is part of the rhythm.
     const strip =
       open === 'position'
-        ? rhythm(lists.history as Entry[], new Date(now).toISOString().slice(0, 10), stripWidth(width, e.surface))
+        ? rhythm(lists.history as Entry[], new Date(now).toISOString().slice(0, 10), stripWidth(inner, e.surface))
         : null
     const found = open === 'assumptions' ? await read($, lookupResult) : null
     const lookupView =
@@ -425,9 +429,29 @@ export const register: Register = on => {
       },
     }
 
+    const body = sectionsOf(lists, open).map(s =>
+      section(
+        sectionEls,
+        s.key,
+        s.title,
+        s.count,
+        s.items !== undefined ? (
+          items(sectionEls, `${s.key}-items`, s.items, s.more)
+        ) : s.fields !== undefined ? (
+          fields(sectionEls, `${s.key}-fields`, s.fields)
+        ) : s.markdown !== undefined ? (
+          <Markdown key={`${s.key}-md`} text={s.markdown} />
+        ) : (
+          <Text dimColor>{s.empty}</Text>
+        ),
+      ),
+    )
+    const registerRowsCount = lists.statuses.reduce((a, [, n]) => a + n, 0)
+
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" paddingLeft={1} paddingRight={1}>
         {banner}
+        {banner === null ? null : <Text> </Text>}
         <Box flexDirection="row" columnGap={3}>
           {TABS.map(([name, label], i) => (
             <Button
@@ -440,37 +464,55 @@ export const register: Register = on => {
             />
           ))}
         </Box>
+        {rule(sectionEls, width - 2)}
         <Text> </Text>
-        {open === 'position' && drawRhythm(els, strip, e.surface)}
-        {open === 'position' && command !== undefined && (
-          <Box flexDirection="row" columnGap={1}>
-            <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
-            <Text dimColor>{command}</Text>
-          </Box>
-        )}
-        {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
-        {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
-        {open === 'assumptions' && (
-          <Box flexDirection="column">
-            <Input
-              key="lookup"
-              label="What rests on"
-              placeholder="an assumption, such as A-12, then Enter"
-              value=""
-              submitLabel="look up"
-              onSubmit={value => {
-                void runLookup($, value)
-              }}
-            />
-            {lookupView}
-            <Text> </Text>
-          </Box>
-        )}
-        {open === 'matrix' ? (
-          drawMatrix({ Box, Text, Button, Select, Svg }, await read($, matrix), matrixPicks, e.surface, width)
-        ) : (
-          <Markdown key={`body-${open}`} text={tabText(lists, open)} />
-        )}
+        {open === 'position' && strip !== null && section(sectionEls, 'rhythm', 'Rhythm', undefined, drawRhythm(els, strip, e.surface))}
+        {open === 'position' &&
+          command !== undefined &&
+          section(
+            sectionEls,
+            'next',
+            'Next move',
+            undefined,
+            <Box flexDirection="row" columnGap={2} flexWrap="wrap">
+              <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
+              <Text bold color="suggestion">
+                {command}
+              </Text>
+            </Box>,
+          )}
+        {bars.length > 0 && section(sectionEls, 'waiting', 'Waiting', lists.asks.length, drawAskBars(els, bars, e.surface, inner))}
+        {open === 'assumptions' &&
+          section(sectionEls, 'register', 'The register', registerRowsCount, drawStatusBar(els, lists.statuses, e.surface, inner))}
+        {open === 'assumptions' &&
+          section(
+            sectionEls,
+            'lookup',
+            'What rests on a belief',
+            undefined,
+            <Box flexDirection="column" rowGap={1}>
+              <Input
+                key="lookup"
+                label="Assumption"
+                placeholder="such as A-12, then Enter"
+                value=""
+                submitLabel="look up"
+                onSubmit={value => {
+                  void runLookup($, value)
+                }}
+              />
+              {lookupView}
+            </Box>,
+          )}
+        {open === 'matrix'
+          ? section(
+              sectionEls,
+              'matrix',
+              'Impact matrix',
+              undefined,
+              drawMatrix({ Box, Text, Button, Select, Svg }, await read($, matrix), matrixPicks, e.surface, inner),
+            )
+          : body}
       </Box>
     )
   })

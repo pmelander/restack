@@ -95,7 +95,7 @@ export function drawAskBars(els: Els, bars: AskBar[], surface: RenderSurface, co
   const most = Math.max(1, ...bars.map(b => b.cells.length))
 
   return (
-    <Box key="ask-bars" flexDirection="column">
+    <Box key="ask-bars" flexDirection="column" rowGap={0}>
       {bars.map((bar, i) => {
         const filled = Math.max(1, Math.round((bar.cells.length / most) * track))
         const byAge = AGE_ORDER.map(b => bar.cells.filter(c => c.bucket === b).length)
@@ -129,7 +129,6 @@ export function drawAskBars(els: Els, bars: AskBar[], surface: RenderSurface, co
         ))}
         <Text dimColor>since the last send, or since registered when never asked</Text>
       </Text>
-      <Text> </Text>
     </Box>
   )
 }
@@ -161,7 +160,6 @@ export function drawStatusBar(els: Els, statuses: Array<[string, number]>, surfa
         ))}
       </Box>
       <Text dimColor>{`${total} rows in the register`}</Text>
-      <Text> </Text>
     </Box>
   )
 }

@@ -16,7 +16,7 @@ import {
   readLog,
   readRegister,
   stateProblem,
-  tabText,
+  sectionsOf,
 } from '../hooks/journey.ts'
 import { FIXTURES } from './fixtures.ts'
 
@@ -160,22 +160,50 @@ test('a send is the last one recorded, and unasked cancels it, as journey.py rea
 })
 
 test('the position tab is the newest subsection, never a superseded one', () => {
-  const text = tabText(readDetail(filesOf('lived'))!, 'position')
-  expect(text).toContain('**Next move:** `/restack-design-review complete`')
-  expect(text).not.toContain('(superseded)')
-  expect(text).not.toContain('Previous phase line')
-  expect(text.trimEnd().endsWith('---')).toBe(false)
+  const where = sectionsOf(readDetail(filesOf('lived'))!, 'position').find(s => s.key === 'where')!
+  expect(where.markdown).toContain('**Next move:** `/restack-design-review complete`')
+  expect(where.markdown).not.toContain('(superseded)')
+  expect(where.markdown).not.toContain('Previous phase line')
+  expect(where.markdown!.trimEnd().endsWith('---')).toBe(false)
 })
 
-test('each tab names its contents, and says when there is nothing', () => {
+test('the header fields are a two-column list, the history line excluded', () => {
+  const journey = sectionsOf(readDetail(filesOf('band'))!, 'position').find(s => s.key === 'journey')!
+  expect(journey.fields).toContainEqual(['Terrain Type', 'Brownfield'])
+  expect(journey.fields!.map(([label]) => label)).not.toContain('Previous phase line')
+})
+
+test('each tab is headed sections of items, and says when there is nothing', () => {
   const detail = readDetail(filesOf('band'))!
-  expect(tabText(detail, 'asks')).toContain('### Depot operations (1)')
-  expect(tabText(detail, 'asks')).toContain('**A-2** · Partly resolved · never asked — the UPS hold-up time')
-  expect(tabText(detail, 'assumptions')).toContain('**A-3** · Open — Reservation lookups stay under 50 ms')
-  expect(tabText(detail, 'decisions')).toContain('**D3** · 2026-04-18 · Offline unlock')
+  const asks = sectionsOf(detail, 'asks')
+  expect(asks.map(s => [s.title, s.count])).toEqual([
+    ['Depot operations', 1],
+    ['Locker vendor', 1],
+  ])
+  expect(asks[1].items).toEqual([{ id: 'A-2', meta: 'Partly resolved · never asked', lines: ['the UPS hold-up time'] }])
+  const open = sectionsOf(detail, 'assumptions')[0]
+  expect([open.title, open.count]).toEqual(['Open assumptions', 3])
+  expect(open.items!.find(i => i.id === 'A-3')).toEqual({
+    id: 'A-3',
+    meta: 'Open',
+    lines: ['Reservation lookups stay under 50 ms', '*settles it:* a load test against the staging API'],
+  })
+  expect(sectionsOf(detail, 'decisions')[0].items).toEqual([
+    { id: 'D3', meta: '2026-04-18 · gate: brief', lines: ['Offline unlock: local codes or a cached allow-list?'] },
+  ])
   const none = readDetail(filesOf('canonical'))!
-  expect(tabText(none, 'asks')).toBe('No open asks.')
-  expect(tabText(none, 'decisions')).toBe('No open decisions.')
+  expect(sectionsOf(none, 'asks')).toEqual([{ key: 'asks', title: 'Open asks', count: 0, empty: 'No open asks.' }])
+  expect(sectionsOf(none, 'decisions')[0].empty).toBe('No open decisions.')
+  expect(sectionsOf(none, 'matrix')).toEqual([])
+})
+
+test('a long list stops at sixty items and says where the rest is', () => {
+  const detail = readDetail(filesOf('band'))!
+  const many = { ...detail, open: Array.from({ length: 75 }, (_, i) => ({ id: `A-${i + 1}`, status: 'Open', assumption: 'x', validates: 'y' })) }
+  const open = sectionsOf(many, 'assumptions')[0]
+  expect(open.items!.length).toBe(60)
+  expect(open.count).toBe(75)
+  expect(open.more).toBe('… 15 more: docs/journey/assumptions-register.md')
 })
 
 test('a tab stays under the element limit and says where the rest is', () => {

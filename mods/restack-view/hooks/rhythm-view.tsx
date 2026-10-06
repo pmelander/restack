@@ -18,7 +18,8 @@ export const FAMILY_COLOR: Record<Family, string> = {
   review: '#e0b050',
   other: '#8a8f98',
 }
-const LABEL = 'rhythm  '
+// No label of its own: the section's heading names it.
+const LABEL = ''
 // Block glyphs measure about 1.15 cells wide in the Desktop's proportional
 // font (headroom's measurement).
 const DESKTOP_SLACK = 0.85
@@ -76,7 +77,6 @@ export function drawRhythm(els: Els, r: Rhythm | null, surface: RenderSurface) {
           </Text>
         ))}
       </Text>
-      <Text> </Text>
     </Box>
   )
 }
