@@ -3,6 +3,15 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+### Changed
+
+- **Every legend in the pane keys its colours with a full square** (`■`),
+  the one a matrix hit is drawn with, where the lens, age, family and status
+  keys had used a half block or a dot. The Matrix tab's lens strip is drawn
+  in squares too, so it matches its legend.
+
 ## [2.17.0] — 2026-10-06
 
 A read-only journey view as a Claude Code mod

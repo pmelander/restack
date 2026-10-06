@@ -9,6 +9,7 @@ import type { Elements, RenderSurface } from 'claude-code'
 import type { MatrixState } from '../types'
 import { claimedCells, COLOR, desktopWindow, fileLabel, flippedWindow, order, runs } from './matrix.ts'
 import type { Mark } from './matrix.ts'
+import { KEY } from './layout.tsx'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select' | 'Svg'>
 
@@ -150,7 +151,7 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
             <Text dimColor>{pad('lens', label)}</Text>
             {runs(win.lens).map(([color, n], i) => (
               <Text key={`lens-${i}`} color={color}>
-                {'▄'.repeat(n)}
+                {KEY.repeat(n)}
               </Text>
             ))}
           </Text>
@@ -184,16 +185,16 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
       )}
       <Text> </Text>
       <Text wrap="wrap">
-        <Text color={COLOR.hit}>■</Text>
+        <Text color={COLOR.hit}>{KEY}</Text>
         <Text dimColor> hit  </Text>
-        <Text color={COLOR.unknown}>■</Text>
+        <Text color={COLOR.unknown}>{KEY}</Text>
         <Text dimColor> unknown (counts as 1)  </Text>
-        {grid.claims.length > 0 ? <Text color={COLOR.claimed}>■</Text> : null}
+        {grid.claims.length > 0 ? <Text color={COLOR.claimed}>{KEY}</Text> : null}
         {grid.claims.length > 0 ? <Text dimColor>{` claimed by ${grid.residualsFile}  `}</Text> : null}
         <Text dimColor>· empty   lens </Text>
         {Object.entries(COLOR.lens).map(([lens, c]) => (
           <Text key={`lens-key-${lens}`}>
-            <Text color={c}>■</Text>
+            <Text color={c}>{KEY}</Text>
             <Text dimColor>{`${lens} `}</Text>
           </Text>
         ))}

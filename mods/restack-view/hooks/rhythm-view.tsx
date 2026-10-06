@@ -7,6 +7,7 @@ import type { Elements, RenderSurface } from 'claude-code'
 
 import { FAMILIES } from './rhythm.ts'
 import type { Family, Rhythm } from './rhythm.ts'
+import { KEY } from './layout.tsx'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text'>
 
@@ -72,7 +73,7 @@ export function drawRhythm(els: Els, r: Rhythm | null, surface: RenderSurface) {
         <Text dimColor>{' '.repeat(LABEL.length)}</Text>
         {FAMILIES.map(([family, label]) => (
           <Text key={`family-${family}`}>
-            <Text color={FAMILY_COLOR[family]}>▄</Text>
+            <Text color={FAMILY_COLOR[family]}>{KEY}</Text>
             <Text dimColor>{` ${label}  `}</Text>
           </Text>
         ))}

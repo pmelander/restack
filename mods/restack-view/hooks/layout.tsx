@@ -36,6 +36,10 @@ export function section(els: Els, key: string, title: string, count: number | un
   )
 }
 
+// Every legend's colour key, on every tab: a full square, as the matrix marks
+// a hit (maintainer, 2026-10-06).
+export const KEY = '■'
+
 // A dim rule across the pane, under the tabs.
 export const rule = (els: Els, width: number) => (
   <els.Text key="rule" dimColor wrap="truncate">

@@ -10,6 +10,7 @@
 import type { Elements, RenderSurface } from 'claude-code'
 
 import type { AgeBucket, AskBar } from './journey.ts'
+import { KEY } from './layout.tsx'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text'>
 
@@ -123,7 +124,7 @@ export function drawAskBars(els: Els, bars: AskBar[], surface: RenderSurface, co
       <Text wrap="truncate">
         {[0, 1, 2].map(b => (
           <Text key={`legend-${b}`}>
-            <Text color={AGE_COLOR[b as AgeBucket]}>{BAR}</Text>
+            <Text color={AGE_COLOR[b as AgeBucket]}>{KEY}</Text>
             <Text dimColor>{` ${AGE_LABEL[b as AgeBucket]}  `}</Text>
           </Text>
         ))}
@@ -153,7 +154,7 @@ export function drawStatusBar(els: Els, statuses: Array<[string, number]>, surfa
       <Box flexDirection="row" flexWrap="wrap" columnGap={2}>
         {statuses.map(([status, n]) => (
           <Text key={`status-${status}`}>
-            <Text color={STATUS_COLOR[status] ?? OTHER_COLOR}>●</Text>
+            <Text color={STATUS_COLOR[status] ?? OTHER_COLOR}>{KEY}</Text>
             <Text>{` ${status} `}</Text>
             <Text bold>{String(n)}</Text>
           </Text>

@@ -346,7 +346,8 @@ on languages). The rules:
 6. **Every pane view is laid out by `hooks/layout.tsx`**: headed sections
    (`HEADING · count` in the accent), items in a fixed id column, label and
    value fields, a blank line between everything. A new view uses them, so
-   the pane spaces alike and reads well with a lot of text.
+   the pane spaces alike and reads well with a lot of text. Every legend's
+   colour key is `KEY`, the full square a matrix hit is drawn with.
 
 ### Adding Compliance Packs
 
