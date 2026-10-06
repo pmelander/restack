@@ -193,7 +193,7 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
         <Text dimColor>· empty   lens </Text>
         {Object.entries(COLOR.lens).map(([lens, c]) => (
           <Text key={`lens-key-${lens}`}>
-            <Text color={c}>▄</Text>
+            <Text color={c}>■</Text>
             <Text dimColor>{`${lens} `}</Text>
           </Text>
         ))}
