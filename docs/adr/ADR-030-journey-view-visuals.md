@@ -13,8 +13,12 @@ reference engagement at iteration 7: a 115 × 29 impact matrix, a 121 KB
 assumptions register, a 1,300-line decisions log. Anonymised: this
 repository is public.
 
-**Implementation Status:** in progress: the waiting bars (O1: built first).
-The matrix, the lookup and the rhythm are not yet built.
+**Implementation Status:** in progress. Built: the waiting bars (O1: first)
+and the Matrix tab. The Matrix tab was checked against `matrix.py` on the
+reference engagement's five real matrices, up to 152 × 30: rows, actors,
+totals, unknowns, accept or reject, and every residual claim agree. Not yet
+built: the lookup and the rhythm. The pane also gained a banner, an 80s fade
+of the ReStack logo, which the maintainer asked for "just because we can".
 
 **Accepted:** 2026-10-06, by the maintainer
 

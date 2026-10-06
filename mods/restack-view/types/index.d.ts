@@ -63,10 +63,61 @@ export type Detail = {
   statuses: Array<[string, number]>
 }
 
-export type Tab = 'position' | 'asks' | 'assumptions' | 'decisions'
+export type Tab = 'position' | 'asks' | 'assumptions' | 'decisions' | 'matrix'
+
+// The Matrix tab (ADR-030, view 1).
+
+export type MatrixFile = { name: string; date: string; iter?: number }
+
+// One residual's claimed cells, as [stressor, actor].
+export type Claim = { id: string; title: string; cells: Array<[string, string]> }
+
+export type MatrixRow = {
+  id: string
+  lens?: string
+  // 0 empty, 1 hit, 2 unknown (which counts as 1 in every total).
+  cells: number[]
+  total: number
+}
+
+export type MatrixGrid = {
+  file: string
+  actors: string[]
+  rows: MatrixRow[]
+  colTotals: number[]
+  total: number
+  unknown: number
+  claims: Claim[]
+  residualsFile?: string
+  // trace.py's BASE: the declared baseline, the actor-set changes since that
+  // the matrix is not marked for, and the `scored pre-D<n>` marks it carries.
+  baseline?: number
+  stale: number[]
+  marked: number[]
+}
+
+export type MatrixState = {
+  files: MatrixFile[]
+  // The file shown: the newest, or the one picked.
+  file?: string
+  grid?: MatrixGrid
+  // A matrix matrix.py would reject: the first problem, and no grid.
+  problem?: string
+}
 
 declare module 'claude-code' {
   interface PluginState {
-    'restack-view': { view: View | null; detail: Detail | null; isBandOn: boolean; tab: Tab }
+    'restack-view': {
+      view: View | null
+      detail: Detail | null
+      isBandOn: boolean
+      tab: Tab
+      matrix: MatrixState | null
+      // The matrix picked in the tab's Select; null is the newest.
+      matrixPick: string | null
+      // '*' every residual's claims dimmed, '-' none, or one residual's id.
+      residualPick: string
+      isSortedByTotal: boolean
+    }
   }
 }

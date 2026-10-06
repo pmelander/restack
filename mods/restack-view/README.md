@@ -37,7 +37,7 @@ The choice is remembered, so `/restack-upgrade` keeps it current.
 
 ## The pane
 
-Four tabs, `1` to `4`. Esc closes it.
+Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.
 
 | Tab | Shows | Whole list in |
 |---|---|---|
@@ -45,6 +45,20 @@ Four tabs, `1` to `4`. Esc closes it.
 | Asks | a waiting bar per recipient, then open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
 | Assumptions | the register by status as one bar, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
+| Matrix | the newest impact matrix as a heatmap, with residual claims and its staleness | `docs/stressor-analysis/` |
+
+**The Matrix tab** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md))
+draws the newest `docs/stressor-analysis/matrix-<date>[-iter<n>].md` as
+`matrix.py` reads it: one mark per cell, orange for a hit and violet for an
+unknown, which counts as 1. There is no severity scale, because scoring is
+binary. A band at the left gives each row's lens. Cells the same iteration's
+residuals claim are dimmed. The Select shows all residuals, none, or one. The
+title says when the matrix is stale: scored before a decision that changed
+the actor set, and not marked `scored pre-D<n>`, as `trace.py` decides it.
+`s` sorts rows and columns by total, as a reading aid. In the terminal two
+stressors share a line, the upper and lower half of each cell. On the
+Desktop it is an image with each cell named on hover. A matrix `matrix.py`
+would reject is not drawn: the tab names the problem instead.
 
 **The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
 a meter per recipient, filled in proportion to the busiest recipient's open

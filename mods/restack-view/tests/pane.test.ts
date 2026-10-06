@@ -4,7 +4,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { FIXTURES } from './fixtures.ts'
+import { FIXTURES, MATRIX_FIXTURES } from './fixtures.ts'
 
 const SURFACES = ['terminal', 'desktop'] as const
 const ROOT = '/work'
@@ -38,29 +38,47 @@ const VERDICT_COLORS = ['success', 'warning', 'error']
 
 type Seen = { filled: string[]; toasts: string[]; opened: string[]; closed: string[] }
 
-// The engine, for a project at /work holding the named fixture, drawn on `surface`.
-const stub = (on: On, surface: string, fixture: string | null | Record<string, string>, draft = ''): Seen => {
+// The engine, for a project at /work holding the named journey fixture in
+// docs/journey/ and `analysis` in docs/stressor-analysis/, drawn on `surface`.
+const stub = (
+  on: On,
+  surface: string,
+  fixture: string | null | Record<string, string>,
+  draft = '',
+  analysis: Record<string, string> = {},
+): Seen => {
   const seen: Seen = { filled: [], toasts: [], opened: [], closed: [] }
   mock.store(on)
   mock.clock(on, { now: Date.parse('2026-04-20T12:00:00Z') })
-  const files: Readonly<Record<string, string>> =
-    fixture === null ? {} : typeof fixture === 'string' ? FIXTURES[fixture] : fixture
-  const nameOf = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/journey\/([^/]+)$/)?.[1]
-  const has = (path: string) => {
-    const name = nameOf(path)
+  const dirs: Record<string, Readonly<Record<string, string>>> = {
+    journey: fixture === null ? {} : typeof fixture === 'string' ? FIXTURES[fixture] : fixture,
+    'stressor-analysis': analysis,
+  }
+  // The engine hands a stub the path resolved and absolute, so match its end.
+  const where = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/(journey|stressor-analysis)(?:\/([^/]+))?$/)
+  const fileAt = (path: string): string | undefined => {
+    const m = where(path)
 
-    return name !== undefined && name in files
+    return m && m[2] !== undefined ? dirs[m[1]][m[2]] : undefined
   }
   on('session.root', () => ({ value: ROOT }))
   on('session.cwd', () => ({ value: ROOT }))
   on('session.surfaces', () => ({ value: [surface] }))
-  on('fs.exists', ($, e) => ({ value: has(e.path) }))
-  on('fs.stat', ($, e) =>
-    has(e.path)
-      ? { value: { kind: 'file', size: files[nameOf(e.path)!].length, mtimeMs: 1, isLink: false } }
-      : { deny: 'missing' },
-  )
-  on('fs.read', ($, e) => ({ value: files[nameOf(e.path) ?? ''] ?? '' }))
+  on('fs.exists', ($, e) => ({ value: fileAt(e.path) !== undefined }))
+  on('fs.stat', ($, e) => {
+    const text = fileAt(e.path)
+
+    return text !== undefined ? { value: { kind: 'file', size: text.length, mtimeMs: 1, isLink: false } } : { deny: 'missing' }
+  })
+  on('fs.read', ($, e) => ({ value: fileAt(e.path) ?? '' }))
+  on('fs.list', ($, e) => {
+    const m = where(e.path)
+    if (!m || m[2] !== undefined || Object.keys(dirs[m[1]]).length === 0) return { deny: 'missing' }
+
+    return {
+      value: Object.entries(dirs[m[1]]).map(([name, text]) => ({ name, kind: 'file', size: text.length, mtimeMs: 1, isLink: false })),
+    }
+  })
   on('ui.open', ($, e) => {
     seen.opened.push(e.id)
     return { value: { isPlaced: true } }
@@ -210,6 +228,93 @@ for (const surface of SURFACES) {
     expect(textOf(await ui.drawn())).not.toContain('rows in the register')
     await ui.press({ key: 'tab-decisions' })
     expect(textOf(await ui.drawn())).not.toContain('never asked ·')
+  })
+}
+
+// --- the banner ------------------------------------------------------------------
+
+for (const surface of SURFACES) {
+  test(`the banner tops the pane, and leaves a narrow pane alone, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const wide = await $.ui.mount({ ...PANE, surface })
+    if (surface === 'terminal') {
+      expect(textOf(await wide.drawn())).toContain('/_/ |_|')
+    } else {
+      const svg = await wide.find({ type: 'Svg' })
+      expect((svg as { props: { source: string } }).props.source).toContain('linearGradient')
+    }
+    await wide.unmount()
+
+    const narrow = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, bodyColumns: 30 } })
+    expect(textOf(await narrow.drawn())).not.toContain('/_/ |_|')
+    expect(await narrow.find({ type: 'Svg' })).toBeUndefined()
+  })
+}
+
+// --- the Matrix tab (ADR-030, view 1) -------------------------------------------
+
+// The fixture journey's log, plus a later decision that changed the actor set.
+const LOG_WITH_D5 =
+  FIXTURES.band['decisions-log.md'] +
+  '\n## D5 · 2026-04-19 · Add the event cluster\n\n- **Gate:** brief\n- **Answer:** yes\n- **Rationale:** —\n- **Changes the actor set:** yes\n- **Supersedes:** —\n'
+const ANALYSIS = {
+  'matrix-2026-04-10-iter1.md': MATRIX_FIXTURES['matrix-iter1.md'],
+  'residuals-2026-04-10-iter1.md': MATRIX_FIXTURES['residuals-iter1.md'],
+  'matrix-2026-04-01.md': MATRIX_FIXTURES['broken.md'],
+  'stressors-2026-04-01.md': '# Stressors\n',
+}
+
+const openMatrix = async ($: Parameters<Parameters<typeof test>[1]>[0], surface: (typeof SURFACES)[number]) => {
+  await $.command.run({ command: 'restack-view', args: '' })
+  const ui = await $.ui.mount({ ...PANE, surface })
+  await ui.press({ key: 'tab-matrix' })
+
+  return ui
+}
+
+for (const surface of SURFACES) {
+  test(`with no matrix yet, the tab says where one comes from, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band')
+    const ui = await openMatrix($, surface)
+    expect(textOf(await ui.drawn())).toContain('No impact matrix scored yet. /restack-stressor analyze')
+  })
+
+  test(`the newest matrix is drawn, stale where the eye lands, on ${surface}`, async ($, on) => {
+    stub(on, surface, { ...FIXTURES.band, 'decisions-log.md': LOG_WITH_D5 }, '', ANALYSIS)
+    const ui = await openMatrix($, surface)
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('iteration 1 · 2026-04-10 · 5 × 4 · 11 cells (2 unknown)')
+    expect(tree).toContain(' · scored at D2 · stale: D5 changed the actor set')
+    expect(colorsOf(await ui.drawn())).toContainEqual(['claude', false])
+    expect(tree).toContain('claimed by residuals-2026-04-10-iter1.md')
+    if (surface === 'terminal') {
+      const raster = (await ui.find({ type: 'Raster' })) as { props: { columns: number; rows: number } }
+      expect(raster.props.rows).toBe(3)
+      expect(tree).toContain('S-1')
+    } else {
+      // Two Svgs on the Desktop, the banner and the matrix: read the matrix's from the tree.
+      const drawn = JSON.stringify(await ui.drawn())
+      expect(drawn).toContain('Impact matrix matrix-2026-04-10-iter1.md: 5 stressors by 4 actors')
+      expect(drawn).toContain('<title>S-5 × LC</title>')
+    }
+  })
+
+  test(`the Select shows an older matrix, and a rejected one only as its problem, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band', '', ANALYSIS)
+    const ui = await openMatrix($, surface)
+    await ui.select({ key: 'matrix-file', value: 'matrix-2026-04-01.md' })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('matrix-2026-04-01.md: 1 × Locker = 2: scoring is 0 or 1. Not drawn')
+    expect(await ui.find({ type: 'Raster' })).toBeUndefined()
+  })
+
+  test(`sorting by total is a toggle, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band', '', ANALYSIS)
+    const ui = await openMatrix($, surface)
+    expect(textOf(await ui.drawn())).toContain('Sort by total')
+    await ui.press({ key: 'matrix-sort' })
+    expect(textOf(await ui.drawn())).toContain('File order')
   })
 }
 

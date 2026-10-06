@@ -8,14 +8,22 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
+import type { MatrixFile, MatrixState } from '../types'
+import { drawBanner } from './banner.tsx'
 import { askBars, bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
 import type { Files } from './journey.ts'
+import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix.ts'
+import { drawMatrix } from './matrix-view.tsx'
 import { drawAskBars, drawStatusBar } from './waiting.tsx'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
 const detail = atom({ plugin: 'restack-view', key: 'detail' } as const, null)
 const isBandOn = atom({ plugin: 'restack-view', key: 'isBandOn' } as const, true)
 const tab = atom({ plugin: 'restack-view', key: 'tab' } as const, 'position')
+const matrix = atom({ plugin: 'restack-view', key: 'matrix' } as const, null)
+const matrixPick = atom({ plugin: 'restack-view', key: 'matrixPick' } as const, null)
+const residualPick = atom({ plugin: 'restack-view', key: 'residualPick' } as const, '*')
+const isSortedByTotal = atom({ plugin: 'restack-view', key: 'isSortedByTotal' } as const, false)
 
 const PANE = 'restack-view'
 // The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
@@ -81,13 +89,29 @@ async function readOnce($: EngineInterface): Promise<void> {
       lastSeen = ''
       await update($, view, () => null)
       await update($, detail, () => null)
+      await update($, matrix, () => null)
       return
     }
     const names = Object.entries(FILES)
     const times = await Promise.all(
       names.map(([, name]) => $.fs.stat(join(dir, name)).then(s => s.mtimeMs, () => -1)),
     )
-    const seen = dir + '|' + times.join('|')
+    // The matrices sit beside the journey, in docs/stressor-analysis/. Listed
+    // every time; the one shown is read again only when it or its residuals change.
+    const stressorDir = join(dir.replace(/[\\/]journey$/, ''), 'stressor-analysis')
+    const entries = await $.fs.list(stressorDir).catch(() => [])
+    const mtimeOf = (name: string): number => entries.find(x => x.name === name)?.mtimeMs ?? -1
+    const matrices = matrixFiles(entries.filter(x => x.kind === 'file').map(x => x.name))
+    const pick = await read($, matrixPick)
+    const shown = matrices.find(f => f.name === pick) ?? matrices[0]
+    const seen = [
+      dir,
+      ...times,
+      matrices.map(f => f.name).join(','),
+      shown?.name ?? '',
+      shown === undefined ? -1 : mtimeOf(shown.name),
+      shown === undefined ? -1 : mtimeOf(residualsFor(shown.name)),
+    ].join('|')
     if (seen === lastSeen) return
 
     const files: Files = {}
@@ -96,12 +120,52 @@ async function readOnce($: EngineInterface): Promise<void> {
     }
     const next = readJourney(files)
     const nextDetail = readDetail(files)
+    const nextMatrix =
+      shown === undefined
+        ? { files: matrices }
+        : await matrixState($, stressorDir, matrices, shown, files.log ?? '', mtimeOf(residualsFor(shown.name)) >= 0)
     await update($, view, () => next)
     await update($, detail, () => nextDetail)
+    await update($, matrix, () => nextMatrix)
     lastSeen = seen
   } catch {
     // A file moved mid-read, or the session is not bound yet: keep the last view.
   }
+}
+
+// The shown matrix, its residuals' claims and its staleness; or the first
+// problem matrix.py would report, and no grid.
+async function matrixState(
+  $: EngineInterface,
+  dir: string,
+  files: MatrixFile[],
+  shown: MatrixFile,
+  log: string,
+  hasResiduals: boolean,
+): Promise<MatrixState> {
+  const text = await $.fs.read(join(dir, shown.name))
+  const { grid, problems } = readMatrix(text)
+  if (grid === undefined || problems.length > 0) return { files, file: shown.name, problem: problems[0] }
+  const residualsFile = residualsFor(shown.name)
+  const claims = hasResiduals ? readClaims(await $.fs.read(join(dir, residualsFile)), grid.actors) : []
+
+  return {
+    files,
+    file: shown.name,
+    grid: {
+      ...grid,
+      file: shown.name,
+      claims,
+      residualsFile: hasResiduals ? residualsFile : undefined,
+      ...staleness(text, actorSetChanges(log)),
+    },
+  }
+}
+
+// The Matrix tab's Select: show another matrix, then read it.
+async function pickMatrix($: EngineInterface, name: string): Promise<void> {
+  await update($, matrixPick, () => name)
+  await refresh($)
 }
 
 // The pane's one button. It never submits, and never writes over a draft:
@@ -213,23 +277,50 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
-    const { Box, Text, Button, Markdown } = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown, Select, Raster, Svg } = $.ui.resolve(e)
     const current = await read($, view)
     const lists = await read($, detail)
     const open = await read($, tab)
+    const banner = drawBanner({ Box, Text, Svg }, e.surface, e.props.bodyColumns)
 
-    if (current === null) return <Text dimColor>{NO_JOURNEY}</Text>
+    if (current === null) {
+      return (
+        <Box flexDirection="column">
+          {banner}
+          <Text dimColor>{NO_JOURNEY}</Text>
+        </Box>
+      )
+    }
     if (current.kind === 'not-canonical' || lists === null) {
-      return <Text color="warning">{bandText(current)}</Text>
+      return (
+        <Box flexDirection="column">
+          {banner}
+          <Text color="warning">{bandText(current)}</Text>
+        </Box>
+      )
     }
     const command = current.next
     const els = { Box, Text }
     const width = e.props.bodyColumns
     // Ages are counted to now, not to the last read: a day passes without a file changing.
     const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, await $.clock.now()) : []
+    const matrixPicks = {
+      residual: await read($, residualPick),
+      isSortedByTotal: await read($, isSortedByTotal),
+      onFile: (name: string) => {
+        void pickMatrix($, name)
+      },
+      onResidual: (value: string) => {
+        void update($, residualPick, () => value)
+      },
+      onSort: () => {
+        void update($, isSortedByTotal, value => !value)
+      },
+    }
 
     return (
       <Box flexDirection="column">
+        {banner}
         <Box flexDirection="row" columnGap={3}>
           {TABS.map(([name, label], i) => (
             <Button
@@ -251,7 +342,11 @@ export const register: Register = on => {
         )}
         {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
         {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
-        <Markdown key={`body-${open}`} text={tabText(lists, open)} />
+        {open === 'matrix' ? (
+          drawMatrix({ Box, Text, Button, Select, Raster, Svg }, await read($, matrix), matrixPicks, e.surface, width)
+        ) : (
+          <Markdown key={`body-${open}`} text={tabText(lists, open)} />
+        )}
       </Box>
     )
   })

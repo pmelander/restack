@@ -26,7 +26,7 @@ SKILLS = ROOT / "skills"
 
 # ADR-029, decision point 2. `$.ui.*` is every drawing call; the rest by name.
 ALLOWED_CALLS = {
-    "$.fs.read", "$.fs.stat", "$.fs.exists", "$.fs.ancestors",
+    "$.fs.read", "$.fs.stat", "$.fs.exists", "$.fs.ancestors", "$.fs.list",
     "$.command.register", "$.prompt.read", "$.prompt.fill",
     "$.store.get", "$.store.set", "$.state.get", "$.state.set",
     "$.session.root", "$.session.cwd", "$.session.surfaces", "$.clock.after", "$.clock.now",
@@ -49,12 +49,17 @@ def notes(report: dict) -> list[str]:
 
 
 def listed(lines: list[str], label: str) -> list[str]:
-    """The items of every `<module> <label>: a, b (via f), c` line."""
+    """The items of every `<module> <label>: a, b (via f, g), c` line.
+
+    The `(via ...)` groups go first: they hold commas of their own when a call
+    is reached through more than one function.
+    """
     items = []
     for line in lines:
         m = re.match(rf"^\S+ {label}: (.*)$", line)
         if m:
-            items += [re.sub(r"\s*\(via [^)]*\)$", "", i.strip()) for i in m.group(1).split(", ")]
+            bare = re.sub(r"\s*\(via [^)]*\)", "", m.group(1))
+            items += [i.strip() for i in bare.split(", ") if i.strip()]
     return items
 
 

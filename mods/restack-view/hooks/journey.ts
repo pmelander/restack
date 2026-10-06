@@ -455,10 +455,13 @@ export const TABS: ReadonlyArray<[Tab, string]> = [
   ['asks', 'Asks'],
   ['assumptions', 'Assumptions'],
   ['decisions', 'Decisions'],
+  ['matrix', 'Matrix'],
 ]
 
 // A tab's body as markdown. Every list names the command that gives it whole.
 export function tabText(detail: Detail, tab: Tab): string {
+  // The Matrix tab draws, it does not list (matrix-view.tsx).
+  if (tab === 'matrix') return ''
   if (tab === 'position') {
     const fields = detail.header.map(([label, value]) => `- **${label}:** ${value}`)
     const position = detail.position === '' ? ['No Current Position section.'] : detail.position.split('\n')
