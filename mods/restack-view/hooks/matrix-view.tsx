@@ -7,7 +7,7 @@
 import type { Elements, RenderSurface } from 'claude-code'
 
 import type { MatrixState } from '../types'
-import { claimedCells, COLOR, fileLabel, flippedWindow, laneSvg, order, runs } from './matrix.ts'
+import { claimedCells, COLOR, desktopWindow, fileLabel, flippedWindow, order, runs } from './matrix.ts'
 import type { Mark } from './matrix.ts'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select' | 'Svg'>
@@ -69,7 +69,9 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
   // The lane's width: what is left of the pane after the actor code and the total.
   const label = Math.max(4, ...grid.actors.map(a => a.length)) + 1
   const room = columns - label - TOTAL_WIDTH - 1
-  const win = flippedWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room))
+  // The Desktop's drawing must stay under the Svg limit, so its window may be narrower.
+  const desktop = surface === 'desktop' ? desktopWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room)) : null
+  const win = desktop?.win ?? flippedWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room))
 
   const stamp =
     grid.baseline === undefined
@@ -138,8 +140,10 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
       </Box>
       {pager}
       <Text> </Text>
-      {surface === 'desktop' ? (
-        <Svg source={laneSvg(win)} alt={`Impact matrix ${grid.file}, ${win.ids[0]} to ${win.ids[win.ids.length - 1]}, one lane per actor`} />
+      {surface === 'desktop' && desktop === null ? (
+        <Text dimColor>Too many marks to draw here, even ten stressors at a time; the terminal draws them as text.</Text>
+      ) : surface === 'desktop' && desktop !== null ? (
+        <Svg source={desktop.svg} alt={`Impact matrix ${grid.file}, ${win.ids[0]} to ${win.ids[win.ids.length - 1]}, one lane per actor`} />
       ) : (
         <Box flexDirection="column">
           <Text wrap="truncate">

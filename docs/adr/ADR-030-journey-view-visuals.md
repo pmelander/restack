@@ -99,6 +99,14 @@ no skill depends on them, and every number matches the script that owns it.
   lanes drifted apart and nothing lined up (maintainer, 2026-10-06). The
   `Svg` is not interactive, so it is drawn without a frame. Both read one
   `flippedWindow`, so the surfaces cannot disagree about the data.
+- **The `Svg` is compact by construction, and a page narrows to fit it.**
+  The first Desktop drawing made one shape per cell. On the reference
+  engagement that came to about 280,000 characters against the element's
+  131,072, and the pane showed only "nothing to show". Empty cells are now
+  one dotted line per lane, only marks are shapes, and the lens strip is one
+  rect per run: about 24,000 characters for 125 of its 152 stressors. If a
+  denser matrix would still pass the limit, the window narrows until it
+  fits. Tests hold both at real scale, 152 × 30.
 - **One mark per cell, three states:** hit (`1`), unknown (`?`, `1?`), empty.
   No severity scale, because there is none. A lens strip runs above the
   lanes, one colour per stressor, and a ruler names every tenth stressor.

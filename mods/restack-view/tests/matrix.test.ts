@@ -8,6 +8,7 @@ import type { MatrixGrid } from '../types'
 import {
   actorSetChanges,
   claimedCells,
+  desktopWindow,
   COLOR,
   EMPTY,
   flippedWindow,
@@ -17,6 +18,7 @@ import {
   order,
   readClaims,
   readMatrix,
+  SVG_LIMIT,
   runs,
   staleness,
   UNKNOWN,
@@ -178,16 +180,68 @@ test('runs group equal neighbours', () => {
   expect(runs([])).toEqual([])
 })
 
+
 test('on the Desktop the lanes are shapes on an exact grid, labelled in monospace', () => {
   const g = gridOf('matrix-iter1.md', 'residuals-iter1.md')
   const { rows, cols } = order(g, false)
   const svg = laneSvg(flippedWindow(g, rows, cols, claimedCells(g, '*'), 0, 100))
-  // 5 lens cells, and one shape per stressor in each of 4 lanes.
-  expect(svg.match(/<rect /g)!.length).toBe(5 + 4 * 5)
+  // Lens runs O, C, O, C, X (5), and one square per mark: CA 2, RS 4, LC 3, NS 2.
+  expect(svg.match(/<rect /g)!.length).toBe(5 + 11)
+  // Every empty cell at once: one dotted line per lane.
+  expect(svg.match(/<line /g)!.length).toBe(4)
+  expect(svg).toContain('stroke-dasharray="2 6"')
   expect(svg).toContain('font-family="ui-monospace, Menlo, Consolas, monospace"')
   expect(svg).toContain('>RS</text>')
   expect(svg).toContain('3 claimed')
   expect(svg).toContain('(1?)')
   expect(svg).toContain(`fill="${COLOR.claimed}"`)
+  expect(svg).not.toContain('<use')
   expect(svg).not.toContain('currentColor')
+})
+
+// A grid the size of a real engagement's: 152 stressors by 30 actors, with a
+// mark in roughly one cell in `every`.
+const bigGrid = (every: number) => {
+  const actors = Array.from({ length: 30 }, (_, j) => `A${j}`)
+  const rows = Array.from({ length: 152 }, (_, i) => ({
+    id: `S-${i + 1}`,
+    lens: 'OVCPX'[i % 5],
+    cells: actors.map((_, j) => ((i * 7 + j * 13) % every === 0 ? 1 : 0)),
+    total: 0,
+  }))
+  rows.forEach(r => (r.total = r.cells.reduce((a, b) => a + b, 0)))
+  const colTotals = actors.map((_, j) => rows.reduce((a, r) => a + r.cells[j], 0))
+
+  return {
+    file: 'big.md',
+    actors,
+    rows,
+    colTotals,
+    total: colTotals.reduce((a, b) => a + b, 0),
+    unknown: 0,
+    claims: [],
+    stale: [],
+    marked: [],
+  } as MatrixGrid
+}
+
+test('a real-sized matrix draws a full page under the Svg limit', () => {
+  // About one cell in 19 marked, as on the reference engagement (244 of 4,560).
+  const g = bigGrid(19)
+  const { rows, cols } = order(g, false)
+  const fit = desktopWindow(g, rows, cols, new Set(), 0, 125)
+  expect(fit).not.toBeNull()
+  expect(fit!.win.end - fit!.win.start).toBe(125)
+  expect(fit!.svg.length).toBeLessThan(SVG_LIMIT)
+})
+
+test('a matrix too dense for one page narrows its window until it fits', () => {
+  // Every cell marked: 4,560 squares would pass the limit at full width.
+  const g = bigGrid(1)
+  const { rows, cols } = order(g, false)
+  expect(laneSvg(flippedWindow(g, rows, cols, new Set(), 0, 152)).length).toBeGreaterThan(SVG_LIMIT)
+  const fit = desktopWindow(g, rows, cols, new Set(), 0, 152)
+  expect(fit).not.toBeNull()
+  expect(fit!.svg.length).toBeLessThanOrEqual(SVG_LIMIT)
+  expect(fit!.win.end - fit!.win.start).toBeLessThan(152)
 })

@@ -393,6 +393,14 @@ const MARK_FILL: Record<Exclude<Mark, 'empty'>, string> = {
   claimed: COLOR.claimed,
 }
 
+// An Svg holds at most this many characters; a larger one is refused, and
+// Claude Code draws "nothing to show" in its place.
+export const SVG_LIMIT = 131_072
+
+// Compact by construction, because a real matrix is large: 152 stressors by 30
+// actors is 4,560 cells. Empty cells are one dotted line per lane, its dash
+// one cell apart; only marks are shapes; the lens strip is one rect per run of
+// a colour. Plain shapes only, nothing a sanitiser might strip (no `<use>`).
 export function laneSvg(win: Window): string {
   const n = win.ids.length
   const right = LABEL_PX + n * PITCH + 8
@@ -403,9 +411,11 @@ export function laneSvg(win: Window): string {
     ` font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11">`,
     `<text x="0" y="8" fill="${INK}">lens</text>`,
   ]
-  win.lens.forEach((color, i) => {
-    parts.push(`<rect x="${LABEL_PX + i * PITCH}" y="2" width="${PITCH}" height="6" fill="${color}"/>`)
-  })
+  let x = LABEL_PX
+  for (const [color, count] of runs(win.lens)) {
+    parts.push(`<rect x="${x}" y="2" width="${count * PITCH}" height="6" fill="${color}"/>`)
+    x += count * PITCH
+  }
   for (let i = 0; i < n; i += 10) {
     parts.push(`<text x="${LABEL_PX + i * PITCH}" y="22" fill="${INK}">${esc(win.ids[i])}</text>`)
   }
@@ -413,23 +423,44 @@ export function laneSvg(win: Window): string {
     const y = TOP + row * LANE
     const label = lane.total > 0 ? '#d0d3d8' : DOT
     parts.push(`<text x="0" y="${y + 9}" fill="${label}" font-weight="700">${esc(lane.actor)}</text>`)
+    // Every cell's dot at once: a 2-pixel dash every PITCH pixels, centred in its cell.
+    parts.push(
+      `<line x1="${LABEL_PX + 3}" y1="${y + 4}" x2="${LABEL_PX + n * PITCH}" y2="${y + 4}" stroke="${DOT}" stroke-width="2" stroke-dasharray="2 ${PITCH - 2}"/>`,
+    )
     lane.marks.forEach((mark, i) => {
-      const x = LABEL_PX + i * PITCH
-      parts.push(
-        mark === 'empty'
-          ? `<rect x="${x + 3}" y="${y + 4}" width="2" height="2" fill="${DOT}"/>`
-          : `<rect x="${x + 1}" y="${y + 1}" width="${PITCH - 2}" height="${PITCH - 2}" rx="1" fill="${MARK_FILL[mark]}"/>`,
-      )
+      if (mark === 'empty') return
+      parts.push(`<rect x="${LABEL_PX + i * PITCH + 1}" y="${y + 1}" width="${PITCH - 2}" height="${PITCH - 2}" rx="1" fill="${MARK_FILL[mark]}"/>`)
     })
     const extra = [
       lane.unknown > 0 ? `<tspan fill="${COLOR.unknown}"> (${lane.unknown}?)</tspan>` : '',
       lane.claimed > 0 ? `<tspan fill="${COLOR.claimed}"> ${lane.claimed} claimed</tspan>` : '',
     ].join('')
     parts.push(
-      `<text x="${right}" y="${y + 9}" fill="${label}" font-weight="700">${String(lane.total).padStart(3, '\u2007')}${extra}</text>`,
+      `<text x="${right}" y="${y + 9}" fill="${label}" font-weight="700">${String(lane.total).padStart(3, ' ')}${extra}</text>`,
     )
   })
   parts.push('</svg>')
 
   return parts.join('')
+}
+
+// The Desktop's window: as wide as the pane allows, narrowed while its drawing
+// would pass the Svg limit, as a dense matrix can. Null when even the
+// narrowest window does not fit, and the view says so in place of a drawing.
+export function desktopWindow(
+  grid: MatrixGrid,
+  rows: number[],
+  cols: number[],
+  claimed: Set<string>,
+  offset: number,
+  width: number,
+): { win: Window; svg: string } | null {
+  let size = width
+  for (;;) {
+    const win = flippedWindow(grid, rows, cols, claimed, offset, size)
+    const svg = laneSvg(win)
+    if (svg.length <= SVG_LIMIT) return { win, svg }
+    if (win.end - win.start <= 10) return null
+    size = Math.max(10, Math.floor((win.end - win.start) * 0.75))
+  }
 }
