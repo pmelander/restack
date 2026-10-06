@@ -46,6 +46,7 @@ const stub = (
   fixture: string | null | Record<string, string>,
   draft = '',
   analysis: Record<string, string> = {},
+  adr: Record<string, string> = {},
 ): Seen => {
   const seen: Seen = { filled: [], toasts: [], opened: [], closed: [] }
   mock.store(on)
@@ -53,9 +54,10 @@ const stub = (
   const dirs: Record<string, Readonly<Record<string, string>>> = {
     journey: fixture === null ? {} : typeof fixture === 'string' ? FIXTURES[fixture] : fixture,
     'stressor-analysis': analysis,
+    adr,
   }
   // The engine hands a stub the path resolved and absolute, so match its end.
-  const where = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/(journey|stressor-analysis)(?:\/([^/]+))?$/)
+  const where = (path: string) => path.replace(/\\/g, '/').match(/\/work\/docs\/(journey|stressor-analysis|adr)(?:\/([^/]+))?$/)
   const fileAt = (path: string): string | undefined => {
     const m = where(path)
 
@@ -325,6 +327,28 @@ for (const surface of SURFACES) {
     expect(textOf(await ui.drawn())).toContain('Sort by total')
     await ui.press({ key: 'matrix-sort' })
     expect(textOf(await ui.drawn())).toContain('File order')
+  })
+}
+
+// --- what rests on a belief (ADR-030, view 3) ----------------------------------------
+
+for (const surface of SURFACES) {
+  test(`the Assumptions tab looks up what rests on a belief, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'asks', '', {}, { 'ADR-0004-controller-reporting.md': '# ADR-0004: Controller reporting interval\n' })
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    await ui.press({ key: 'tab-assumptions' })
+    expect(await ui.find({ key: 'lookup' })).toBeDefined()
+
+    await ui.input({ key: 'lookup', text: 'A-2' })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('A-2 · Open · Locker controllers report door state within a second')
+    expect(tree).toContain('ADR-0004 · Controller reporting interval (ADR-0004-controller-reporting.md)')
+    // No matrix in this project: the stressor it names is said to be not found.
+    expect(tree).toContain('S-12 · not found')
+
+    await ui.input({ key: 'lookup', text: 'A-99' })
+    expect(textOf(await ui.drawn())).toContain('A-99 is not in the register.')
   })
 }
 

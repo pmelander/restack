@@ -10,8 +10,18 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { MatrixFile, MatrixState } from '../types'
 import { drawBanner } from './banner.tsx'
-import { askBars, bandParts, bandText, readDetail, readJourney, TABS, tabText } from './journey.ts'
+import { askBars, bandParts, bandText, readDetail, readJourney, registerRows, TABS, tabText } from './journey.ts'
 import type { Files } from './journey.ts'
+import {
+  adrFiles,
+  assumptionNumber,
+  decisionTitles,
+  lookup,
+  lookupLines,
+  parseRefs,
+  residualTitles,
+  titleOf,
+} from './refs.ts'
 import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix.ts'
 import { drawMatrix } from './matrix-view.tsx'
 import { drawAskBars, drawStatusBar } from './waiting.tsx'
@@ -25,6 +35,7 @@ const matrixPick = atom({ plugin: 'restack-view', key: 'matrixPick' } as const, 
 const residualPick = atom({ plugin: 'restack-view', key: 'residualPick' } as const, '*')
 const isSortedByTotal = atom({ plugin: 'restack-view', key: 'isSortedByTotal' } as const, false)
 const matrixOffset = atom({ plugin: 'restack-view', key: 'matrixOffset' } as const, 0)
+const lookupResult = atom({ plugin: 'restack-view', key: 'lookup' } as const, null)
 
 const PANE = 'restack-view'
 // The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
@@ -163,6 +174,61 @@ async function matrixState(
   }
 }
 
+// The Assumptions tab's lookup: what rests on one assumption (ADR-030, view 3).
+// Read on Enter, not on every refresh, and only what the row cites: the ADRs
+// it names, the residual files newest first until every residual it names is
+// found, the decisions log if it names a decision, and the matrix the Matrix
+// tab shows for its stressors.
+async function runLookup($: EngineInterface, input: string): Promise<void> {
+  const dir = await journeyDir($)
+  if (dir === undefined) {
+    await update($, lookupResult, () => ({ kind: 'error' as const, message: NO_JOURNEY }))
+    return
+  }
+  const docs = dir.replace(/[\\/]journey$/, '')
+  const rows = registerRows(await $.fs.read(join(dir, FILES.register)).catch(() => ''))
+  if (typeof rows === 'string') {
+    const message = 'assumptions-register.md is not canonical: /restack-journey migrate'
+    await update($, lookupResult, () => ({ kind: 'error' as const, message }))
+    return
+  }
+  const n = assumptionNumber(input)
+  const row = n === undefined ? undefined : rows.find(r => assumptionNumber(r.id) === n)
+  const refs = parseRefs(row?.depends ?? '')
+
+  const adrs = new Map<number, { file: string; title?: string }>()
+  if (refs.adrs.length > 0) {
+    const listed = await $.fs.list(join(docs, 'adr')).catch(() => [])
+    const files = adrFiles(listed.filter(x => x.kind === 'file').map(x => x.name))
+    for (const a of refs.adrs) {
+      const file = files.get(a)
+      if (file === undefined) continue
+      adrs.set(a, { file, title: titleOf(await $.fs.read(join(docs, 'adr', file)).catch(() => '')) })
+    }
+  }
+
+  const residuals = new Map<string, { file: string; title: string }>()
+  if (refs.residuals.length > 0) {
+    const listed = await $.fs.list(join(docs, 'stressor-analysis')).catch(() => [])
+    const names = matrixFiles(listed.map(x => x.name.replace(/^residuals-/, 'matrix-')))
+      .map(f => f.name.replace(/^matrix-/, 'residuals-'))
+      .filter(name => listed.some(x => x.name === name))
+    for (const name of names) {
+      if (refs.residuals.every(r => residuals.has(r))) break
+      const titles = residualTitles(await $.fs.read(join(docs, 'stressor-analysis', name)).catch(() => ''))
+      for (const r of refs.residuals) {
+        const title = titles.get(r)
+        if (!residuals.has(r) && title !== undefined) residuals.set(r, { file: name, title })
+      }
+    }
+  }
+
+  const decisions = refs.decisions.length > 0 ? decisionTitles(await $.fs.read(join(dir, FILES.log)).catch(() => '')) : new Map<number, string>()
+  const grid = (await read($, matrix))?.grid
+  const result = lookup(input, rows, { adrs, residuals, decisions, grid })
+  await update($, lookupResult, () => result)
+}
+
 // The Matrix tab's Select: show another matrix from its first stressor, then read it.
 async function pickMatrix($: EngineInterface, name: string): Promise<void> {
   await update($, matrixPick, () => name)
@@ -279,7 +345,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
-    const { Box, Text, Button, Markdown, Select, Svg } = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown, Select, Svg, Input } = $.ui.resolve(e)
     const current = await read($, view)
     const lists = await read($, detail)
     const open = await read($, tab)
@@ -306,6 +372,31 @@ export const register: Register = on => {
     const width = e.props.bodyColumns
     // Ages are counted to now, not to the last read: a day passes without a file changing.
     const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, await $.clock.now()) : []
+    const found = open === 'assumptions' ? await read($, lookupResult) : null
+    const lookupView =
+      found === null ? null : (
+        <Box flexDirection="column">
+          {lookupLines(found).map((line, i) =>
+            line.tone === 'head' ? (
+              <Text key={`lookup-${i}`} bold wrap="wrap">
+                {line.text}
+              </Text>
+            ) : line.tone === 'missing' ? (
+              <Text key={`lookup-${i}`} italic dimColor wrap="wrap">
+                {line.text}
+              </Text>
+            ) : line.tone === 'found' ? (
+              <Text key={`lookup-${i}`} wrap="wrap">
+                {line.text}
+              </Text>
+            ) : (
+              <Text key={`lookup-${i}`} dimColor wrap="wrap">
+                {line.text}
+              </Text>
+            ),
+          )}
+        </Box>
+      )
     const matrixPicks = {
       residual: await read($, residualPick),
       isSortedByTotal: await read($, isSortedByTotal),
@@ -349,6 +440,22 @@ export const register: Register = on => {
         )}
         {bars.length > 0 && drawAskBars(els, bars, e.surface, width)}
         {open === 'assumptions' && drawStatusBar(els, lists.statuses, e.surface, width)}
+        {open === 'assumptions' && (
+          <Box flexDirection="column">
+            <Input
+              key="lookup"
+              label="What rests on"
+              placeholder="an assumption, such as A-12, then Enter"
+              value=""
+              submitLabel="look up"
+              onSubmit={value => {
+                void runLookup($, value)
+              }}
+            />
+            {lookupView}
+            <Text> </Text>
+          </Box>
+        )}
         {open === 'matrix' ? (
           drawMatrix({ Box, Text, Button, Select, Svg }, await read($, matrix), matrixPicks, e.surface, width)
         ) : (

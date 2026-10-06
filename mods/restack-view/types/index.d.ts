@@ -96,6 +96,25 @@ export type MatrixGrid = {
   marked: number[]
 }
 
+// What rests on a belief (ADR-030, view 3).
+
+export type LookupItem = { id: string; isFound: boolean; title?: string; where?: string }
+
+export type Lookup =
+  | { kind: 'error'; message: string }
+  | {
+      kind: 'found'
+      id: string
+      status: string
+      assumption: string
+      validates: string
+      groups: Array<{ label: string; items: LookupItem[] }>
+      // Names in the cell that are not IDs, as written.
+      other: string[]
+      // Open rows whose own cell names this one.
+      restsOnIt: string[]
+    }
+
 export type MatrixState = {
   files: MatrixFile[]
   // The file shown: the newest, or the one picked.
@@ -120,6 +139,8 @@ declare module 'claude-code' {
       isSortedByTotal: boolean
       // The first stressor of the Matrix tab's window.
       matrixOffset: number
+      // The Assumptions tab's lookup: the last result, or none yet.
+      lookup: Lookup | null
     }
   }
 }

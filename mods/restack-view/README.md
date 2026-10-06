@@ -43,7 +43,7 @@ Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.
 |---|---|---|
 | Position | the header fields and the newest Current Position subsection | `/restack-journey where` |
 | Asks | a waiting bar per recipient, then open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
-| Assumptions | the register by status as one bar, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
+| Assumptions | the register by status as one bar, a lookup of what rests on a belief, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
 | Matrix | the newest impact matrix as a heatmap, with residual claims and its staleness | `docs/stressor-analysis/` |
 
@@ -61,6 +61,15 @@ stale: scored before a decision that changed the actor set, and not marked
 `scored pre-D<n>`, as `trace.py` decides it. `s` sorts stressors and actors
 by total, as a reading aid. A matrix `matrix.py` would reject is not drawn:
 the tab names the problem instead.
+
+**What rests on a belief** (Assumptions tab): type an assumption's ID, such
+as `A-12`, and press Enter. The row is shown, then every ID its *Depends on
+it* cell names, resolved where a source holds it: an ADR to its title from
+`docs/adr/`, a residual to its heading, a decision to its heading, a
+stressor to its hits in the matrix the Matrix tab shows, another assumption
+to its row. What no source holds is marked `not found`. Names that are not
+IDs, such as `LLD-03`, are listed as written. Last come the open rows that
+rest on this one. Nothing is read until you press Enter.
 
 **The waiting bars** ([ADR-030](../../docs/adr/ADR-030-journey-view-visuals.md)):
 a meter per recipient, filled in proportion to the busiest recipient's open

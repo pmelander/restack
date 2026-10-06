@@ -13,12 +13,15 @@ reference engagement at iteration 7: a 115 × 29 impact matrix, a 121 KB
 assumptions register, a 1,300-line decisions log. Anonymised: this
 repository is public.
 
-**Implementation Status:** in progress. Built: the waiting bars (O1: first)
-and the Matrix tab. The Matrix tab was checked against `matrix.py` on the
-reference engagement's five real matrices, up to 152 × 30: rows, actors,
-totals, unknowns, accept or reject, and every residual claim agree. Not yet
-built: the lookup and the rhythm. The pane also gained a banner, an 80s fade
-of the ReStack logo, which the maintainer asked for "just because we can".
+**Implementation Status:** in progress. Built: the waiting bars (O1: first),
+the Matrix tab, and the lookup of what rests on a belief. Not yet built: the
+rhythm. The Matrix tab was checked against `matrix.py` on the reference
+engagement's five real matrices, up to 152 × 30: rows, actors, totals,
+unknowns, accept or reject, and every residual claim agree. The lookup's
+reader was run over the reference register's 172 *Depends on it* cells: 99
+IDs recognised, and nothing that looks like one left among the names kept
+as written. The pane also gained a banner, an 80s fade of the ReStack logo,
+which the maintainer asked for "just because we can".
 
 **Accepted:** 2026-10-06, by the maintainer
 
@@ -170,10 +173,20 @@ no skill depends on them, and every number matches the script that owns it.
   *Depends on it* cell names, grouped by kind and resolved where a canonical
   source holds it:
   - an ADR, to its title, from `docs/adr/`
-  - a residual, to its heading in the newest residuals file
+  - a residual, to its heading in the residual files, newest first
   - a decision, to its heading in the decisions log
-  - a stressor, to its row in the newest matrix, with its hits
+  - a stressor, to its row in the matrix the Matrix tab shows, with its hits
   - another assumption, to its row
+- **The cell is read as a long engagement writes it,** clause by clause on
+  `;`. In a clause that names an ADR, every bare three- or four-digit number
+  is one of its ADRs, so `ADR-0005, 0025, 0026–0031` is seven of them and
+  `ADR-0002/0003` two. Anything not recognised as an ID is listed as
+  written, under "also named": `LLD-03`, `DECISION-04/05/06`, "golden
+  vectors". It is never interpreted.
+- **Read on Enter, and only what the row cites.** The register, then the
+  cited ADRs' first headings, the residual files until every cited residual
+  is found, and the decisions log only when a decision is cited. Never on a
+  refresh.
 - **What is not found is shown as written and marked `not found`.** It is
   never guessed at.
 - **The reverse:** other open rows whose *Depends on it* names this ID, so a

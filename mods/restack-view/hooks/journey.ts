@@ -498,3 +498,22 @@ export function tabText(detail: Detail, tab: Tab): string {
     'docs/journey/decisions-log.md',
   )
 }
+
+// --- every row, for the lookup (ADR-030, view 3) ----------------------------------
+
+export type RegisterRow = { id: string; status: string; assumption: string; validates: string; depends: string }
+
+// Every row of the canonical register, open or not: the lookup shows a
+// resolved belief too, and what rests on one. A message when not canonical.
+export function registerRows(text: string): RegisterRow[] | string {
+  const table = registerTable(text)
+  if (typeof table === 'string') return table
+
+  return table.rows.map(cells => ({
+    id: rowId(cells),
+    status: stripMd(cells[5] ?? ''),
+    assumption: cells[1] ?? '',
+    validates: cells[3] ?? '',
+    depends: cells[4] ?? '',
+  }))
+}

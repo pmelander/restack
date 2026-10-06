@@ -24,6 +24,12 @@ beginning with the waiting bars.
   `matrix.py` would reject is not drawn, only named. It is read as
   `matrix.py` reads it, which was checked against its fixtures and five
   real matrices.
+- **What rests on a belief**, on the Assumptions tab: type `A-12` and press
+  Enter for the row, every ID its *Depends on it* cell names (ADRs,
+  residuals, decisions, stressors, assumptions), each resolved where a source
+  holds it or marked `not found`, the names that are not IDs as written, and
+  the open rows that rest on it. ADR lists are read as engagements write
+  them: `ADR-0005, 0025, 0026–0031` is seven ADRs.
 - **A banner** at the top of the pane: the ReStack logo in an 80s sunset
   fade, because a mod can.
 - **Waiting bars** in the pane, drawn as headroom draws its meters. The
