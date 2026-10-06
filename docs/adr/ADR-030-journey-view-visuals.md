@@ -13,11 +13,13 @@ reference engagement at iteration 7: a 115 × 29 impact matrix, a 121 KB
 assumptions register, a 1,300-line decisions log. Anonymised: this
 repository is public.
 
-**Implementation Status:** in progress. Built: the waiting bars (O1: first),
-the Matrix tab, and the lookup of what rests on a belief. Not yet built: the
-rhythm. The Matrix tab was checked against `matrix.py` on the reference
+**Implementation Status:** implemented on `feature/restack-view-visuals-adr`,
+all four views in O1's order: the waiting bars, the Matrix tab, the lookup
+of what rests on a belief, and the rhythm strip. The Matrix tab was checked against `matrix.py` on the reference
 engagement's five real matrices, up to 152 × 30: rows, actors, totals,
-unknowns, accept or reject, and every residual claim agree. The lookup's
+unknowns, accept or reject, and every residual claim agree. The rhythm's
+counts match the reference journey's own (190 entries, 7 iterations, 81
+gates). The lookup's
 reader was run over the reference register's 172 *Depends on it* cells: 99
 IDs recognised, and nothing that looks like one left among the names kept
 as written. The pane also gained a banner, an 80s fade of the ReStack logo,
@@ -206,7 +208,16 @@ no skill depends on them, and every number matches the script that owns it.
   iterations (`/restack-journey iterate` entries), gates, entries. No
   expected range and no verdict. The route's expectation belongs in
   `/restack-journey review`.
-- **Block glyphs in `Text`**, both surfaces.
+- **Block glyphs in `Text`**, both surfaces: `▄` a day with entries, `█` a
+  day with a gate, the dimmed track an empty day. They share one width, so
+  the strip stays straight in the Desktop's proportional font.
+- **Read as a long engagement writes its history.** A command is matched
+  with or without its `restack-` prefix (`/stressor walk`), a gate is any
+  `D<n>` on the line (`(D2 = A)`), and a line with no ReStack command, such
+  as `repo setup (D43)`, is `other`. A cell takes the family most of its
+  entries share, the latest of them on a tie. Run over the reference
+  journey, the counts match the file's own: 190 entries, 7 iterations, 81
+  gates.
 
 ### Reading the files
 

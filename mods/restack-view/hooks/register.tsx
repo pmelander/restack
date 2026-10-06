@@ -24,6 +24,9 @@ import {
 } from './refs.ts'
 import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix.ts'
 import { drawMatrix } from './matrix-view.tsx'
+import { rhythm } from './rhythm.ts'
+import type { Entry } from './rhythm.ts'
+import { drawRhythm, stripWidth } from './rhythm-view.tsx'
 import { drawAskBars, drawStatusBar } from './waiting.tsx'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
@@ -371,7 +374,13 @@ export const register: Register = on => {
     const els = { Box, Text }
     const width = e.props.bodyColumns
     // Ages are counted to now, not to the last read: a day passes without a file changing.
-    const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, await $.clock.now()) : []
+    const now = open === 'asks' || open === 'position' ? await $.clock.now() : 0
+    const bars = open === 'asks' && lists.asks.length > 0 ? askBars(lists, now) : []
+    // The strip runs to today, not to the last read: a quiet day is part of the rhythm.
+    const strip =
+      open === 'position'
+        ? rhythm(lists.history as Entry[], new Date(now).toISOString().slice(0, 10), stripWidth(width, e.surface))
+        : null
     const found = open === 'assumptions' ? await read($, lookupResult) : null
     const lookupView =
       found === null ? null : (
@@ -432,6 +441,7 @@ export const register: Register = on => {
           ))}
         </Box>
         <Text> </Text>
+        {open === 'position' && drawRhythm(els, strip, e.surface)}
         {open === 'position' && command !== undefined && (
           <Box flexDirection="row" columnGap={1}>
             <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />

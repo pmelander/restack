@@ -51,6 +51,9 @@ export type Decision = {
   gate?: string
 }
 
+// One journey history line (ADR-030, view 4), as rhythm.ts reads it.
+export type HistoryEntry = { date: string; command: string; family: string; isGate: boolean; isIterate: boolean }
+
 export type Detail = {
   // The header fields as written, first line only, label then value.
   header: Array<[string, string]>
@@ -61,6 +64,8 @@ export type Detail = {
   decisions: Decision[]
   // Every row of the register by status, in the vocabulary's order.
   statuses: Array<[string, number]>
+  // The journey history, oldest first.
+  history: HistoryEntry[]
 }
 
 export type Tab = 'position' | 'asks' | 'assumptions' | 'decisions' | 'matrix'

@@ -41,7 +41,7 @@ Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.
 
 | Tab | Shows | Whole list in |
 |---|---|---|
-| Position | the header fields and the newest Current Position subsection | `/restack-journey where` |
+| Position | the rhythm strip, then the header fields and the newest Current Position subsection | `/restack-journey where` |
 | Asks | a waiting bar per recipient, then open asks by recipient: status, last send, what is needed | `/restack-journey asks` |
 | Assumptions | the register by status as one bar, a lookup of what rests on a belief, then open rows: status, the belief, what would settle it | `assumptions-register.md` |
 | Decisions | open decisions: date, question, gate | `decisions-log.md` |
@@ -61,6 +61,14 @@ stale: scored before a decision that changed the actor set, and not marked
 `scored pre-D<n>`, as `trace.py` decides it. `s` sorts stressors and actors
 by total, as a reading aid. A matrix `matrix.py` would reject is not drawn:
 the tab names the problem instead.
+
+**The rhythm** (Position tab): the journey history as a strip, one cell a
+day from its first entry to today, or a week when the days do not fit. A cell
+takes the colour of its commands' family: discover, stressor and events,
+decisions, documentation and trace, review, or other. `█` marks a day with a
+gate. Empty days stay empty, so the parked stretches show without a label.
+Under it are the history's own counts: entries, iterations and gates. There
+is no expected range: that belongs to `/restack-journey review`.
 
 **What rests on a belief** (Assumptions tab): type an assumption's ID, such
 as `A-12`, and press Enter. The row is shown, then every ID its *Depends on

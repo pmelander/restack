@@ -24,6 +24,11 @@ beginning with the waiting bars.
   `matrix.py` would reject is not drawn, only named. It is read as
   `matrix.py` reads it, which was checked against its fixtures and five
   real matrices.
+- **The rhythm strip**, on the Position tab: the journey history one cell a
+  day (or a week) to today, coloured by command family, gates marked, empty
+  days left empty, with the history's own counts of entries, iterations and
+  gates. Older histories are read too: commands without the `restack-`
+  prefix, gates mentioned mid-line.
 - **What rests on a belief**, on the Assumptions tab: type `A-12` and press
   Enter for the row, every ID its *Depends on it* cell names (ADRs,
   residuals, decisions, stressors, assumptions), each resolved where a source

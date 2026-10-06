@@ -330,6 +330,27 @@ for (const surface of SURFACES) {
   })
 }
 
+// --- the rhythm (ADR-030, view 4) ---------------------------------------------------
+
+for (const surface of SURFACES) {
+  test(`the Position tab opens with the rhythm strip, on ${surface}`, async ($, on) => {
+    stub(on, surface, 'band')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('rhythm')
+    // The stub's clock is 2026-04-20: from the first entry, 2026-03-01, 51 days.
+    expect(tree).toContain('3 entries · 2 iterations · 3 gates · 51 days, one cell a day')
+    expect(tree).toContain('2026-03-01')
+    const colors = colorsOf(await ui.drawn()).map(([c]) => c)
+    expect(colors).toContain('#af87ff')
+    for (const key of VERDICT_COLORS) expect(colors).not.toContain(key)
+    // Only on Position.
+    await ui.press({ key: 'tab-decisions' })
+    expect(textOf(await ui.drawn())).not.toContain('one cell a day')
+  })
+}
+
 // --- what rests on a belief (ADR-030, view 3) ----------------------------------------
 
 for (const surface of SURFACES) {

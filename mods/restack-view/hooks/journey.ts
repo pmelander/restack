@@ -6,6 +6,7 @@
 // does not reach here fails tests/journey.test.ts (ADR-029, decision point 4).
 
 import type { Ask, Decision, Detail, Journey, OpenRow, Tab, View } from '../types'
+import { historyEntries } from './rhythm.ts'
 
 export type Files = { state?: string; register?: string; log?: string }
 
@@ -358,6 +359,7 @@ export function readDetail(files: Files): Detail | null {
     open,
     decisions: files.log === undefined ? [] : openDecisions(files.log),
     statuses: statusCounts(all),
+    history: historyEntries(files.state),
   }
 }
 
