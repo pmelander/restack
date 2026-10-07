@@ -1,6 +1,6 @@
 ---
 name: restack-adr
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 2
 model: opus
 description: |
@@ -295,9 +295,14 @@ path is no longer translated for a Windows Python.
 | When | Command |
 |---|---|
 | **before** issuing a decision brief | `decision open "<question>" --gate <terrain\|confidence\|iterate\|approach\|brief>` prints the brief's number, `D<n>` |
-| the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no` (or `--actors "yes: added <actor>"`; `--supersedes D<m>` when it reverses one) |
+| the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no --assumptions none` (or `--actors "yes: added <actor>"`; `--assumptions "settles A-3, A-7; changes A-9; raises A-12"`; `--supersedes D<m>` when it reverses one) |
 | a belief the design relies on is unverified | `assume add "<belief>" --source "..." --validates "..." --depends "..."` prints `A-<n>` |
 | only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
+| it is an open design question, a check the build must run, or something only the running system can show | the same, plus `--kind decide`, `--kind test` or `--kind observe` |
+| a row's kind is wrong or missing | `assume kind A-<n> <decide\|test\|observe\|belief>`, after the architect confirms it |
+| the work just touched an ADR, decision, residual, actor or iteration | `assume touching <ID or phrase> ...`: the not-closed rows that name it (read-only) |
+| you need one row's whole record | `assume show A-<n>`: the row (its current state) and its own status lines |
+| you need the register's load | `register`: exposure apart from carried, by kind and age, and four worklists (read-only) |
 | an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
 | the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
 | a send was recorded that did not happen | `assume unasked A-<n> [A-<m> ...] --why "..."`: keeps each status, cancels the row's last send |
@@ -305,6 +310,21 @@ path is no longer translated for a Windows Python.
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
 | a `/restack-journey` command finishes | `history add --command "/restack-journey <cmd>" --outcome "..." [--decision D<n>]` |
+
+**Close what the work settles.** Registering a row is half the job. Before a
+command finishes after a decision is answered, an ADR is written or amended, an
+iteration is gated, an ablation is answered or a review finding is confirmed,
+run `assume touching` on what that work was about: the ADRs, decisions,
+residuals and actors it names, and `iteration <n>` at an iterate gate. Put the
+rows it lists to the architect, one choice question each, statuses drawn from
+the evidence and **Still open** last, and write each answer with
+`assume status`. The list is a worklist: a row that only mentions the thing
+in passing stays as it is. A decision's `--assumptions` is the answer to the
+same question, and it is required: `none` is a fine answer, a missing one is
+not. It records the claim and changes no status.
+
+**The row is the current state.** Its status lines are its history. Read the
+row; read the lines when you need to know how it got there.
 
 **A `--why` comes from the record.** Quote or point at what settled it: the
 discovery note, the code read, the architect's answer, the line that already
@@ -437,6 +457,8 @@ reasoning can still change the decision.
   it clears.
 - Knock-on changes are filled and true: every document listed was changed,
   bannered or ticketed in the same step.
+- The `Assumptions:` line is filled, `none` included, and every row it says
+  the decision settles has had its status put to the architect.
 - On a supersession, every withdrawn decision point names what now prevents
   the failure it prevented.
 
@@ -508,9 +530,17 @@ printed, it is `~/.claude/skills/restack-adr`.
    stale, or ticket it **now**, and fill the Knock-on table. A decision that
    adds or removes an actor also makes any already-scored impact matrix stale:
    mark it `scored pre-D<n>` in `docs/journey/stressor-iteration-history.md`.
-10. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
-11. Log to `docs/journey/decisions-log.md` and add to the journey state's
-    artifact list.
+10. **The register.** Run `journey.py assume touching` on what the decision
+    is about: the ADRs it supersedes or amends, the residuals and actors it
+    creates or removes, and the decision that chose it. Put each row it lists
+    to the architect, one choice question each: settled by this decision
+    (with its status), rested on, or neither. Write the `Assumptions:` header
+    line from the answers (`none` when nothing applies), each settled row
+    with `assume status ... --why "ADR-NNN: ..."`, and any new belief the
+    decision rests on with `assume add`.
+11. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
+12. Log to `docs/journey/decisions-log.md` (`decision answer ... --assumptions`
+    carries the same rows) and add to the journey state's artifact list.
 
 ## `/restack-adr list`
 
@@ -567,7 +597,11 @@ amendments, knock-on changes). Then:
    confirmed as still correct. **STOP** while one still specifies the replaced
    behaviour unmarked. This is the step that keeps an amendment from becoming
    a footnote.
-6. Log to `docs/journey/decisions-log.md`.
+6. **The register**, as in `create` step 10, on this ADR's number and on
+   every withdrawn point. A superseded decision leaves rows that rested on it:
+   each is settled by the new decision, still open under it, or withdrawn.
+   Update the `Assumptions:` line of the ADR that now stands.
+7. Log to `docs/journey/decisions-log.md`.
 
 Never quietly rewrite a decision to match what happened. That destroys the only
 record of what was actually believed at the time.

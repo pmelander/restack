@@ -18,6 +18,8 @@
 
 **Challenged by removal:** [only once challenged: YYYY-MM-DD, kept (D<n>): what would come back, by lens — the ablation report]
 
+**Assumptions:** [settles A-<n>, ...; rests on A-<n>, ... | none — the register rows this decision answers, and the open ones it depends on]
+
 ## Context
 
 [Describe the context and problem statement. What forces are at play? What are the concerns and constraints?]

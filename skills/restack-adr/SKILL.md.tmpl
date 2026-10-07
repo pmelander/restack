@@ -1,6 +1,6 @@
 ---
 name: restack-adr
-version: 2.2.0
+version: 2.3.0
 preamble-tier: 2
 model: opus
 description: |
@@ -66,6 +66,8 @@ reasoning can still change the decision.
   it clears.
 - Knock-on changes are filled and true: every document listed was changed,
   bannered or ticketed in the same step.
+- The `Assumptions:` line is filled, `none` included, and every row it says
+  the decision settles has had its status put to the architect.
 - On a supersession, every withdrawn decision point names what now prevents
   the failure it prevented.
 
@@ -125,9 +127,17 @@ the folder fills with trivia and people stop reading it.
    stale, or ticket it **now**, and fill the Knock-on table. A decision that
    adds or removes an actor also makes any already-scored impact matrix stale:
    mark it `scored pre-D<n>` in `docs/journey/stressor-iteration-history.md`.
-10. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
-11. Log to `docs/journey/decisions-log.md` and add to the journey state's
-    artifact list.
+10. **The register.** Run `journey.py assume touching` on what the decision
+    is about: the ADRs it supersedes or amends, the residuals and actors it
+    creates or removes, and the decision that chose it. Put each row it lists
+    to the architect, one choice question each: settled by this decision
+    (with its status), rested on, or neither. Write the `Assumptions:` header
+    line from the answers (`none` when nothing applies), each settled row
+    with `assume status ... --why "ADR-NNN: ..."`, and any new belief the
+    decision rests on with `assume add`.
+11. Write to `docs/adr/ADR-NNN-title-in-kebab-case.md`.
+12. Log to `docs/journey/decisions-log.md` (`decision answer ... --assumptions`
+    carries the same rows) and add to the journey state's artifact list.
 
 ## `/restack-adr list`
 
@@ -184,7 +194,11 @@ amendments, knock-on changes). Then:
    confirmed as still correct. **STOP** while one still specifies the replaced
    behaviour unmarked. This is the step that keeps an amendment from becoming
    a footnote.
-6. Log to `docs/journey/decisions-log.md`.
+6. **The register**, as in `create` step 10, on this ADR's number and on
+   every withdrawn point. A superseded decision leaves rows that rested on it:
+   each is settled by the new decision, still open under it, or withdrawn.
+   Update the `Assumptions:` line of the ADR that now stands.
+7. Log to `docs/journey/decisions-log.md`.
 
 Never quietly rewrite a decision to match what happened. That destroys the only
 record of what was actually believed at the time.
