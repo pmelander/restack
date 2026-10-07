@@ -197,7 +197,8 @@ class Decisions(JourneyCase):
         self.assertIn("## D3 · 2026-04-20 · Shard the event store by depot?", log)
         self.assertIn("- **Answer:** (open)", log)
         code, out = self.j("decision", "answer", "D3", "--answer", "B: one store",
-                           "--rationale", "depots share couriers", "--actors", "yes: added the shard router")
+                           "--rationale", "depots share couriers", "--actors", "yes: added the shard router",
+                           "--assumptions", "none")
         self.assertEqual(code, 0, out)
         log = self.text("decisions-log.md")
         self.assertIn("- **Answer:** B: one store", log)
@@ -210,19 +211,21 @@ class Decisions(JourneyCase):
         self.assertEqual(self.j("decision", "open", "second question")[1].strip(), "D4")
 
     def test_answering_twice_is_refused(self):
-        code, out = self.j("decision", "answer", "D2", "--answer", "x", "--rationale", "y", "--actors", "no")
+        code, out = self.j("decision", "answer", "D2", "--answer", "x", "--rationale", "y", "--actors", "no",
+                           "--assumptions", "none")
         self.assertEqual(code, 1)
         self.assertIn("already answered", out)
 
     def test_answering_an_unopened_decision_is_refused(self):
-        code, out = self.j("decision", "answer", "D9", "--answer", "x", "--rationale", "y", "--actors", "no")
+        code, out = self.j("decision", "answer", "D9", "--answer", "x", "--rationale", "y", "--actors", "no",
+                           "--assumptions", "none")
         self.assertEqual(code, 1)
         self.assertIn("decision open", out)
 
     def test_actors_yes_needs_the_change(self):
         self.j("decision", "open", "q")
         self.assertEqual(self.j("decision", "answer", "D3", "--answer", "x", "--rationale", "y",
-                                "--actors", "yes")[0], 2)
+                                "--actors", "yes", "--assumptions", "none")[0], 2)
 
     def test_note_records_a_missing_actor_set_as_recorded_later(self):
         log = self.docs / "journey" / "decisions-log.md"
@@ -238,7 +241,7 @@ class Decisions(JourneyCase):
     def test_note_refuses_when_already_recorded(self):
         code, out = self.j("decision", "note", "D2", "--actors", "yes: x")
         self.assertEqual(code, 1)
-        self.assertIn("already records it", out)
+        self.assertIn("already records changes the actor set", out)
 
     def test_note_refuses_an_open_decision(self):
         self.j("decision", "open", "q")
@@ -608,11 +611,246 @@ def split_cells(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split(" | ")]
 
 
+class Drain(JourneyCase):
+    """ADR-031: kinds, the rows a step touches, the register's load, and decisions that say
+    what they did to it. The `drain` journey plants one case per worklist: A-3 settled by D3
+    and still open, A-4 deferred to an iteration that ran, A-7 resting on a superseded ADR,
+    A-8 on a superseded decision, and every kind of row.
+    """
+
+    fixture = "drain"
+
+    def row(self, ident: str) -> str:
+        return next(l for l in self.text("assumptions-register.md").splitlines()
+                    if l.startswith(f"| {ident} "))
+
+    def unchanged(self, *args: str) -> tuple[int, str]:
+        files = sorted((self.docs / "journey").iterdir())
+        before = [f.read_bytes() for f in files]
+        result = self.j(*args)
+        self.assertEqual([f.read_bytes() for f in files], before, f"{args[0]} wrote a file")
+        return result
+
+    def test_fixture_is_canonical(self):
+        self.assertEqual(self.j("check")[0], 0)
+
+    # kinds
+
+    def test_add_with_a_kind_writes_the_prefix(self):
+        code, out = self.j("assume", "add", "Bench doors match the field model", "--source", "vendor",
+                           "--validates", "compare serials", "--depends", "ADR-0002", "--kind", "Test")
+        self.assertEqual((code, out.strip()), (0, "A-11"))
+        self.assertIn("| Test: compare serials |", self.row("A-11"))
+
+    def test_add_with_a_kind_and_an_ask_is_a_usage_error(self):
+        self.assertEqual(self.unchanged("assume", "add", "x", "--source", "s", "--validates", "v",
+                                        "--depends", "d", "--kind", "test", "--ask", "BI")[0], 2)
+
+    def test_add_with_a_conflicting_kind_is_a_usage_error(self):
+        for validates, kind in (("Observe: v", "test"), ("Ask BI: v", "decide")):
+            with self.subTest(validates=validates):
+                self.assertEqual(self.unchanged("assume", "add", "x", "--source", "s", "--validates",
+                                                validates, "--depends", "d", "--kind", kind)[0], 2)
+        self.assertEqual(self.unchanged("assume", "add", "x", "--source", "s", "--validates",
+                                        "Test: v", "--depends", "d", "--ask", "BI")[0], 2)
+
+    def test_ask_is_not_a_kind_to_set(self):
+        self.assertEqual(self.unchanged("assume", "kind", "A-3", "ask")[0], 2)
+
+    def test_kind_changes_only_the_validates_cell(self):
+        before = self.text("assumptions-register.md").splitlines()
+        code, out = self.j("assume", "kind", "A-3", "test")
+        self.assertEqual((code, out.strip()), (0, "A-3 · test (was belief)"))
+        after = self.text("assumptions-register.md").splitlines()
+        changed = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
+        self.assertEqual((len(before), len(changed)), (len(after), 1))
+        old, new = split_cells(before[changed[0]]), split_cells(after[changed[0]])
+        self.assertEqual(new[3], "Test: a week of reservation logs")
+        self.assertEqual(old[:3] + old[4:], new[:3] + new[4:])
+
+    def test_kind_replaces_an_ask_and_belief_removes_the_prefix(self):
+        self.assertEqual(self.j("assume", "kind", "A-2", "observe")[1].strip(),
+                         "A-2 · observe (was Ask Locker vendor)")
+        self.assertIn("| Observe: the firmware's reporting interval |", self.row("A-2"))
+        self.assertEqual(self.j("assume", "kind", "A-2", "belief")[1].strip(), "A-2 · belief (was observe)")
+        self.assertIn("| the firmware's reporting interval |", self.row("A-2"))
+
+    def test_kind_already_set_writes_nothing(self):
+        self.assertEqual(self.unchanged("assume", "kind", "A-4", "Decide")[1].strip(), "A-4 is already decide")
+
+    def test_route_replaces_a_kind(self):
+        self.assertEqual(self.j("assume", "route", "A-5", "Locker vendor")[1].strip(),
+                         "A-5 · routed to Locker vendor (was test)")
+        self.assertIn("| Ask Locker vendor: measure on the bench with forty doors |", self.row("A-5"))
+
+    def test_trace_agrees_after_kinds_are_set(self):
+        for ident, kind in (("A-1", "test"), ("A-3", "decide")):
+            self.j("assume", "kind", ident, kind)
+        code, out = run("scan", str(self.docs), "--only", "REG", script=TRACE)
+        self.assertNotIn("## REG", out)
+
+    # show and touching
+
+    def test_show_prints_the_row_and_its_own_lines(self):
+        code, out = self.unchanged("assume", "show", "A-7", "A-2")
+        self.assertEqual(code, 0, out)
+        self.assertIn("A-7 · Partly resolved since 2026-04-01 · belief", out)
+        self.assertIn("history (the row above is current):", out)
+        self.assertIn("- 2026-04-01 · Partly resolved · March volumes fit; April unknown", out)
+        self.assertIn("A-2 · Open since 2026-04-05 · ask of Locker vendor", out)
+        self.assertIn("- 2026-04-06 · Open · asked Locker vendor", out)
+        self.assertNotIn("A-9", out)
+
+    def test_show_of_an_unknown_id_is_refused(self):
+        self.assertEqual(self.j("assume", "show", "A-99")[0], 1)
+
+    def test_touching_reads_padding_and_continued_adr_lists(self):
+        code, out = self.unchanged("assume", "touching", "ADR-4")
+        self.assertEqual(code, 0, out)
+        self.assertIn("2 not closed", out)
+        self.assertIn("- A-1 · Open since 2026-03-10 · belief · names ADR-4 in depends on it", out)
+        self.assertIn("- A-2 ·", out)
+
+    def test_touching_skips_closed_rows_and_keeps_carried_ones(self):
+        out = self.j("assume", "touching", "ADR-0003", "ADR-2")[1]
+        self.assertIn("- A-7 ·", out)
+        self.assertIn("- A-5 · Resolved by design (test pending)", out)
+        self.assertNotIn("A-9", out)                                    # resolved
+
+    def test_touching_matches_ids_exactly_and_phrases_by_word(self):
+        out = self.j("assume", "touching", "D2", "iteration   2")[1]
+        self.assertIn("Rows naming D2, iteration 2", out)
+        self.assertIn("- A-8 ·", out)
+        self.assertIn("- A-4 · Open since 2026-03-25 · decide · names iteration 2 in validates it", out)
+        self.assertNotIn("A-10", out)                                   # withdrawn
+        out = self.j("assume", "touching", "D20", "iteration 20")[1]
+        self.assertIn(": 0 not closed", out)
+
+    def test_touching_needs_a_reference(self):
+        self.assertEqual(self.j("assume", "touching", " ")[0], 2)
+
+    # the register's load
+
+    def test_register_counts_exposure_apart_from_carried(self):
+        code, out = self.unchanged("register")
+        self.assertEqual(code, 0, out)
+        self.assertIn("10 rows, 8 not closed", out)
+        self.assertIn("Status: Open 6 · Partly resolved 1 · Resolved by design (test pending) 1 · "
+                      "Resolved 1 · Withdrawn 1", out)
+        self.assertIn("Exposure: 7 row(s) (belief 4, ask 1, decide 1, observe 1); 5 load-bearing", out)
+        self.assertIn("by age of status: 0–6 days 1 · 7–29 days 4 · 30+ days 2; "
+                      "6 untouched since registered", out)
+        self.assertIn("Carried: 1 row(s) resolved by design, test pending (test 1)", out)
+
+    def worklist(self, out: str, title: str) -> str:
+        return out.split(f"## {title}")[1].split("\n## ")[0]
+
+    def test_register_worklists(self):
+        out = self.j("register")[1]
+        said = self.worklist(out, "Said settled, still open (1)")
+        self.assertIn("- A-3 · Open since 2026-03-20 · belief · D3 says it settles this row", said)
+        deferred = self.worklist(out, "Deferred to a step that has passed (2)")
+        self.assertIn("A-4 · Open since 2026-03-25 · decide · load-bearing · names iteration 2; "
+                      "iteration 2 is recorded", deferred)
+        self.assertIn("A-8 · Open since 2026-04-02 · belief · load-bearing · validated by D4, answered",
+                      deferred)
+        stale = self.worklist(out, "Resting on something superseded (2)")
+        self.assertIn("A-7 · Partly resolved since 2026-04-01 · belief · load-bearing · rests on ADR-3, "
+                      "Superseded by ADR-0006", stale)
+        self.assertIn("rests on D2, superseded by D4", stale)
+        self.assertNotIn("A-9", stale)                                  # resolved: not a worklist item
+        self.assertNotIn("A-10", stale)
+        waiting = self.worklist(out, "Decisions waiting for a brief (1)")
+        self.assertIn("A-4 ·", waiting)
+
+    def test_register_lists_load_bearing_rows_first(self):
+        stale = self.worklist(self.j("register")[1], "Deferred to a step that has passed (2)")
+        self.assertLess(stale.index("A-4"), stale.index("A-8"))        # both load-bearing: oldest first
+
+    def test_a_closed_row_leaves_the_worklist(self):
+        self.j("assume", "status", "A-3", "Resolved", "--why", "D3: couriers reserve at the depot door")
+        self.assertIn("## Said settled, still open (0)\nnone", self.j("register")[1].replace("\r\n", "\n"))
+
+    def test_register_without_an_iteration_says_so(self):
+        out = run("register", "--docs", str(FIXTURES / "canonical"), "--date", DATE)[1]
+        self.assertIn("No iteration is recorded", out)
+        self.assertIn("## Deferred to a step that has passed (0)", out)
+
+    # decisions say what they did to the register
+
+    def test_answer_records_the_register_claim_with_the_register_labels(self):
+        code, out = self.j("decision", "answer", "D5", "--answer", "proceed", "--rationale", "r",
+                           "--actors", "no", "--assumptions", "settles A-4 A-8")
+        self.assertEqual(code, 2, out)                                  # IDs are a comma list
+        code, out = self.j("decision", "answer", "D5", "--answer", "proceed", "--rationale", "r",
+                           "--actors", "no", "--assumptions", "Settles a-4,A-8 ; raises A-6")
+        self.assertEqual(code, 0, out)
+        entry = self.text("decisions-log.md").split("## D5")[1]
+        # D5 was opened before the field existed: the line goes after the actor set
+        self.assertIn("- **Changes the actor set:** no\n- **Assumptions:** settles A-4, A-8; raises A-6\n"
+                      "- **Supersedes:** —", entry)
+        said = self.worklist(self.j("register")[1], "Said settled, still open (3)")
+        self.assertIn("A-4 · Open since 2026-03-25 · decide · load-bearing · D5 says it settles this row", said)
+
+    def test_answer_does_not_change_a_status(self):
+        register = (self.docs / "journey" / "assumptions-register.md").read_bytes()
+        self.j("decision", "answer", "D5", "--answer", "proceed", "--rationale", "r",
+               "--actors", "no", "--assumptions", "settles A-4")
+        self.assertEqual((self.docs / "journey" / "assumptions-register.md").read_bytes(), register)
+
+    def test_answer_naming_a_row_that_does_not_exist_is_refused_and_writes_nothing(self):
+        code, out = self.unchanged("decision", "answer", "D5", "--answer", "a", "--rationale", "r",
+                                   "--actors", "no", "--assumptions", "settles A-4, A-40")
+        self.assertEqual(code, 1, out)
+        self.assertIn("A-40", out)
+
+    def test_answer_needs_the_field_in_its_grammar(self):
+        for bad in ("", "A-4", "settles", "closes A-4", "settles A-4 and A-8"):
+            with self.subTest(assumptions=bad):
+                self.assertEqual(self.unchanged("decision", "answer", "D5", "--answer", "a",
+                                                "--rationale", "r", "--actors", "no",
+                                                "--assumptions", bad)[0], 2)
+
+    def test_open_writes_the_field(self):
+        self.j("decision", "open", "q")
+        self.assertIn("- **Changes the actor set:** —\n- **Assumptions:** —\n- **Supersedes:** —",
+                      self.text("decisions-log.md").split("## D6")[1])
+        self.j("decision", "answer", "D6", "--answer", "a", "--rationale", "r", "--actors", "no",
+               "--assumptions", "none")
+        entry = self.text("decisions-log.md").split("## D6")[1]
+        self.assertIn("- **Assumptions:** none", entry)
+        self.assertEqual(entry.count("**Assumptions:**"), 1)
+
+    def test_note_completes_a_decision_that_never_said(self):
+        code, out = run("decision", "note", "D1", "--assumptions", "none", "--docs", str(self.docs),
+                        "--date", DATE)
+        self.assertEqual(code, 1, out)                                  # D1 already says none
+        code, out = self.j("decision", "note", "D4", "--assumptions", "changes A-7")
+        self.assertEqual(code, 1, out)                                  # D4 says none: recorded
+        log = self.docs / "journey" / "decisions-log.md"
+        log.write_text(log.read_text(encoding="utf-8").replace("- **Assumptions:** none\n- **Supersedes:** D2",
+                                                               "- **Supersedes:** D2"), encoding="utf-8")
+        code, out = self.j("decision", "note", "D4", "--assumptions", "changes A-7; settles A-8")
+        self.assertEqual((code, out.strip()), (0, "D4: assumptions: changes A-7; settles A-8"))
+        self.assertIn("- **Assumptions:** changes A-7; settles A-8 *(recorded 2026-04-20; not stated "
+                      "when decided)*", self.text("decisions-log.md").split("## D4")[1])
+        said = self.worklist(self.j("register")[1], "Said settled, still open (2)")
+        self.assertIn("D4 says it settles this row", said)
+
+    def test_note_needs_something_to_record(self):
+        self.assertEqual(self.j("decision", "note", "D4")[0], 2)
+
+    def test_mod_reads_the_log_with_the_new_field(self):
+        # matrix.ts finds the actor-set field by its own name; a new field must not shadow it
+        log = self.text("decisions-log.md")
+        self.assertEqual(len(re.findall(r"\*\*Changes the actor set:\*\* yes", log)), 2)
+
+
 class Usage(JourneyCase):
 
     def test_bad_arguments_exit_two(self):
         self.assertEqual(self.j("decision", "answer", "seven", "--answer", "a", "--rationale", "r",
-                                "--actors", "no")[0], 2)
+                                "--actors", "no", "--assumptions", "none")[0], 2)
         self.assertEqual(run("assume", "add", "x", "--docs", str(self.docs), "--date", "tomorrow",
                              "--source", "s", "--validates", "v", "--depends", "d")[0], 2)
         self.assertEqual(self.j("history", "add", "--command", "/x", "--outcome", "y",

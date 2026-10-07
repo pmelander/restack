@@ -8,17 +8,21 @@ the next A-<n> and D<n>, where a row or an entry goes, the status vocabulary,
 and keeping a register row and its status lines in step.
 
     journey.py check                         is each file canonical?
-    journey.py assume add "<belief>" --source S --validates V --depends D [--ask R]
+    journey.py assume add "<belief>" --source S --validates V --depends D [--ask R | --kind K]
     journey.py assume status A-12 "Partly resolved" --why "..."
+    journey.py assume kind A-12 test             `Test:` on Validates it (decide|test|observe|belief)
+    journey.py assume show A-12 [A-14 ...]       a row and its own status lines (read-only)
+    journey.py assume touching D12 ADR-31 "iteration 6"   not-closed rows naming them (read-only)
     journey.py assume sync A-12 | --all        row cells from the last status line
     journey.py assume route A-12 "<recipient>"  `Ask <recipient>:` on Validates it
     journey.py assume asked A-12 A-14 --to R    the asks went out; statuses unchanged
     journey.py assume unasked A-12 --why "..."  cancel a send recorded in error
     journey.py asks [recipient]               open asks by recipient (read-only)
+    journey.py register                       the register's load and four worklists (read-only)
     journey.py decision next                 the number the next brief takes
     journey.py decision open "<question>" [--gate brief]
-    journey.py decision answer D7 --answer "..." --rationale "..." --actors no
-    journey.py decision note D7 --actors no    an answered decision that never said
+    journey.py decision answer D7 --answer "..." --rationale "..." --actors no --assumptions none
+    journey.py decision note D7 [--actors no] [--assumptions none]   an answered decision that never said
     journey.py history add --command "/restack-x y" --outcome "..." [--decision D7]
     journey.py migrate [register|log|state|all] [--write]
 
@@ -48,6 +52,8 @@ from pathlib import Path
 REGISTER = "journey/assumptions-register.md"
 LOG = "journey/decisions-log.md"
 STATE = "journey/journey-state.md"
+ITERATIONS = "journey/stressor-iteration-history.md"
+ADRS = "adr"
 
 COLUMNS = ["ID", "Assumption", "Source", "Validates it", "Depends on it", "Status", "Status date"]
 HEADER = "| " + " | ".join(COLUMNS) + " |"
@@ -65,6 +71,10 @@ LEGACY_D_HEADING = re.compile(r"^## (\d{4}-\d{2}-\d{2}):\s*D(\d+)\b\s*[,:]?\s*(.
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 ASK_PREFIX = re.compile(r"^Ask ([^:|*`]{1,40}?):\s*(.*)$", re.DOTALL)
 ASK_OPEN = ("Open", "Partly resolved")
+KIND_PREFIX = re.compile(r"^(Decide|Test|Observe):\s*(.*)$", re.IGNORECASE | re.DOTALL)
+KINDS = ("belief", "ask", "decide", "test", "observe")
+NOT_CLOSED = ("Open", "Partly resolved", "Resolved by design (test pending)")
+CARRIED = "Resolved by design (test pending)"
 LOOKS_LIKE_ASK = re.compile(
     r"\b(ask|asking|confirm(?:s|ed)? (?:with|by)|check(?:s|ed)? with|answer(?:ed)? (?:from|by)|"
     r"sign[- ]?off|owner|vendor|supplier|team)\b", re.IGNORECASE)
@@ -197,7 +207,11 @@ def id_width(lines: list[str]) -> int:
 
 
 def assume_add(root: Path, text: str, source: str, validates: str, depends: str,
-               date: str, ident: str | None, ask: str | None = None) -> str:
+               date: str, ident: str | None, ask: str | None = None, kind: str | None = None) -> str:
+    if ask is not None and kind is not None:
+        raise UsageError("--ask and --kind both set the row's kind; an ask is `--ask <recipient>` alone")
+    if kind is not None:
+        validates = with_kind(validates, kind_name(kind), strict=True)
     validates = with_ask(validates, recipient_name(ask) if ask is not None else None)
     path = root / REGISTER
     if path.exists():
@@ -350,6 +364,9 @@ def with_ask(validates: str, recipient: str | None) -> str:
         return validates
     if current is not None and current != recipient:
         raise UsageError(f"--validates already says 'Ask {current}:', and --ask says {recipient}")
+    kind, _, rest = split_kind(validates)
+    if kind not in ("belief", "ask"):
+        raise UsageError(f"--validates already says '{kind.capitalize()}:', and --ask makes it an ask")
     return f"Ask {recipient}: {rest}"
 
 
@@ -385,14 +402,15 @@ def assume_route(root: Path, ident: str, recipient: str) -> str:
     path, lines, newline, rows = open_register(root)
     k = rows[row_for(ident, rows)]
     cells = split_row(lines[k])
-    current, rest = split_ask(cells[3])
+    kind, current, rest = split_kind(cells[3])
     label = strip_md(cells[0])
     if current == recipient:
         return f"{label} is already routed to {recipient}"
     cells[3] = f"Ask {recipient}: {rest}"
     lines[k] = "| " + " | ".join(cells) + " |"
     write(path, lines, newline)
-    return f"{label} · routed to {recipient}" + (f" (was {current})" if current else "")
+    was = current if current else (kind if kind != "belief" else None)
+    return f"{label} · routed to {recipient}" + (f" (was {was})" if was else "")
 
 
 def assume_asked(root: Path, idents: list[str], recipient: str, date: str) -> list[str]:
@@ -534,6 +552,367 @@ def recipient_stem(key: str) -> str:
 
 
 # --------------------------------------------------------------------------
+# Kinds and load: what a row is, what names it, what the register carries (ADR-031)
+
+
+def kind_name(text: str) -> str:
+    kind = text.strip().lower()
+    if kind not in KINDS or kind == "ask":
+        raise UsageError(f"'{text}' is not a kind: decide, test, observe or belief "
+                         f"(an ask is `assume route A-<n> <recipient>`)")
+    return kind
+
+
+def split_kind(validates: str) -> tuple[str, str | None, str]:
+    """`Test: measure it` -> ("test", None, "measure it"); `Ask BI: x` -> ("ask", "BI", "x")."""
+    recipient, rest = split_ask(validates)
+    if recipient is not None:
+        return "ask", recipient, rest
+    m = KIND_PREFIX.match(validates.strip())
+    if m:
+        return m.group(1).lower(), None, m.group(2).strip()
+    return "belief", None, validates.strip()
+
+
+def with_kind(validates: str, kind: str, strict: bool = False) -> str:
+    current, _, rest = split_kind(validates)
+    if strict and current not in ("belief", kind):
+        raise UsageError(f"--validates already says it is {current}, and --kind says {kind}")
+    return rest if kind == "belief" else f"{kind.capitalize()}: {rest}"
+
+
+def assume_kind(root: Path, ident: str, kind: str) -> str:
+    """Set the kind prefix on one row's Validates it cell. Nothing else changes."""
+    kind = kind_name(kind)
+    path, lines, newline, rows = open_register(root)
+    k = rows[row_for(ident, rows)]
+    cells = split_row(lines[k])
+    current, recipient, _ = split_kind(cells[3])
+    label = strip_md(cells[0])
+    if current == kind:
+        return f"{label} is already {kind}"
+    cells[3] = with_kind(cells[3], kind)
+    lines[k] = "| " + " | ".join(cells) + " |"
+    write(path, lines, newline)
+    was = f"Ask {recipient}" if recipient else current
+    return f"{label} · {kind} (was {was})"
+
+
+def status_lines(lines: list[str]) -> dict[int, list[tuple[str, str, str]]]:
+    """Each row's status lines as (status, date, why), oldest first."""
+    out: dict[int, list[tuple[str, str, str]]] = collections.defaultdict(list)
+    for line in lines:
+        m = STATUS_LINE.match(line)
+        if m:
+            out[int(m.group(1))].append((m.group(2).strip(), m.group(3), m.group(4).strip()))
+    return out
+
+
+def assume_show(root: Path, idents: list[str]) -> list[str]:
+    """A row's cells and its own status lines: one place to read it."""
+    _, lines, _, rows = open_register(root)
+    history = status_lines(lines)
+    out = []
+    for ident in idents:
+        n = row_for(ident, rows)
+        cells = split_row(lines[rows[n]])
+        kind, recipient, _ = split_kind(cells[3])
+        if out:
+            out.append("")
+        out.append(f"{strip_md(cells[0])} · {strip_md(cells[5])} since {cells[6]} · "
+                   f"{'ask of ' + recipient if recipient else kind}")
+        out += [f"  {name.lower()}: {value}" for name, value in zip(COLUMNS[1:5], cells[1:5])]
+        out.append("  history (the row above is current):")
+        out += [f"  - {d} · {s} · {w}" for s, d, w in history.get(n, [])] or ["  - none recorded"]
+    return out
+
+
+ID_REF = re.compile(r"^(ADR|R|D|S|A)-?0*(\d+)(-?[A-Za-z])?$", re.IGNORECASE)
+ADR_IN = re.compile(r"\bADR-?0*(\d+)\b", re.IGNORECASE)
+ADR_MORE = re.compile(r"(?<![\w-])(\d{3,4})(?:\s*[–-]\s*(\d{3,4}))?(?![\w-])")
+OTHER_IN = {
+    "R": re.compile(r"\bR-?0*(\d+(?:-[A-Z])?)\b"),
+    "D": re.compile(r"\bD0*(\d{1,4})\b"),
+    "S": re.compile(r"\bS-0*(\d+[a-z]?)\b"),
+    "A": re.compile(r"\bA-0*(\d+)\b"),
+}
+
+
+def cell_refs(text: str) -> set[str]:
+    """The IDs a cell names, normalised (`ADR-0031` -> ADR-31, `R-04` -> R4), as the mod reads them.
+
+    Clause by clause (`;`): in a clause that names an ADR, a bare number or a
+    range continues the list, so `ADR-0005, 0025–0027` is four ADRs.
+    """
+    refs = set()
+    for clause in re.sub(r"\*+|`", "", text).split(";"):
+        adrs = [int(m.group(1)) for m in ADR_IN.finditer(clause)]
+        rest = ADR_IN.sub(" ", clause)
+        if adrs:
+            for m in ADR_MORE.finditer(rest):
+                lo = int(m.group(1))
+                hi = int(m.group(2)) if m.group(2) else lo
+                adrs += list(range(lo, min(hi, lo + 99) + 1))
+            rest = ADR_MORE.sub(" ", rest)
+        refs |= {normal_ref("ADR", str(n)) for n in adrs}
+        for key, pattern in OTHER_IN.items():
+            refs |= {normal_ref(key, m.group(1)) for m in pattern.finditer(rest)}
+    return refs
+
+
+def normal_ref(key: str, body: str) -> str:
+    """One spelling per ID: ADR-31, R4-A, D12, S-17B, A-9."""
+    m = re.match(r"0*(\d+)(.*)$", body)
+    digits, tail = (m.group(1), m.group(2).upper()) if m else (body, "")
+    return {"ADR": f"ADR-{digits}", "R": f"R{digits}{tail}", "D": f"D{digits}",
+            "S": f"S-{digits}{tail.lstrip('-')}", "A": f"A-{digits}"}[key]
+
+
+def ref_key(text: str) -> str | None:
+    """`ADR-0031` -> ADR-31, `d12` -> D12; None when it is a phrase, not an ID."""
+    m = ID_REF.match(text.strip())
+    if not m:
+        return None
+    key, suffix = m.group(1).upper(), m.group(3) or ""
+    if suffix and key in ("ADR", "D", "A"):
+        return None
+    return normal_ref(key, m.group(2) + suffix)
+
+
+def register_rows_read(root: Path) -> tuple[list[str], list[dict]]:
+    """The register's rows as dicts, read-only."""
+    _, lines, _, rows = open_register(root)
+    out = []
+    for n, k in sorted(rows.items()):
+        cells = split_row(lines[k])
+        kind, recipient, _ = split_kind(cells[3])
+        out.append({"n": n, "label": strip_md(cells[0]), "text": cells[1], "validates": cells[3],
+                    "depends": cells[4], "status": canonical_term(strip_md(cells[5])),
+                    "date": cells[6].strip(), "kind": kind, "recipient": recipient})
+    return lines, out
+
+
+def not_closed(row: dict) -> bool:
+    """Off-vocabulary statuses count as not closed: a worklist that lists too much is the safe side."""
+    return not STATUS_TERM.fullmatch(row["status"]) or row["status"] in NOT_CLOSED
+
+
+def kind_label(row: dict) -> str:
+    return f"ask of {row['recipient']}" if row["recipient"] else row["kind"]
+
+
+def clip(text: str, width: int = 110) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= width else text[:width - 1].rstrip() + "…"
+
+
+def touching(root: Path, refs: list[str], today: str) -> list[str]:
+    """Not-closed rows whose Assumption, Validates it or Depends on it names any ref. A worklist."""
+    if not any(ref.strip() for ref in refs):
+        raise UsageError("name at least one reference: D12, ADR-31, R-4, S-17, A-9, or a phrase")
+    _, rows = register_rows_read(root)
+    refs = list(dict.fromkeys(" ".join(ref.split()) for ref in refs if ref.strip()))
+    keys = {ref: ref_key(ref) for ref in refs}
+    phrases = {ref: re.compile(r"(?<!\w)" + r"\s+".join(map(re.escape, ref.split())) + r"(?!\w)",
+                               re.IGNORECASE)
+               for ref, key in keys.items() if key is None}
+    hits = []
+    for row in rows:
+        if not not_closed(row):
+            continue
+        found = []
+        for column, value in (("assumption", row["text"]), ("validates it", row["validates"]),
+                              ("depends on it", row["depends"])):
+            named = cell_refs(value)
+            for ref, key in keys.items():
+                if (key in named) if key else phrases[ref].search(value):
+                    found.append(f"{ref} in {column}")
+        if found:
+            hits.append((row, found))
+    head = (f"Rows naming {', '.join(refs)} in {REGISTER} on {today}: {len(hits)} not closed. "
+            f"A worklist: confirm each with the architect before a status changes.")
+    out = [head]
+    for row, found in hits:
+        out += ["", f"- {row['label']} · {row['status']} since {row['date']} · {kind_label(row)} · "
+                    f"names {'; '.join(dict.fromkeys(found))}",
+                f"  belief: {clip(row['text'])}",
+                f"  validates it: {clip(row['validates'])}",
+                f"  depends on it: {clip(row['depends'])}"]
+    return out
+
+
+def answered_decisions(root: Path) -> tuple[set[int], dict[int, int], dict[int, list[tuple[str, int]]]]:
+    """From the log: answered decisions, superseded -> by whom, and each decision's register claims."""
+    path = root / LOG
+    answered, superseded, claims = set(), {}, {}
+    if not path.exists():
+        return answered, superseded, claims
+    lines = read(path)[0]
+    current = None
+    for line in lines:
+        m = D_HEADING.match(line)
+        if m:
+            current = int(m.group(1))
+            continue
+        if line.startswith("## "):
+            current = None
+        if current is None:
+            continue
+        f = re.match(r"^- \*\*(Answer|Supersedes|Assumptions):\*\*\s*(.*)$", line)
+        if not f:
+            continue
+        value = f.group(2).strip()
+        if f.group(1) == "Answer" and value != "(open)":
+            answered.add(current)
+        elif f.group(1) == "Supersedes":
+            for d in re.findall(r"\bD(\d+)\b", value):
+                superseded[int(d)] = current
+        elif f.group(1) == "Assumptions":
+            value = re.sub(r"\s*\*\(recorded .*$", "", value)
+            for clause in value.split(";"):
+                c = re.match(r"\s*(settles|changes|raises)\s+(.*)$", clause, re.IGNORECASE)
+                if c:
+                    claims.setdefault(current, []).extend(
+                        (c.group(1).lower(), int(a)) for a in re.findall(r"\bA-(\d+)\b", c.group(2), re.IGNORECASE))
+    return answered, superseded, claims
+
+
+def adr_statuses(root: Path) -> dict[int, str]:
+    """ADR number -> its Status line, from docs/adr/ADR-<n>*.md."""
+    out = {}
+    folder = root / ADRS
+    if not folder.is_dir():
+        return out
+    for path in sorted(folder.glob("*.md")):
+        m = re.match(r"ADR-?0*(\d+)", path.name, re.IGNORECASE)
+        if not m:
+            continue
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()[:40]:
+            s = re.match(r"^\s*\**Status:?\**:?\s*(.+)$", line, re.IGNORECASE)
+            if s:
+                out[int(m.group(1))] = strip_md(s.group(1))
+                break
+    return out
+
+
+def last_iteration(root: Path) -> int | None:
+    numbers = []
+    for rel in (STATE, ITERATIONS):
+        path = root / rel
+        if path.exists():
+            numbers += [int(n) for n in re.findall(r"(?im)^#{1,6}\s*iteration\s+(\d+)\b",
+                                                   path.read_text(encoding="utf-8", errors="replace"))]
+    return max(numbers, default=None)
+
+
+def age_days(date: str, today: str) -> int | None:
+    if not DATE.fullmatch(date):
+        return None
+    return (dt.date.fromisoformat(today) - dt.date.fromisoformat(date)).days
+
+
+def register_summary(root: Path, today: str) -> list[str]:
+    """The register's load and four worklists. Read-only: every item is a candidate to confirm."""
+    lines, rows = register_rows_read(root)
+    history = status_lines(lines)
+    answered, superseded, claims = answered_decisions(root)
+    adrs = adr_statuses(root)
+    iteration = last_iteration(root)
+
+    by_status = collections.Counter(
+        "Superseded by D<n>" if r["status"].startswith("Superseded") else r["status"] for r in rows)
+    live = [r for r in rows if not_closed(r)]
+    carried = [r for r in live if r["status"] == CARRIED]
+    exposure = [r for r in live if r["status"] != CARRIED]
+    for r in rows:
+        refs = cell_refs(r["depends"])
+        r["load"] = any(x.startswith(("ADR-", "D", "R")) for x in refs)
+        r["age"] = age_days(r["date"], today)
+        moved = [s for s, _, w in history.get(r["n"], []) if w != "registered" and not is_send_line(w)]
+        r["untouched"] = not moved
+
+    def by_kind(group: list[dict]) -> str:
+        c = collections.Counter(r["kind"] for r in group)
+        return ", ".join(f"{k} {c[k]}" for k in KINDS if c[k])
+
+    ages = collections.Counter(
+        "unknown" if r["age"] is None else "0–6 days" if r["age"] < 7 else
+        "7–29 days" if r["age"] < 30 else "30+ days" for r in exposure)
+    order = ["0–6 days", "7–29 days", "30+ days", "unknown"]
+
+    out = [f"Register {REGISTER} on {today}: {len(rows)} rows, {len(live)} not closed. "
+           f"A worklist: every status is the architect's.", ""]
+    vocab = ["Open", "Partly resolved", CARRIED, "Resolved", "Withdrawn", "Superseded by D<n>"]
+    out.append("Status: " + " · ".join(f"{s} {by_status[s]}" for s in vocab if by_status[s]) +
+               "".join(f" · {s} {n}" for s, n in by_status.items() if s not in vocab))
+    out.append(f"Exposure: {len(exposure)} row(s)" +
+               (f" ({by_kind(exposure)}); {sum(r['load'] for r in exposure)} load-bearing"
+                if exposure else ""))
+    if exposure:
+        out.append("  by age of status: " + " · ".join(f"{a} {ages[a]}" for a in order if ages[a]) +
+                   f"; {sum(r['untouched'] for r in exposure)} untouched since registered")
+    out.append(f"Carried: {len(carried)} row(s) resolved by design, test pending" +
+               (f" ({by_kind(carried)})" if carried else ""))
+
+    def rank(r: dict) -> tuple:
+        return (not r["load"], r["date"] if DATE.fullmatch(r["date"]) else "9999", r["n"])
+
+    def section(title: str, items: list[tuple[dict, str]]) -> None:
+        out.extend(["", f"## {title} ({len(items)})"])
+        if not items:
+            out.append("none")
+        for r, why in sorted(items, key=lambda item: rank(item[0])):
+            out.append(f"- {r['label']} · {r['status']} since {r['date']} · {kind_label(r)}"
+                       f"{' · load-bearing' if r['load'] else ''} · {why}")
+            out.append(f"  belief: {clip(r['text'])}")
+
+    by_n = {r["n"]: r for r in rows}
+    said = {}
+    for d, items in sorted(claims.items()):
+        for verb, a in items:
+            if verb == "settles" and a in by_n and not_closed(by_n[a]) and by_n[a]["status"] != CARRIED:
+                said.setdefault(a, []).append(f"D{d}")
+    section("Said settled, still open", [(by_n[a], f"{', '.join(ds)} says it settles this row")
+                                         for a, ds in said.items()])
+
+    deferred = []
+    for r in exposure:
+        reasons = []
+        text = f"{r['text']} {r['validates']}"
+        passed = sorted({int(n) for n in re.findall(r"(?i)\biteration\s+(\d+)\b", text)
+                         if iteration is not None and int(n) <= iteration})
+        if passed:
+            reasons.append(f"names iteration {', '.join(map(str, passed))}; iteration {iteration} is recorded")
+        done = sorted(int(x[1:]) for x in cell_refs(r["validates"])
+                      if re.fullmatch(r"D\d+", x) and int(x[1:]) in answered)
+        if done:
+            reasons.append(f"validated by {', '.join(f'D{d}' for d in done)}, answered")
+        if reasons:
+            deferred.append((r, "; ".join(reasons)))
+    section("Deferred to a step that has passed", deferred)
+
+    stale = []
+    for r in live:
+        reasons = []
+        for x in sorted(cell_refs(r["depends"])):
+            if re.fullmatch(r"D\d+", x) and int(x[1:]) in superseded:
+                reasons.append(f"rests on {x}, superseded by D{superseded[int(x[1:])]}")
+            m = re.fullmatch(r"ADR-(\d+)", x)
+            if m and re.match(r"(superseded|deprecated)", adrs.get(int(m.group(1)), ""), re.IGNORECASE):
+                reasons.append(f"rests on {x}, {adrs[int(m.group(1))]}")
+        if reasons:
+            stale.append((r, "; ".join(reasons)))
+    section("Resting on something superseded", stale)
+
+    section("Decisions waiting for a brief",
+            [(r, "Decide: " + clip(split_kind(r["validates"])[2], 80))
+             for r in exposure if r["kind"] == "decide"])
+    if iteration is None:
+        out += ["", "No iteration is recorded, so no row was checked for a passed iteration."]
+    return out
+
+
+# --------------------------------------------------------------------------
 # Decisions log
 
 
@@ -596,13 +975,14 @@ def decision_open(root: Path, question: str, gate: str, date: str) -> str:
               "- **Answer:** (open)",
               "- **Rationale:** —",
               "- **Changes the actor set:** —",
+              "- **Assumptions:** —",
               "- **Supersedes:** —"]
     write(path, lines, newline)
     return f"D{n}"
 
 
 def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors: str,
-                    supersedes: str | None) -> str:
+                    supersedes: str | None, assumptions: str) -> str:
     path = root / LOG
     if not path.exists():
         raise Refused(f"{LOG} does not exist; open the decision first")
@@ -613,6 +993,7 @@ def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors:
     if not answer.strip() or not rationale.strip():
         raise UsageError("--answer and --rationale are both required")
     actors_text = actors_field(actors, n)
+    assumptions_text = assumptions_field(root, assumptions)
     lines, newline = read(path)
     shape = log_shape(lines)
     if shape["problems"]:
@@ -622,11 +1003,12 @@ def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors:
         raise Refused(f"D{n} has no entry; `decision open` it first so it has its number")
     end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
     fields = {"Answer": " ".join(answer.split()), "Rationale": " ".join(rationale.split()),
-              "Changes the actor set": actors_text,
+              "Changes the actor set": actors_text, "Assumptions": assumptions_text,
               "Supersedes": supersedes.strip() if supersedes else "—"}
     seen = set()
     for j in range(start + 1, end):
-        f = re.match(r"^- \*\*(Answer|Rationale|Changes the actor set|Supersedes):\*\*\s*(.*)$", lines[j])
+        f = re.match(r"^- \*\*(Answer|Rationale|Changes the actor set|Assumptions|Supersedes):\*\*\s*(.*)$",
+                     lines[j])
         if not f:
             continue
         if f.group(1) == "Answer" and f.group(2).strip() != "(open)":
@@ -636,8 +1018,47 @@ def decision_answer(root: Path, ident: str, answer: str, rationale: str, actors:
         seen.add(f.group(1))
     if "Answer" not in seen:
         raise Refused(f"D{n}'s entry has no `- **Answer:** (open)` line to fill")
+    if "Assumptions" not in seen:      # an entry opened before the field existed
+        lines.insert(field_slot(lines, start, end), f"- **Assumptions:** {assumptions_text}")
     write(path, lines, newline)
     return f"D{n} answered"
+
+
+ASSUMPTION_CLAUSE = re.compile(r"^(settles|changes|raises)\s+(A-\d+(?:\s*,\s*A-\d+)*)$", re.IGNORECASE)
+
+
+def assumptions_field(root: Path, text: str) -> str:
+    """`none`, or `settles A-3, A-7; changes A-9; raises A-12`, every ID a row (ADR-031)."""
+    text = " ".join(text.split())
+    if text.lower() == "none":
+        return "none"
+    clauses, ids = [], []
+    for raw in text.split(";"):
+        m = ASSUMPTION_CLAUSE.match(raw.strip())
+        if not m:
+            raise UsageError(f"--assumptions is `none`, or clauses like `settles A-3, A-7; changes A-9; "
+                             f"raises A-12`; '{raw.strip()}' is not one")
+        numbers = [int(a) for a in re.findall(r"A-(\d+)", m.group(2), re.IGNORECASE)]
+        clauses.append((m.group(1).lower(), numbers))
+        ids += numbers
+    if not (root / REGISTER).exists():
+        raise Refused(f"--assumptions names rows, and {REGISTER} does not exist")
+    _, lines, _, rows = open_register(root)
+    missing = [f"A-{a}" for a in dict.fromkeys(ids) if a not in rows]
+    if missing:
+        raise Refused(f"--assumptions names rows the register does not have: {', '.join(missing)}")
+    label = {a: strip_md(split_row(lines[rows[a]])[0]) for a in ids}
+    return "; ".join(f"{verb} {', '.join(label[a] for a in numbers)}" for verb, numbers in clauses)
+
+
+def field_slot(lines: list[str], start: int, end: int) -> int:
+    """Where a missing field goes: after `Changes the actor set`, else at the entry's end."""
+    for j in range(start + 1, end):
+        if lines[j].startswith("- **Changes the actor set:**"):
+            return j + 1
+    while end > start + 1 and not lines[end - 1].strip():
+        end -= 1
+    return end
 
 
 def actors_field(actors: str, n: int) -> str:
@@ -652,12 +1073,14 @@ def actors_field(actors: str, n: int) -> str:
     raise UsageError("--actors is `no` or `yes: <what changed>`")
 
 
-def decision_note(root: Path, ident: str, actors: str, date: str) -> str:
-    """Record whether an answered decision changed the actor set, when it never said.
+def decision_note(root: Path, ident: str, actors: str | None, assumptions: str | None, date: str) -> str:
+    """Record what an answered decision never said: the actor set, the register, or both.
 
-    Completing the record, not changing the decision: it refuses if the entry
-    already states it, and marks the line as recorded later.
+    Completing the record, not changing the decision: it refuses a field the
+    entry already states, and marks each line as recorded later.
     """
+    if actors is None and assumptions is None:
+        raise UsageError("give --actors, --assumptions, or both")
     path = root / LOG
     if not path.exists():
         raise Refused(f"{LOG} does not exist")
@@ -665,7 +1088,12 @@ def decision_note(root: Path, ident: str, actors: str, date: str) -> str:
     if not m:
         raise UsageError(f"'{ident}' is not a decision ID (D7)")
     n = int(m.group(1))
-    text = f"{actors_field(actors, n)} *(recorded {date}; not stated when decided)*"
+    later = f" *(recorded {date}; not stated when decided)*"
+    todo = {}
+    if actors is not None:
+        todo["Changes the actor set"] = actors_field(actors, n) + later
+    if assumptions is not None:
+        todo["Assumptions"] = assumptions_field(root, assumptions) + later
     lines, newline = read(path)
     shape = log_shape(lines)
     if shape["problems"]:
@@ -674,24 +1102,30 @@ def decision_note(root: Path, ident: str, actors: str, date: str) -> str:
     if start is None:
         raise Refused(f"D{n} has no entry")
     end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
-    insert_at = end
+    found = {}
     for j in range(start + 1, end):
-        f = re.match(r"^- \*\*(Answer|Changes the actor set):\*\*\s*(.*)$", lines[j], re.IGNORECASE)
+        f = re.match(r"^- \*\*(Answer|Changes the actor set|Assumptions):\*\*\s*(.*)$", lines[j], re.IGNORECASE)
         if not f:
             continue
         if f.group(1).lower() == "answer" and f.group(2).strip() == "(open)":
-            raise Refused(f"D{n} is still open; `decision answer` records the actor set with the answer")
-        if f.group(1).lower() == "changes the actor set":
-            if f.group(2).strip() not in ("—", "-", ""):
-                raise Refused(f"D{n} already records it: {f.group(2).strip()[:60]}")
-            lines[j] = f"- **Changes the actor set:** {text}"
-            write(path, lines, newline)
-            return f"D{n}: changes the actor set: {actors.strip()}"
-    while insert_at > start + 1 and not lines[insert_at - 1].strip():
-        insert_at -= 1
-    lines.insert(insert_at, f"- **Changes the actor set:** {text}")
+            raise Refused(f"D{n} is still open; `decision answer` records the actor set and the "
+                          f"register with the answer")
+        found[f.group(1).lower()] = (j, f.group(2).strip())
+    for field in todo:
+        value = found.get(field.lower(), (None, ""))[1]
+        if value not in ("—", "-", ""):
+            raise Refused(f"D{n} already records {field.lower()}: {value[:60]}")
+    said = []
+    for field, text in todo.items():
+        j = found.get(field.lower(), (None, ""))[0]
+        if j is not None:
+            lines[j] = f"- **{field}:** {text}"
+        else:
+            lines.insert(field_slot(lines, start, end), f"- **{field}:** {text}")
+            end += 1
+        said.append(f"{field.lower()}: {text.split(' *(recorded')[0]}")
     write(path, lines, newline)
-    return f"D{n}: changes the actor set: {actors.strip()}"
+    return f"D{n}: " + "; ".join(said)
 
 
 # --------------------------------------------------------------------------
@@ -1158,6 +1592,14 @@ def main(argv: list[str]) -> int:
     a_add.add_argument("--depends", required=True)
     a_add.add_argument("--id", dest="ident")
     a_add.add_argument("--ask")
+    a_add.add_argument("--kind")
+    a_kind = p_assume.add_parser("kind", parents=[common])
+    a_kind.add_argument("ident")
+    a_kind.add_argument("kind")
+    a_show = p_assume.add_parser("show", parents=[common])
+    a_show.add_argument("idents", nargs="+")
+    a_touch = p_assume.add_parser("touching", parents=[common])
+    a_touch.add_argument("refs", nargs="+")
     a_route = p_assume.add_parser("route", parents=[common])
     a_route.add_argument("ident")
     a_route.add_argument("recipient")
@@ -1185,10 +1627,12 @@ def main(argv: list[str]) -> int:
     d_ans.add_argument("--answer", required=True)
     d_ans.add_argument("--rationale", required=True)
     d_ans.add_argument("--actors", required=True)
+    d_ans.add_argument("--assumptions", required=True)
     d_ans.add_argument("--supersedes")
     d_note = p_dec.add_parser("note", parents=[common])
     d_note.add_argument("ident")
-    d_note.add_argument("--actors", required=True)
+    d_note.add_argument("--actors")
+    d_note.add_argument("--assumptions")
 
     p_hist = sub.add_parser("history").add_subparsers(dest="action", required=True)
     h_add = p_hist.add_parser("add", parents=[common])
@@ -1202,6 +1646,7 @@ def main(argv: list[str]) -> int:
 
     p_asks = sub.add_parser("asks", parents=[common])
     p_asks.add_argument("recipient", nargs="?")
+    sub.add_parser("register", parents=[common])
 
     try:
         args = parser.parse_args(argv)
@@ -1223,9 +1668,17 @@ def main(argv: list[str]) -> int:
             return 0 if ok else 1
         if args.command == "asks":
             print("\n".join(asks(root, args.recipient, args.date)))
+        elif args.command == "register":
+            print("\n".join(register_summary(root, args.date)))
         elif args.command == "assume" and args.action == "add":
             print(assume_add(root, args.text, args.source, args.validates, args.depends,
-                             args.date, args.ident, args.ask))
+                             args.date, args.ident, args.ask, args.kind))
+        elif args.command == "assume" and args.action == "kind":
+            print(assume_kind(root, args.ident, args.kind))
+        elif args.command == "assume" and args.action == "show":
+            print("\n".join(assume_show(root, args.idents)))
+        elif args.command == "assume" and args.action == "touching":
+            print("\n".join(touching(root, args.refs, args.date)))
         elif args.command == "assume" and args.action == "route":
             print(assume_route(root, args.ident, args.recipient))
         elif args.command == "assume" and args.action == "asked":
@@ -1244,10 +1697,10 @@ def main(argv: list[str]) -> int:
         elif args.command == "decision" and args.action == "open":
             print(decision_open(root, args.question, args.gate, args.date))
         elif args.command == "decision" and args.action == "note":
-            print(decision_note(root, args.ident, args.actors, args.date))
+            print(decision_note(root, args.ident, args.actors, args.assumptions, args.date))
         elif args.command == "decision":
             print(decision_answer(root, args.ident, args.answer, args.rationale, args.actors,
-                                  args.supersedes))
+                                  args.supersedes, args.assumptions))
         else:
             print(history_add(root, args.cmd, args.outcome, args.decision, args.date))
     except UsageError as exc:
