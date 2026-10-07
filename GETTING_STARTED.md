@@ -189,6 +189,16 @@ contradicts an earlier decision becomes a brief on the spot. Only what you
 defer goes into the pack. Afterwards it asks whether any section has been
 sent, and records only those.
 
+The register fills faster than it empties. Every decision says which rows it
+settles, and every ADR, iterate gate and ablation looks for the rows it just
+answered, so most close where the work settles them. `where` and `iterate`
+show what is left: how many rows the design still rests on, how old they are,
+and which look answered and are still open. When that list is long:
+
+```
+/restack-journey settle                         # each row that looks answered, put to you
+```
+
 ---
 
 ## What to expect from these skills

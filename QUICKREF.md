@@ -68,10 +68,11 @@ moves), each asked as a choice. Interrupt to redirect.
 /restack-journey start           # classify terrain, map the route, name the first move
 /restack-journey where           # mid-journey: where am I, what was skipped, what next
 /restack-journey iterate         # THE ITERATE GATE — loop or proceed
-/restack-journey review          # health check against the eleven journey failures
+/restack-journey review          # health check against the twelve journey failures
 /restack-journey cadence         # ongoing rhythm for a live system
 /restack-journey migrate         # old-shape journey files to the canonical one (dry run first)
 /restack-journey asks [who]      # you answer what you can; the rest, one section per team
+/restack-journey settle [scope]  # rows that look answered, put to you one at a time
 ```
 
 State lives in `docs/journey/` — position, iteration history, decisions,
@@ -81,16 +82,21 @@ canonical shape:
 
 ```bash
 journey.py decision open "<question>"     # a brief takes its number when issued
-journey.py decision answer D7 --answer "..." --rationale "..." --actors no
+journey.py decision answer D7 --answer "..." --rationale "..." --actors no --assumptions none
 journey.py assume add "<belief>" --source S --validates V --depends D
 journey.py assume status A-12 "Partly resolved" --why "..."   # --why from the record
 journey.py assume sync A-12 | --all       # row cells from the last status line
-journey.py decision note D7 --actors no   # an answered decision that never said
+journey.py decision note D7 --actors no   # an answered decision that never said (or --assumptions)
 journey.py assume add "..." ... --ask BI  # an ask: only someone outside the design can settle it
 journey.py assume route A-12 "BI"         # route an existing row (after the architect confirms)
 journey.py assume asked A-12 A-14 --to BI # they went out; statuses unchanged
 journey.py assume unasked A-12 --why "..." # that send never happened; cancels it
 journey.py asks [BI]                      # open asks by recipient, last asked when (read-only)
+journey.py assume add "..." ... --kind test # decide | test | observe: where the row drains
+journey.py assume kind A-12 decide        # set a row's kind (after the architect confirms)
+journey.py assume touching D12 ADR-31     # not-closed rows naming what the work touched (read-only)
+journey.py assume show A-12               # a row and its own history (read-only)
+journey.py register                       # exposure, load-bearing, age, four worklists (read-only)
 journey.py history add --command "/restack-journey iterate" --outcome "..."
 journey.py check | migrate [--write]     # is it canonical; convert an old shape
 ```
@@ -332,6 +338,7 @@ docs/learning/         outcome analyses, retrospectives
 | Decide whether to keep iterating | `/restack-journey iterate` |
 | Check whether something should come out | `/restack-stressor ablate` |
 | Send what we need from other teams | `/restack-journey asks` |
+| Know what the design actually rests on | `/restack-journey settle` |
 | Record a decision properly | `/restack-adr create` |
 | Check a design before building | `/restack-design-review complete` |
 | Find where the documents disagree, fast | `/restack-trace` |

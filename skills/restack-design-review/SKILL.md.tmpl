@@ -1,6 +1,6 @@
 ---
 name: restack-design-review
-version: 2.3.0
+version: 2.4.0
 preamble-tier: 2
 model: opus
 description: |
@@ -115,6 +115,13 @@ Whatever the scope, the sequence is the same:
    the marginal value is low and the data leaving is not.
 8. Log the review as an artifact in the journey state, and register every
    Question as an assumption to close.
+9. **Close what the review settled** (ADR-031). A finding can answer a row
+   as well as raise one: the design visibly does or does not do what a belief
+   assumed. Run `journey.py assume touching` on the documents, ADRs and
+   actors the confirmed findings are about. Put each listed row the review
+   bears on to the architect, one choice question each with **Still open**
+   last, and write each answer with `assume status`, its `--why` citing the
+   finding.
 
 ## Scoped reviews
 

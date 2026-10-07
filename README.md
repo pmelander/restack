@@ -238,6 +238,13 @@ and score what comes back
 ([ADR-028](docs/adr/ADR-028-residuals-challenged-by-removal.md)). A residual
 that survives keeps a tested reason in its ADR.
 
+**They close what they open.** Every unverified belief goes into a register,
+and a register that only grows stops saying what the design rests on. Each
+decision says which rows it settles, the steps that settle rows look for them,
+and `where` and the iterate gate show what is still open, how old it is and
+what rests on it
+([ADR-031](docs/adr/ADR-031-assumptions-drained-where-the-work-settles-them.md)).
+
 **They compound.** Residuals that recur across engagements become patterns.
 Decisions carry predictions, which makes them falsifiable, which is what lets
 the next analysis be better than the last.
@@ -253,7 +260,7 @@ are called — plus three utilities.
 
 | | |
 |---|---|
-| [`/restack-journey`](skills/restack-journey/SKILL.md) | classify terrain, map the route, run the iterate gate, keep state, write the asks to other teams |
+| [`/restack-journey`](skills/restack-journey/SKILL.md) | classify terrain, map the route, run the iterate gate, keep state, write the asks to other teams, settle what the design rests on |
 
 **Understand what is there** — brownfield and minefield
 

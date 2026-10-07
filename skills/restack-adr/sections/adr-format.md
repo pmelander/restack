@@ -12,6 +12,7 @@
 **Technical story:** [optional ticket reference]
 **Review date:** [when to run /restack-adr review — default 6 months]
 **Challenged by removal:** [only once challenged: YYYY-MM-DD, kept (D<n>): what would come back, by lens — `docs/stressor-analysis/ablation-<date>-<slug>.md`]
+**Assumptions:** [settles A-<n>, ...; rests on A-<n>, ... | none]
 
 ## Context
 
@@ -93,6 +94,16 @@ absence says something. The stressors listed at proposal time say why a
 residual was added; this field says why it is still there, tested against the
 design as it now stands. That is the line an inheritor needs before deleting
 something that looks unnecessary.
+
+**Assumptions.** Mandatory, on `create` and on every `update` (ADR-031 in the
+ReStack repository). `settles` lists the register rows this decision answers;
+`rests on` lists the open rows it depends on. Write `none` when it touches no
+row: as with residuals, an explicit "none" is information and an empty field
+is not. Find the candidates with `journey.py assume touching` (*Journey
+Files*); the architect confirms each, and each settled row's status is
+written with `assume status`. A decision whose open `rests on` rows are never
+settled is a decision resting on beliefs, and the register's summary counts
+those rows as load-bearing.
 
 **Knock-on changes.** Mandatory, on `create` and on every `update`. List every
 descriptive document the decision invalidates (HLD, LLD, deployment guide,

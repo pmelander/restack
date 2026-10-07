@@ -7,6 +7,24 @@ and never add an "Update" heading. Both make the file impossible to append to.
 `Open` · `Partly resolved` · `Resolved` · `Resolved by design (test pending)` ·
 `Withdrawn` · `Superseded by D<n>`
 
+**The row is the current state.** The status lines under the table are its
+history: read the row to know where it stands, and the lines to know how it
+got there. `journey.py assume show A-<n>` prints both.
+
+**Kinds** (ADR-031). The start of `Validates it` says what kind of row it is,
+and so where it drains:
+
+| Prefix | Kind | Drains through |
+|---|---|---|
+| none | belief: an unverified claim about what exists | evidence: a discovery note, a code read, a test |
+| `Ask <recipient>:` | ask: only someone outside the design can settle it | the asks pack |
+| `Decide:` | an open design question | a decision brief; ends `Superseded by D<n>` |
+| `Test:` | a check the build has to run | the design answers it (`Resolved by design (test pending)`), the build carries it |
+| `Observe:` | something only the running system can show | the design answers it, operation carries it |
+
+A row `Resolved by design (test pending)` is **carried**, not exposure:
+`journey.py register` counts it apart from the open rows.
+
 **Rules**
 
 - A new assumption is a new row at the **end of the table**, with the next `A-<n>`.
@@ -32,14 +50,22 @@ and never add an "Update" heading. Both make the file impossible to append to.
   error is cancelled, never deleted:
   `- A-<n> · Open · <YYYY-MM-DD> · unasked <recipient>: <why>`, written by
   `journey.py assume unasked A-<n> --why "..."` (ADR-027).
+- **A row is closed by the work that settles it.** A decision says which rows
+  it settles in its `Assumptions` field, and an ADR in its header line.
+  `journey.py assume touching <ID>` lists the open rows naming what the work
+  was about, and `journey.py register` lists rows that look settled and are
+  still open. Both are worklists: the status is the architect's.
 
 | ID | Assumption | Source | Validates it | Depends on it | Status | Status date |
 |---|---|---|---|---|---|---|
 | A-1 | [the belief, stated so it can be false] | [where it came from: doc, person, inference] | [the check that would settle it] | [ADRs, residuals, matrix cells resting on it] | Open | YYYY-MM-DD |
 | A-2 | [a belief about a neighbour's system] | [where it came from] | Ask [recipient]: [what they would have to tell us] | [what rests on it] | Open | YYYY-MM-DD |
+| A-3 | [a check only the build can run] | [where it came from] | Test: [the test, and where it runs] | [what rests on it] | Resolved by design (test pending) | YYYY-MM-DD |
 
 ## Status lines
 
 - A-1 · Open · YYYY-MM-DD · registered
 - A-2 · Open · YYYY-MM-DD · registered
 - A-2 · Open · YYYY-MM-DD · asked [recipient]
+- A-3 · Open · YYYY-MM-DD · registered
+- A-3 · Resolved by design (test pending) · YYYY-MM-DD · [the ADR or residual that answers it]

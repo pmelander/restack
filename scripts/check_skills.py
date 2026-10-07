@@ -37,6 +37,13 @@ def frontmatter(text: str) -> str | None:
     return None if end == -1 else text[4:end]
 
 
+def banner_zone(text: str) -> str:
+    """Where a generated banner belongs: the first lines after the frontmatter."""
+    end = text.find("\n---\n", 3) if text.startswith("---\n") else -1
+    start = 0 if end == -1 else end + len("\n---\n")
+    return text[start:start + 400]
+
+
 # Tokens that look like a file path: something ending in a known extension.
 PATH_TOKEN = re.compile(r"[A-Za-z0-9_.$~<>*/-]*\.(?:md|py|json|sh|yml|tmpl)\b")
 
@@ -189,12 +196,15 @@ def check_skill(skill_dir: Path) -> dict:
         errors.append(f"{rel}/SKILL.md: frontmatter has no 'description' - the skill will not be discoverable")
 
     # A generated file must still say so; the banner is what stops hand edits.
-    if generated and BANNER not in text[:1200]:
+    # gen_skills.py writes it straight after the frontmatter, so look there:
+    # a fixed offset from the top fails a skill whose description grows.
+    head = banner_zone(text)
+    if generated and BANNER not in head:
         errors.append(
             f"{rel}/SKILL.md: has a template but no {BANNER} banner - "
             f"it was probably hand-edited. Run: python scripts/gen_skills.py {name}"
         )
-    if not generated and BANNER in text[:1200]:
+    if not generated and BANNER in head:
         errors.append(f"{rel}/SKILL.md: claims to be generated but has no SKILL.md.tmpl")
 
     # Sections: manifest and directory must agree in both directions.
