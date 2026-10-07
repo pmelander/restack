@@ -113,12 +113,15 @@ test('a residual resolved from its residuals file', () => {
   expect(lines).toContain('   └─ R2 · Depot battery backup (residuals-iter1.md)')
 })
 
-test('A-09 is A-9; an unknown ID and a non-ID are said so', () => {
+test('A-09 is A-9 is 9; an unknown ID and a non-ID are said so', () => {
   const rows = rowsOf(FIXTURES.asks['assumptions-register.md'])
   const none = { adrs: new Map(), residuals: new Map(), decisions: new Map() }
   expect(lookup('A-02', rows, none)).toMatchObject({ kind: 'found', id: 'A-2' })
+  expect(lookup('2', rows, none)).toMatchObject({ kind: 'found', id: 'A-2' })
+  expect(lookup(' 02 ', rows, none)).toMatchObject({ kind: 'found', id: 'A-2' })
+  expect(lookup('99', rows, none)).toEqual({ kind: 'error', message: 'A-99 is not in the register.' })
   expect(lookup('a-99', rows, none)).toEqual({ kind: 'error', message: 'A-99 is not in the register.' })
-  expect(lookup('ADR-0004', rows, none)).toEqual({ kind: 'error', message: "Type an assumption's ID, such as A-12." })
+  expect(lookup('ADR-0004', rows, none)).toEqual({ kind: 'error', message: "Type an assumption's ID, such as 12 or A-12." })
 })
 
 test('the open rows that rest on a belief are named', () => {

@@ -494,7 +494,7 @@ export const register: Register = on => {
               <Input
                 key="lookup"
                 label="Assumption"
-                placeholder="such as A-12, then Enter"
+                placeholder="such as 12 or A-12, then Enter"
                 value=""
                 submitLabel="look up"
                 onSubmit={value => {
