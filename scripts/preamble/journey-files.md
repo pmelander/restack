@@ -40,7 +40,7 @@ path is no longer translated for a Windows Python.
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
-| a ReStack command finishes | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
+| a ReStack command finishes (not a `/restack-journey where` that found the position current and wrote nothing) | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
 
 **Close what the work settles.** Registering a row is half the job. Before a
 command finishes after a decision is answered, an ADR is written or amended, an

@@ -22,6 +22,11 @@ the choice format whenever possible."
 > Chaining stands. Decision 4's held reflection prompts are withdrawn, with
 > the prompts themselves: a chain ends at its last status line and `Next:`.
 > Marked inline.
+>
+> **Amended 2026-10-07 by [ADR-033](ADR-033-a-wait-is-a-next-move.md).** Two
+> moves are close only if each changes something the next gate needs, and a
+> command whose next step waits on someone outside the design has no next
+> move. Marked inline.
 
 ## Context
 
@@ -48,7 +53,8 @@ numbers and the confusion protocol were often asked in prose.
    `Skill` in `allowed-tools`.
 2. **Only questions pause a chain:** an open decision brief or stop gate, the
    confusion protocol or anything only a person can supply, and two next moves
-   close enough that choosing is the architect's call. After the answer is
+   close enough that choosing is the architect's call *(narrowed 2026-10-07,
+   ADR-033: a move counts only if it changes what the next gate needs)*. After the answer is
    logged, the command finishes and the chain carries on. `NEEDS_DISCOVERY`
    names a discover command, so it runs too.
 3. **Guards.** A chain runs `/restack-*` commands only, never

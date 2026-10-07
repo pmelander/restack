@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.7.0
+version: 2.8.0
 preamble-tier: 3
 model: opus
 description: |
@@ -177,6 +177,24 @@ brief is open. `where` is often asked in the middle of one.
    `position:` line dates the current position and counts the history and
    decisions since. Read everything after that date before trusting anything
    the file says above its history.
+
+   **If the position is still current, say so and stop.** It is current when
+   all of these hold:
+   - the `position:` line reads `nothing in the history since`, with no
+     decision answered since;
+   - the history's last entry is the `where` or `start` that wrote it (without
+     one, same-day work is not counted, ADR-032);
+   - no engagement document is new or changed since its date (`git log`, or
+     modification dates outside a repository);
+   - the architect has brought nothing new into the session: an answer, a
+     number, a send.
+
+   Then restate the position's next move, or what it waits on, and the asks
+   still unsent (`journey.py asks`). Write nothing, and record no history
+   entry: a `where` entry would claim a position was written and move what
+   later reads count from. End `DONE`, with the position's date as the
+   evidence. Skip steps 2 to 6. Any doubt on one of the four: run the full
+   assessment (ADR-033).
 2. Inventory what actually exists on disk, not what the state file claims
    exists. Divergence between the two is itself a finding. If
    `Implementation status:` or `Design boundary:` is missing, ask for it now
@@ -194,6 +212,20 @@ brief is open. `where` is often asked in the middle of one.
    long, the next move is often `settle`.
 5. Recommend the next move, with the alternative you rejected and why. It runs
    once step 6 is done, per *Next command*.
+   **Or the next move is a wait.** When the next gate needs answers only
+   people outside the design can give, and no ReStack command would change
+   anything that gate needs, there is no command to run, and no choice to put
+   to the architect. Say so, in this order:
+   - **asks not yet sent**, by ID and recipient: the architect's to send, and
+     the only thing that shortens the wait. When the architect says one went,
+     record it with `assume asked`;
+   - **asks pending**: recipient, when sent, and what each answer starts;
+   - the command to run when an answer arrives, usually `where`.
+
+   Record it in step 6 as the position's next move
+   (`**Next move:** waiting on <recipients>; when an answer arrives,
+   /restack-journey where`), then end `DONE` with no `Next:` line. A review
+   or trace run to fill the wait is an invented move (ADR-033).
 6. Update `journey-state.md` with the current position and the gaps found:
    - a new `### <date> (/restack-journey where)` subsection at the top of
      *Current Position*, superseding the one below it, with the next move;
