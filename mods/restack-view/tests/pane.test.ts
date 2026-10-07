@@ -36,7 +36,13 @@ const colorsOf = (node: unknown, out: Array<[string, boolean]> = []): Array<[str
 // headroom's traffic-light keys: a verdict, which ADR-030 rules out.
 const VERDICT_COLORS = ['success', 'warning', 'error']
 
-type Seen = { filled: string[]; toasts: string[]; opened: string[]; closed: string[] }
+type Seen = {
+  filled: string[]
+  toasts: string[]
+  opened: string[]
+  openedWith: Array<{ id: string; closeOnEscape: true | undefined }>
+  closed: string[]
+}
 
 // The engine, for a project at /work holding the named journey fixture in
 // docs/journey/ and `analysis` in docs/stressor-analysis/, drawn on `surface`.
@@ -48,7 +54,7 @@ const stub = (
   analysis: Record<string, string> = {},
   adr: Record<string, string> = {},
 ): Seen => {
-  const seen: Seen = { filled: [], toasts: [], opened: [], closed: [] }
+  const seen: Seen = { filled: [], toasts: [], opened: [], openedWith: [], closed: [] }
   mock.store(on)
   mock.clock(on, { now: Date.parse('2026-04-20T12:00:00Z') })
   const dirs: Record<string, Readonly<Record<string, string>>> = {
@@ -83,6 +89,7 @@ const stub = (
   })
   on('ui.open', ($, e) => {
     seen.opened.push(e.id)
+    seen.openedWith.push({ id: e.id, closeOnEscape: e.closeOnEscape })
     return { value: { isPlaced: true } }
   })
   on('ui.close', ($, e) => {
@@ -147,14 +154,17 @@ for (const surface of SURFACES) {
     expect(await ui.find({ key: 'fill-next' })).toBeUndefined()
   })
 
-  test(`the button fills an empty prompt, closes the pane, and submits nothing, on ${surface}`, async ($, on) => {
+  test(`the button fills an empty prompt, keeps the pane open, and submits nothing, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'band')
     await $.command.run({ command: 'restack-view', args: '' })
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'fill-next' })
     expect(seen.filled).toEqual(['/restack-stressor analyze'])
-    expect(seen.closed).toEqual(['restack-view'])
+    expect(seen.closed).toEqual([])
+    // Opened again without closeOnEscape: Esc goes to the prompt, the pane stays.
+    expect(seen.openedWith.at(-1)).toEqual({ id: 'restack-view', closeOnEscape: undefined })
+    expect(seen.toasts).toEqual(['The next command is in the prompt: Esc to reach it, then Enter.'])
   })
 
   test(`the button never writes over a draft, on ${surface}`, async ($, on) => {

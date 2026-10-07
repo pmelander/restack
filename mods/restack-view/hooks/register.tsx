@@ -42,6 +42,7 @@ const matrixOffset = atom({ plugin: 'restack-view', key: 'matrixOffset' } as con
 const lookupResult = atom({ plugin: 'restack-view', key: 'lookup' } as const, null)
 
 const PANE = 'restack-view'
+const TITLE = 'ReStack journey'
 // The surfaces that draw a pane. Anywhere else, `/restack-view` prints the line.
 const DRAWS = ['terminal', 'desktop']
 
@@ -56,7 +57,7 @@ const FILES = {
 } as const
 
 const USAGE_TEXT = 'Usage: /restack-view [band [on|off]]'
-const FILLED = 'The next command is in the prompt: read it, then press Enter.'
+const FILLED = 'The next command is in the prompt: Esc to reach it, then Enter.'
 const NO_JOURNEY = 'No ReStack journey here: no docs/journey/journey-state.md under this project.'
 
 const join = (base: string, ...parts: string[]): string => {
@@ -253,8 +254,10 @@ async function fillNext($: EngineInterface, command: string): Promise<void> {
     $.ui.toast(`Next: ${command}`)
     return
   }
-  // Back to the prompt, where the command waits for the architect's Enter.
-  await $.ui.close({ id: PANE })
+  // The pane stays open. Opened again without closeOnEscape, Esc hands the
+  // keys to the prompt, where the command waits for the architect's Enter,
+  // and leaves the pane up beside it.
+  await $.ui.open({ id: PANE, title: TITLE })
   $.ui.toast(FILLED)
 }
 
@@ -305,7 +308,7 @@ export const register: Register = on => {
       if (!surfaces.some(s => DRAWS.includes(s))) {
         return { text: current === null ? NO_JOURNEY : bandText(current) }
       }
-      await $.ui.open({ id: PANE, title: 'ReStack journey', focus: true, closeOnEscape: true })
+      await $.ui.open({ id: PANE, title: TITLE, focus: true, closeOnEscape: true })
 
       return {}
     }
