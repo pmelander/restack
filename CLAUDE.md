@@ -88,7 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-031
+    ├── adr/                            # ADR-001 .. ADR-032
     └── ...                             # Generated documentation location
 ```
 
@@ -316,7 +316,12 @@ likewise repeats the status
 ([ADR-027](docs/adr/ADR-027-asks-triaged-with-the-architect-first.md)).
 `decision answer --assumptions` records which rows a decision settles and
 changes no status; `register` and `assume touching` only list candidates
-([ADR-031](docs/adr/ADR-031-assumptions-drained-where-the-work-settles-them.md)). `update_check.py` is run by `/restack-journey` and
+([ADR-031](docs/adr/ADR-031-assumptions-drained-where-the-work-settles-them.md)).
+`check` and `history add` say when Current Position is stale (its next move
+ran, or a decision was answered after it) and never rewrite it: only
+`/restack-journey where` does, and the restack-view mod reads the same rule
+from the same `stale` fixture
+([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by

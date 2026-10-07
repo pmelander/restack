@@ -168,6 +168,18 @@ for (const surface of SURFACES) {
     expect(seen.toasts).toEqual(['Your draft is kept. Next: /restack-stressor analyze'])
   })
 
+  test(`a stale position says why, and the button fills where, on ${surface}`, async ($, on) => {
+    const seen = stub(on, surface, 'stale')
+    await $.command.run({ command: 'restack-view', args: '' })
+    const ui = await $.ui.mount({ ...PANE, surface })
+    const tree = textOf(await ui.drawn())
+    expect(tree).toContain('its next move, /restack-design-review complete, ran 2026-04-20')
+    expect(tree).toContain('Stale: `/restack-journey where` rewrites it')
+
+    await ui.press({ key: 'fill-next' })
+    expect(seen.filled).toEqual(['/restack-journey where'])
+  })
+
   test(`a legacy journey shows what the band shows, and no button, on ${surface}`, async ($, on) => {
     stub(on, surface, 'legacy')
     await $.command.run({ command: 'restack-view', args: '' })

@@ -97,8 +97,8 @@ journey.py assume kind A-12 decide        # set a row's kind (after the architec
 journey.py assume touching D12 ADR-31     # not-closed rows naming what the work touched (read-only)
 journey.py assume show A-12               # a row and its own history (read-only)
 journey.py register                       # exposure, load-bearing, age, four worklists (read-only)
-journey.py history add --command "/restack-journey iterate" --outcome "..."
-journey.py check | migrate [--write]     # is it canonical; convert an old shape
+journey.py history add --command "/restack-adr update 0007" --outcome "..."   # every command; notes a stale position
+journey.py check | migrate [--write]     # is it canonical, how old is the position; convert an old shape
 ```
 
 ## Discovery — brownfield and minefield

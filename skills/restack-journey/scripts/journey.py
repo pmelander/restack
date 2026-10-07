@@ -7,7 +7,7 @@ line. This script is that line. It owns the bookkeeping the contract asks for:
 the next A-<n> and D<n>, where a row or an entry goes, the status vocabulary,
 and keeping a register row and its status lines in step.
 
-    journey.py check                         is each file canonical?
+    journey.py check                         is each file canonical? how old is the position?
     journey.py assume add "<belief>" --source S --validates V --depends D [--ask R | --kind K]
     journey.py assume status A-12 "Partly resolved" --why "..."
     journey.py assume kind A-12 test             `Test:` on Validates it (decide|test|observe|belief)
@@ -23,7 +23,7 @@ and keeping a register row and its status lines in step.
     journey.py decision open "<question>" [--gate brief]
     journey.py decision answer D7 --answer "..." --rationale "..." --actors no --assumptions none
     journey.py decision note D7 [--actors no] [--assumptions none]   an answered decision that never said
-    journey.py history add --command "/restack-x y" --outcome "..." [--decision D7]
+    journey.py history add --command "/restack-x y" --outcome "..." [--decision D7]   notes a stale position
     journey.py migrate [register|log|state|all] [--write]
 
 Every command takes --docs (default: docs) and --date (default: today).
@@ -1175,6 +1175,120 @@ def slash_command(text: str) -> str:
     return text
 
 
+HISTORY_LINE = re.compile(r"^\s*-\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.*)$")
+# The commands that write Current Position (ADR-032).
+WRITES_POSITION = re.compile(r"^/(?:restack-)?journey (?:start|where)\b")
+
+
+def normal_command(text: str) -> str:
+    """A command as the history and the position both write it: no ticks, one
+    space, lower case, and `/stressor` the same as `/restack-stressor`."""
+    text = " ".join(text.replace("`", "").split()).lower()
+    return re.sub(r"^/(?:restack-)?", "/", text)
+
+
+def ran(entry: str, move: str) -> bool:
+    """Whether a history command ran `move`: the same command, perhaps with more after it."""
+    h, n = normal_command(entry), normal_command(move)
+    return h.startswith(n) and not re.match(r"[\w-]", h[len(n):])
+
+
+def first_command(text: str | None) -> str | None:
+    """The first ReStack command in a line: a code span if there is one, else
+    the bare command and its first argument. As the restack-view mod reads it."""
+    if text is None:
+        return None
+    m = re.search(r"`(/restack-[^`]+)`", text)
+    if m:
+        return m.group(1).strip()
+    m = re.search(r"/restack-[a-z-]+(?:\s+[a-z][\w-]*)?", text)
+    return m.group(0) if m else None
+
+
+def decided_after(log: list[str], date: str) -> list[str]:
+    """The decisions answered on a later date than `date`, as `D<n>`. A
+    decision dated the same day is left out: the log cannot tell which side
+    of the position it falls on."""
+    found, current = [], None
+    for line in log:
+        m = D_HEADING.match(line)
+        if m:
+            current = (m.group(1), m.group(2))
+            continue
+        if line.startswith("## "):
+            current = None
+        f = re.match(r"^- \*\*Answer:\*\*\s*(.*?)\s*$", line)
+        if current and f and f.group(1) != "(open)" and current[1] > date:
+            found.append(f"D{current[0]}")
+    return found
+
+
+def position_age(lines: list[str], log: list[str] | None = None) -> dict | None:
+    """The newest Current Position, and what happened after it (ADR-032).
+
+    The position's date is the first date in its newest `###` heading, else the
+    header's `Last Updated`. The history after it is every entry on a later
+    date, and on the same date every entry after the last `/restack-journey
+    start` or `where` of that date, in file order. With no such entry the
+    same-day entries are left out: it cannot tell which side they fall on.
+    `done` is the date of the first entry after it that ran its next move;
+    `decided` the decisions answered after it. It is stale when either holds.
+    None when the file has no Current Position or no date for it.
+    """
+    start = next((i for i, l in enumerate(lines) if re.match(r"^##\s+current position\b", l, re.I)), None)
+    if start is None:
+        return None
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    section = lines[start + 1:end]
+    subs = [i for i, l in enumerate(section) if l.startswith("### ")]
+    if subs:
+        newest_end = subs[1] if len(subs) > 1 else len(section)
+        section = section[:subs[0]] + section[subs[0]:newest_end]
+    found = re.search(r"\d{4}-\d{2}-\d{2}", section[subs[0]]) if subs else None
+    if found is None:
+        head_end = next((i for i, l in enumerate(lines) if l.startswith("## ")), len(lines))
+        updated = next((l for l in lines[:head_end] if re.match(r"^\*\*Last Updated:\*\*", l)), "")
+        found = re.search(r"\d{4}-\d{2}-\d{2}", updated)
+    if found is None:
+        return None
+    date = found.group(0)
+    field = re.search(r"^(?:\s*-\s+)?\*\*(?:What's next|Next move)(?: \([^)]*\))?:\*\*\s*(.+?)\s*$",
+                      "\n".join(section), re.I | re.M)
+    move = first_command(field.group(1) if field and not field.group(1).startswith("[") else None)
+
+    entries = []
+    span = history_span(lines)
+    for line in lines[span[0] + 1:span[1]] if span else []:
+        m = HISTORY_LINE.match(line)
+        if m:
+            entries.append((m.group(1), m.group(2).split("·")[0].replace("`", "").strip()))
+    writer = max((i for i, (d, c) in enumerate(entries) if d == date and WRITES_POSITION.match(normal_command(c))),
+                 default=None)
+    after = [(d, c) for i, (d, c) in enumerate(entries)
+             if d > date or (d == date and writer is not None and i > writer)]
+    done = next((d for d, c in after if move and ran(c, move)), None)
+    decided = decided_after(log or [], date)
+    return {"date": date, "next": move, "since": len(after), "done": done, "decided": decided,
+            "stale": done is not None or bool(decided)}
+
+
+def position_note(age: dict | None) -> str | None:
+    """One line on the position: its date, what happened after it, and when it
+    is stale, the command that rewrites it. The restack-view mod says the same."""
+    if age is None:
+        return None
+    parts = [f"{age['since']} history {'entry' if age['since'] == 1 else 'entries'} since"
+             if age["since"] else "nothing in the history since"]
+    if age["decided"]:
+        d = age["decided"]
+        parts.append(f"{len(d)} {'decision' if len(d) == 1 else 'decisions'} answered since "
+                     f"({d[0]}{'' if len(d) == 1 else '–' + d[-1]})")
+    if age["done"]:
+        parts.append(f"its next move, {age['next']}, ran {age['done']}")
+    text = f"Current Position of {age['date']}: " + "; ".join(parts)
+    return text + (". Stale: `/restack-journey where` rewrites it" if age["stale"] else "")
+
+
 def history_add(root: Path, command: str, outcome: str, decision: str | None, date: str) -> str:
     path = root / STATE
     if not path.exists():
@@ -1196,6 +1310,11 @@ def history_add(root: Path, command: str, outcome: str, decision: str | None, da
         lines.pop()
     lines.append(entry)
     write(path, lines, newline)
+    # Said, never written: the position is the architect's (ADR-032).
+    log = read(root / LOG)[0] if (root / LOG).exists() else []
+    age = position_age(lines, log)
+    if age and age["stale"] and not WRITES_POSITION.match(normal_command(command)):
+        entry += f"\nnote: {position_note(age)}."
     return entry
 
 
@@ -1563,6 +1682,10 @@ def check(root: Path) -> tuple[list[str], bool]:
         else:
             report.append(f"{rel}: canonical")
         report += [f"  note: {n}" for n in shape.get("notes", [])]
+        log = read(root / LOG)[0] if (root / LOG).exists() else []
+        position = position_note(position_age(read(path)[0], log)) if kind == "state" and not shape["problems"] else None
+        if position:
+            report.append(f"  position: {position}")
     return report, ok
 
 

@@ -5,7 +5,7 @@
 // The rules mirror journey.py's: a change to the canonical shape there that
 // does not reach here fails tests/journey.test.ts (ADR-029, decision point 4).
 
-import type { Ask, Decision, Detail, Journey, OpenRow, Tab, View } from '../types'
+import type { Ask, Decision, Detail, Journey, OpenRow, PositionAge, Tab, View } from '../types'
 import { historyEntries } from './rhythm.ts'
 import type { Item } from './layout.tsx'
 
@@ -119,6 +119,86 @@ const command = (text: string | undefined): string | undefined => {
 
 const confidenceOf = (text: string | undefined): string | undefined =>
   text?.match(/^(High|Medium|Low)\b/i)?.[1]
+
+// --- how old the position is (ADR-032) ---------------------------------------
+
+// The command that rewrites a stale position.
+export const WHERE = '/restack-journey where'
+// The commands that write Current Position.
+const WRITES_POSITION = /^\/(?:restack-)?journey (?:start|where)\b/
+
+// A command as the history and the position both write it: no ticks, one
+// space, lower case, and `/stressor` the same as `/restack-stressor`.
+const normal = (text: string): string =>
+  text.replace(/`/g, '').replace(/\s+/g, ' ').trim().toLowerCase().replace(/^\/(?:restack-)?/, '/')
+
+// Whether a history command ran `move`: the same command, perhaps with more after it.
+export function ran(entry: string, move: string): boolean {
+  const h = normal(entry)
+  const n = normal(move)
+
+  return h.startsWith(n) && !/^[\w-]/.test(h.slice(n.length))
+}
+
+// The decisions answered on a later date than `date`. A decision dated the
+// same day is left out: the log cannot tell which side of the position it is.
+function decidedAfter(log: string, date: string): string[] {
+  const found: string[] = []
+  let current: RegExpMatchArray | null = null
+  for (const line of lines(log)) {
+    const m = line.match(D_HEADING)
+    if (m) {
+      current = m
+      continue
+    }
+    if (line.startsWith('## ')) current = null
+    const answer = line.match(/^- \*\*Answer:\*\*\s*(.*?)\s*$/)
+    if (current !== null && answer && answer[1] !== '(open)' && current[2] > date) found.push(`D${current[1]}`)
+  }
+
+  return found
+}
+
+// The newest position's date, the history after it, and whether its next move
+// has run, as journey.py's position_age reads them. The date is the newest
+// `###` heading's, else the header's `Last Updated`. The history after it is
+// every entry on a later date, and on the same date every entry after that
+// date's last `/restack-journey start` or `where`; with none, the same-day
+// entries are left out, since nothing says which side they fall on.
+export function positionAge(state: string, log: string | undefined, move: string | undefined): PositionAge | undefined {
+  const position = currentPosition(state)
+  const heading = lines(position).find(l => l.startsWith('### '))
+  const date =
+    heading?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? (field(header(state), 'Last Updated') ?? '').match(/\d{4}-\d{2}-\d{2}/)?.[0]
+  if (position === '' || date === undefined) return undefined
+
+  // In file order within a date: the sort is stable.
+  const entries = historyEntries(state)
+  let writer = -1
+  entries.forEach((e, i) => {
+    if (e.date === date && WRITES_POSITION.test(normal(e.command))) writer = i
+  })
+  const after = entries.filter((e, i) => e.date > date || (e.date === date && writer >= 0 && i > writer))
+  const done = move === undefined ? undefined : after.find(e => ran(e.command, move))?.date
+  const decided = log === undefined ? [] : decidedAfter(log, date)
+
+  return { date, since: after.length, done, decided, isStale: done !== undefined || decided.length > 0 }
+}
+
+// One line on the position, as journey.py's position_note says it.
+export function positionNote(view: Journey): string | undefined {
+  const age = view.age
+  if (age === undefined) return undefined
+  const parts = [age.since === 0 ? 'nothing in the history since' : `${plural(age.since, 'history entry', 'history entries')} since`]
+  if (age.decided.length > 0) {
+    const range = age.decided.length === 1 ? age.decided[0] : `${age.decided[0]}–${age.decided.at(-1)}`
+    parts.push(`${plural(age.decided.length, 'decision', 'decisions')} answered since (${range})`)
+  }
+  if (age.done !== undefined) parts.push(`its next move, ${view.next}, ran ${age.done}`)
+  const text = `Current Position of ${age.date}: ${parts.join('; ')}`
+
+  return age.isStale ? `${text}. Stale: \`${WHERE}\` rewrites it` : text
+}
 
 // journey.py's state_shape: the history is the last section, and a list.
 export function stateProblem(text: string): string | undefined {
@@ -246,12 +326,14 @@ export function readJourney(files: Files): View | null {
 
   const head = header(files.state)
   const position = currentPosition(files.state)
+  const next = command(field(position, "What's next", 'Next move'))
   const journey: Journey = {
     kind: 'journey',
     terrain: terrainOf(field(head, 'Terrain Type')),
     phase: compact(field(head, 'Current Phase')),
     confidence: confidenceOf(field(position, 'Confidence level')),
-    next: command(field(position, "What's next", 'Next move')),
+    next,
+    age: positionAge(files.state, files.log, next),
     asks: register?.asks,
     open: register?.open,
     decisions,
@@ -263,11 +345,13 @@ export function readJourney(files: Files): View | null {
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
 
 // The band's line, as pieces so the drawing can colour them. The same text
-// answers `/restack-view` where nothing draws.
-export function bandParts(view: View): { lead: string; next?: string; tail: string } {
+// answers `/restack-view` where nothing draws. A stale position offers the
+// command that rewrites it in place of the move it recorded (ADR-032).
+export function bandParts(view: View): { lead: string; stale?: string; next?: string; tail: string } {
   if (view.kind === 'not-canonical') {
     return { lead: `${view.file} is not canonical`, next: '/restack-journey migrate', tail: '' }
   }
+  const isStale = view.age?.isStale === true
   const lead = [view.terrain, view.phase, view.confidence].filter(Boolean).join(' · ')
   const counts = [
     view.asks === undefined ? undefined : plural(view.asks, 'ask', 'asks'),
@@ -275,14 +359,19 @@ export function bandParts(view: View): { lead: string; next?: string; tail: stri
     view.decisions === undefined ? undefined : plural(view.decisions, 'decision', 'decisions'),
   ].filter(Boolean)
 
-  return { lead, next: view.next, tail: counts.join(' · ') }
+  return {
+    lead,
+    stale: isStale ? `position stale since ${view.age!.date}` : undefined,
+    next: isStale ? WHERE : view.next,
+    tail: counts.join(' · '),
+  }
 }
 
 export function bandText(view: View): string {
-  const { lead, next, tail } = bandParts(view)
+  const { lead, stale, next, tail } = bandParts(view)
   if (view.kind === 'not-canonical') return `${lead}: ${next}`
 
-  return [lead, next === undefined ? undefined : `next ${next}`, tail].filter(Boolean).join(' · ')
+  return [lead, stale, next === undefined ? undefined : `next ${next}`, tail].filter(Boolean).join(' · ')
 }
 
 // --- the pane ----------------------------------------------------------------

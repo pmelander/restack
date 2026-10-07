@@ -64,7 +64,7 @@ class ModFixtureCase(unittest.TestCase):
     """
 
     def test_mod_fixtures_are_canonical(self):
-        for name in ("band", "lived"):
+        for name in ("band", "lived", "stale"):
             with self.subTest(fixture=name):
                 code, out = run("check", "--docs", str(FIXTURES / name), "--date", DATE)
                 self.assertEqual(code, 0, out)
@@ -276,6 +276,94 @@ class History(JourneyCase):
         code, out = self.j("history", "add", "--command", "/x", "--outcome", "y")
         self.assertEqual(code, 1)
         self.assertIn("/restack-journey start", out)
+
+
+class Position(JourneyCase):
+    """How old Current Position is (ADR-032). `stale` is a position written by
+    `where`, whose next move ran the same day, with a decision answered the
+    next day; the restack-view mod's tests read the same fixture and expect
+    the same numbers."""
+
+    fixture = "stale"
+    RAN = "- 2026-04-20 · `/restack-design-review complete` · not ready to build: SYS-1 and SYS-2\n"
+    WHERE = "- 2026-04-20 · `/restack-journey where` · parked at D3; next: the complete review while the asks are out\n"
+
+    def age(self, state=None, log=True):
+        j = load_module()
+        state = self.text("journey-state.md") if state is None else state
+        return j.position_age(state.split("\n"), self.text("decisions-log.md").split("\n") if log else None)
+
+    def test_the_move_ran_and_a_decision_came_after(self):
+        age = self.age()
+        self.assertEqual(age["date"], "2026-04-20")
+        self.assertEqual(age["next"], "/restack-design-review complete")
+        # complete, asks and the adr update: not the consistency review before
+        # `where`, and not the iteration filed out of order.
+        self.assertEqual(age["since"], 3)
+        self.assertEqual(age["done"], "2026-04-20")
+        # D3 is the position's own day and D5 is open: neither counts.
+        self.assertEqual(age["decided"], ["D4"])
+        self.assertTrue(age["stale"])
+
+    def test_a_decision_alone_makes_it_stale(self):
+        age = self.age(self.text("journey-state.md").replace(self.RAN, ""))
+        self.assertEqual((age["since"], age["done"], age["stale"]), (2, None, True))
+
+    def test_other_work_alone_is_counted_not_stale(self):
+        age = self.age(self.text("journey-state.md").replace(self.RAN, ""), log=False)
+        self.assertEqual((age["since"], age["done"], age["stale"]), (2, None, False))
+
+    def test_without_the_writer_the_same_day_is_left_out(self):
+        age = self.age(self.text("journey-state.md").replace(self.WHERE, ""), log=False)
+        self.assertEqual((age["since"], age["done"]), (1, None))
+
+    def test_the_date_falls_back_to_last_updated(self):
+        # A position in the template's shape: no dated subsections.
+        state = self.text("journey-state.md").replace(
+            "### 2026-04-20 (`/restack-journey where`), supersedes the 2026-03-20 position below\n\n", "")
+        state = state.replace("### 2026-03-20 (superseded)\n\n- **What's next:** `/restack-stressor walk courier-fill`\n\n", "")
+        state = state.replace("**Last Updated:** 2026-04-20", "**Last Updated:** 2026-04-19")
+        age = self.age(state, log=False)
+        self.assertEqual((age["date"], age["since"]), ("2026-04-19", 5))
+
+    def test_a_fresh_position_says_so(self):
+        j = load_module()
+        lived = (FIXTURES / "lived" / "journey" / "journey-state.md").read_text(encoding="utf-8")
+        age = j.position_age(lived.split("\n"))
+        self.assertEqual((age["since"], age["stale"]), (0, False))
+        self.assertEqual(j.position_note(age), "Current Position of 2026-04-20: nothing in the history since")
+
+    def test_ran_is_the_command_and_its_arguments_not_a_longer_word(self):
+        j = load_module()
+        self.assertTrue(j.ran("/stressor walk courier-fill", "/restack-stressor walk"))
+        self.assertTrue(j.ran("`/restack-adr update 0007` (SYS-1)", "/restack-adr update 0007"))
+        self.assertFalse(j.ran("/restack-adr update 00071", "/restack-adr update 0007"))
+        self.assertFalse(j.ran("/restack-design-review consistency", "/restack-design-review complete"))
+
+    def test_check_reports_it(self):
+        out = self.j("check")[1]
+        self.assertIn("position: Current Position of 2026-04-20: 3 history entries since; "
+                      "1 decision answered since (D4); its next move, /restack-design-review complete, "
+                      "ran 2026-04-20. Stale: `/restack-journey where` rewrites it", out)
+
+    def test_history_add_says_it_and_writes_nothing_else(self):
+        before = self.text("journey-state.md")
+        code, out = self.j("history", "add", "--command", "/restack-adr update 0008", "--outcome", "o")
+        self.assertEqual(code, 0, out)
+        self.assertIn("note: Current Position of 2026-04-20:", out)
+        self.assertIn("Stale: `/restack-journey where` rewrites it.", out)
+        self.assertEqual(self.text("journey-state.md").rstrip(),
+                         before.rstrip() + "\n- 2026-04-20 · `/restack-adr update 0008` · o")
+
+    def test_where_itself_gets_no_note(self):
+        out = self.j("history", "add", "--command", "/restack-journey where", "--outcome", "o")[1]
+        self.assertNotIn("note:", out)
+
+    def test_a_fresh_position_gets_no_note(self):
+        shutil.rmtree(self.docs)
+        shutil.copytree(FIXTURES / "lived", self.docs)
+        out = self.j("history", "add", "--command", "/restack-adr update 0007", "--outcome", "o")[1]
+        self.assertNotIn("note:", out)
 
 
 class Legacy(JourneyCase):

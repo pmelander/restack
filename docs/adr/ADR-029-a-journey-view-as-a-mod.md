@@ -24,6 +24,13 @@ point 3), and the CI job has not yet run.
 
 **Review Date:** 2027-04-05
 
+> **Amended 2026-10-07 by [ADR-032](ADR-032-a-stale-position-says-so.md).**
+> The band's next command is the one Current Position records, unless the
+> position is stale (its move has run, or a decision was answered after it).
+> Then the band reads `position stale since <date> · next /restack-journey
+> where`, and the pane's button fills `where`. `journey.py check` gives the
+> same answer.
+
 ## Context
 
 ### What the architect cannot see

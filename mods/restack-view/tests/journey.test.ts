@@ -11,6 +11,9 @@ import {
   bucketOf,
   daysSince,
   budget,
+  positionAge,
+  positionNote,
+  ran,
   readDetail,
   readJourney,
   readLog,
@@ -33,6 +36,7 @@ test('a full journey: header fields, next command, and the three counts', () => 
     phase: 'Stressor Analysis',
     confidence: 'Medium',
     next: '/restack-stressor analyze',
+    age: { date: '2026-04-20', since: 0, done: undefined, decided: [], isStale: false },
     asks: 2,
     open: 3,
     decisions: 1,
@@ -165,6 +169,58 @@ test('the position tab is the newest subsection, never a superseded one', () => 
   expect(where.markdown).not.toContain('(superseded)')
   expect(where.markdown).not.toContain('Previous phase line')
   expect(where.markdown!.trimEnd().endsWith('---')).toBe(false)
+})
+
+// How old the position is (ADR-032): the numbers tests/test_journey.py's
+// Position case expects of journey.py, on the same fixture.
+const RAN = '- 2026-04-20 · `/restack-design-review complete` · not ready to build: SYS-1 and SYS-2\n'
+const WRITER = '- 2026-04-20 · `/restack-journey where` · parked at D3; next: the complete review while the asks are out\n'
+const ageOf = (state: string, log?: string) => positionAge(state, log, '/restack-design-review complete')!
+
+test('a position whose move ran, with a decision after it, is stale', () => {
+  const view = readJourney(filesOf('stale'))
+  if (view?.kind !== 'journey') throw new Error('expected a journey')
+  expect(view.next).toBe('/restack-design-review complete')
+  // complete, asks and the adr update: not the consistency review before
+  // `where`, and not the iteration filed out of order.
+  expect(view.age).toEqual({ date: '2026-04-20', since: 3, done: '2026-04-20', decided: ['D4'], isStale: true })
+  expect(positionNote(view)).toBe(
+    'Current Position of 2026-04-20: 3 history entries since; 1 decision answered since (D4); ' +
+      'its next move, /restack-design-review complete, ran 2026-04-20. Stale: `/restack-journey where` rewrites it',
+  )
+})
+
+test('a decision alone makes it stale; other work alone is only counted', () => {
+  const state = FIXTURES.stale['journey-state.md'].replace(RAN, '')
+  expect(ageOf(state, FIXTURES.stale['decisions-log.md'])).toMatchObject({ since: 2, done: undefined, isStale: true })
+  expect(ageOf(state)).toMatchObject({ since: 2, done: undefined, isStale: false })
+})
+
+test('without the day’s where, the same-day entries are left out', () => {
+  expect(ageOf(FIXTURES.stale['journey-state.md'].replace(WRITER, ''))).toMatchObject({ since: 1, done: undefined })
+})
+
+test('a position with no dated subsection is dated by Last Updated', () => {
+  const state = FIXTURES.stale['journey-state.md']
+    .replace('### 2026-04-20 (`/restack-journey where`), supersedes the 2026-03-20 position below\n\n', '')
+    .replace("### 2026-03-20 (superseded)\n\n- **What's next:** `/restack-stressor walk courier-fill`\n\n", '')
+    .replace('**Last Updated:** 2026-04-20', '**Last Updated:** 2026-04-19')
+  expect(ageOf(state)).toMatchObject({ date: '2026-04-19', since: 5 })
+})
+
+test('a fresh position says so, and the band keeps its move', () => {
+  const view = readJourney(filesOf('lived'))
+  if (view?.kind !== 'journey') throw new Error('expected a journey')
+  expect(view.age).toMatchObject({ since: 0, isStale: false })
+  expect(positionNote(view)).toBe('Current Position of 2026-04-20: nothing in the history since')
+  expect(bandText(view)).toContain('next /restack-design-review complete')
+})
+
+test('ran is the command and its arguments, not a longer word', () => {
+  expect(ran('/stressor walk courier-fill', '/restack-stressor walk')).toBe(true)
+  expect(ran('`/restack-adr update 0007` (SYS-1)', '/restack-adr update 0007')).toBe(true)
+  expect(ran('/restack-adr update 00071', '/restack-adr update 0007')).toBe(false)
+  expect(ran('/restack-design-review consistency', '/restack-design-review complete')).toBe(false)
 })
 
 test('the header fields are a two-column list, the history line excluded', () => {
