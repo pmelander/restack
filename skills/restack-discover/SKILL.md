@@ -386,7 +386,7 @@ path is no longer translated for a Windows Python.
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
-| a ReStack command finishes | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
+| a ReStack command finishes (not a `/restack-journey where` that found the position current and wrote nothing) | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
 
 **Close what the work settles.** Registering a row is half the job. Before a
 command finishes after a decision is answered, an ADR is written or amended, an
@@ -560,7 +560,9 @@ it:**
 - **Two next moves that are genuinely close,** where choosing is the
   architect's call. Ask it as a question, recommended move first. When one move
   is clearly better, run it and add `Alternative: <command> — <why not now>`
-  under the `Next:` line instead.
+  under the `Next:` line instead. A move is a contender only if it changes
+  something the next gate needs. A command that merely can run (a review, a
+  trace, a re-read) is not one because nothing else is.
 
 `NEEDS_DISCOVERY` routes to a specific `/restack-discover` command: that is
 the next command, so run it.
@@ -577,7 +579,10 @@ Rules that keep a chain honest:
   chain and nothing on disk has changed since, do not run it again. Stop with
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
-  and the chain ends there.
+  and the chain ends there. Nor has any command whose next step waits on
+  someone outside the design: name who, what each answer starts, and any ask
+  not yet sent, then end with no `Next:` line. Filling the wait with a command
+  that changes nothing the next gate needs is inventing one.
 - **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back

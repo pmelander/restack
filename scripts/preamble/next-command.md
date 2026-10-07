@@ -21,7 +21,9 @@ it:**
 - **Two next moves that are genuinely close,** where choosing is the
   architect's call. Ask it as a question, recommended move first. When one move
   is clearly better, run it and add `Alternative: <command> — <why not now>`
-  under the `Next:` line instead.
+  under the `Next:` line instead. A move is a contender only if it changes
+  something the next gate needs. A command that merely can run (a review, a
+  trace, a re-read) is not one because nothing else is.
 
 `NEEDS_DISCOVERY` routes to a specific `/restack-discover` command: that is
 the next command, so run it.
@@ -38,7 +40,10 @@ Rules that keep a chain honest:
   chain and nothing on disk has changed since, do not run it again. Stop with
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
-  and the chain ends there.
+  and the chain ends there. Nor has any command whose next step waits on
+  someone outside the design: name who, what each answer starts, and any ask
+  not yet sent, then end with no `Next:` line. Filling the wait with a command
+  that changes nothing the next gate needs is inventing one.
 - **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back

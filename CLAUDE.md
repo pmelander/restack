@@ -88,7 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-032
+    ├── adr/                            # ADR-001 .. ADR-033
     └── ...                             # Generated documentation location
 ```
 
@@ -137,7 +137,11 @@ Change a cross-cutting behaviour once, in the fragment, then regenerate.
 command runs through the `Skill` tool in the same turn. A chain of commands
 pauses only at questions: a decision brief or gate, the confusion protocol,
 something only a person can supply, or two genuinely close next moves
-([ADR-020](docs/adr/ADR-020-follow-up-commands-run-without-pause.md)). Where
+([ADR-020](docs/adr/ADR-020-follow-up-commands-run-without-pause.md)). A move
+is a contender only if it changes something the next gate needs; when the
+next step waits on someone outside the design, the command names who and what
+and ends with no `Next:`
+([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). Where
 `Skill` is unavailable, the command is handed over in a fenced block tagged
 `text`, never a shell tag
 ([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)). A skill that
@@ -321,7 +325,9 @@ changes no status; `register` and `assume touching` only list candidates
 ran, or a decision was answered after it) and never rewrite it: only
 `/restack-journey where` does, and the restack-view mod reads the same rule
 from the same `stale` fixture
-([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). `update_check.py` is run by `/restack-journey` and
+([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). A `where` that
+finds its last position still current restates it and writes nothing, not
+even history ([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by

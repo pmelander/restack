@@ -58,7 +58,10 @@ backwards to discovery, not forwards to a choice.
 
 A command that leads somewhere names `Next:` and runs it, without asking. The
 chain pauses only for questions (gates, confirms, a close call between two
-moves), each asked as a choice. Interrupt to redirect.
+moves that each change what the next gate needs), each asked as a choice.
+Interrupt to redirect. When the next step waits on people outside the design,
+the run says who, leads with the asks not yet sent, and stops: a wait is a
+next move.
 
 ---
 

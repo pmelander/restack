@@ -11,6 +11,12 @@ Position tab offered a design review as the next move four days after it had
 run: `where` had written the position, 38 commands and 20 decisions followed,
 and nothing compared the two.
 
+A wait is a next move, and a current position is not rewritten
+([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). Straight after an asks
+pack left everything waiting on three teams, `where` asked the architect to
+choose between two moves that changed nothing, recommending a journey review,
+while the two unsent asks sat in the question's header.
+
 ### Added
 
 - **`journey.py check` dates the position**: a `position:` line with the
@@ -29,6 +35,16 @@ and nothing compared the two.
 - **`/restack-journey where`** (2.7.0) reads everything since the position's
   date first, then writes a dated subsection, `Last Updated` and the phase
   line together, and names any other section older than the history.
+- **`/restack-journey where`** (2.8.0) says when the journey is waiting: the
+  asks not yet sent first, then the pending ones and what each answer starts,
+  recorded as the position's next move. It ends `DONE` with no `Next:` and no
+  question.
+- **`where` leaves a current position alone**: nothing in the history or the
+  decisions since, no document changed, nothing new from the architect. It
+  restates the position and writes nothing, history included.
+- **Two moves are close only if each changes what the next gate needs**
+  (`next-command.md`, every skill). A command that waits on someone outside
+  the design has no next move to invent.
 
 - **The assumption lookup takes a bare number**: `33` finds `A-33`, as
   `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so

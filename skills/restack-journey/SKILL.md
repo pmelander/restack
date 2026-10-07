@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.7.0
+version: 2.8.0
 preamble-tier: 3
 model: opus
 description: |
@@ -392,7 +392,7 @@ path is no longer translated for a Windows Python.
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
-| a ReStack command finishes | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
+| a ReStack command finishes (not a `/restack-journey where` that found the position current and wrote nothing) | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
 
 **Close what the work settles.** Registering a row is half the job. Before a
 command finishes after a decision is answered, an ADR is written or amended, an
@@ -566,7 +566,9 @@ it:**
 - **Two next moves that are genuinely close,** where choosing is the
   architect's call. Ask it as a question, recommended move first. When one move
   is clearly better, run it and add `Alternative: <command> — <why not now>`
-  under the `Next:` line instead.
+  under the `Next:` line instead. A move is a contender only if it changes
+  something the next gate needs. A command that merely can run (a review, a
+  trace, a re-read) is not one because nothing else is.
 
 `NEEDS_DISCOVERY` routes to a specific `/restack-discover` command: that is
 the next command, so run it.
@@ -583,7 +585,10 @@ Rules that keep a chain honest:
   chain and nothing on disk has changed since, do not run it again. Stop with
   `DONE_WITH_CONCERNS` and say why the chain came back to it.
 - **Never invent a next move.** A utility that answered the question has none,
-  and the chain ends there.
+  and the chain ends there. Nor has any command whose next step waits on
+  someone outside the design: name who, what each answer starts, and any ask
+  not yet sent, then end with no `Next:` line. Filling the wait with a command
+  that changes nothing the next gate needs is inventing one.
 - **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
@@ -749,6 +754,24 @@ brief is open. `where` is often asked in the middle of one.
    `position:` line dates the current position and counts the history and
    decisions since. Read everything after that date before trusting anything
    the file says above its history.
+
+   **If the position is still current, say so and stop.** It is current when
+   all of these hold:
+   - the `position:` line reads `nothing in the history since`, with no
+     decision answered since;
+   - the history's last entry is the `where` or `start` that wrote it (without
+     one, same-day work is not counted, ADR-032);
+   - no engagement document is new or changed since its date (`git log`, or
+     modification dates outside a repository);
+   - the architect has brought nothing new into the session: an answer, a
+     number, a send.
+
+   Then restate the position's next move, or what it waits on, and the asks
+   still unsent (`journey.py asks`). Write nothing, and record no history
+   entry: a `where` entry would claim a position was written and move what
+   later reads count from. End `DONE`, with the position's date as the
+   evidence. Skip steps 2 to 6. Any doubt on one of the four: run the full
+   assessment (ADR-033).
 2. Inventory what actually exists on disk, not what the state file claims
    exists. Divergence between the two is itself a finding. If
    `Implementation status:` or `Design boundary:` is missing, ask for it now
@@ -766,6 +789,20 @@ brief is open. `where` is often asked in the middle of one.
    long, the next move is often `settle`.
 5. Recommend the next move, with the alternative you rejected and why. It runs
    once step 6 is done, per *Next command*.
+   **Or the next move is a wait.** When the next gate needs answers only
+   people outside the design can give, and no ReStack command would change
+   anything that gate needs, there is no command to run, and no choice to put
+   to the architect. Say so, in this order:
+   - **asks not yet sent**, by ID and recipient: the architect's to send, and
+     the only thing that shortens the wait. When the architect says one went,
+     record it with `assume asked`;
+   - **asks pending**: recipient, when sent, and what each answer starts;
+   - the command to run when an answer arrives, usually `where`.
+
+   Record it in step 6 as the position's next move
+   (`**Next move:** waiting on <recipients>; when an answer arrives,
+   /restack-journey where`), then end `DONE` with no `Next:` line. A review
+   or trace run to fill the wait is an invented move (ADR-033).
 6. Update `journey-state.md` with the current position and the gaps found:
    - a new `### <date> (/restack-journey where)` subsection at the top of
      *Current Position*, superseding the one below it, with the next move;
