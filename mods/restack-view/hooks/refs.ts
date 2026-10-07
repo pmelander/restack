@@ -72,9 +72,10 @@ export function parseRefs(cell: string): Refs {
   }
 }
 
-// A-09 and A-9 are one assumption, as journey.py has it.
+// A-09 and A-9 are one assumption, as journey.py has it. So is a bare 9: the
+// register holds nothing but A- IDs, so the prefix adds nothing when typed.
 export const assumptionNumber = (id: string): number | undefined => {
-  const m = id.trim().match(/^A-?(\d+)$/i)
+  const m = id.trim().match(/^(?:A-?)?(\d+)$/i)
 
   return m ? Number(m[1]) : undefined
 }
@@ -133,7 +134,7 @@ const pad4 = (n: number): string => String(n).padStart(4, '0')
 // The lookup itself. `rows` is every row of the register.
 export function lookup(input: string, rows: RegisterRow[], sources: Sources): Lookup {
   const n = assumptionNumber(input)
-  if (n === undefined) return { kind: 'error', message: `Type an assumption's ID, such as A-12.` }
+  if (n === undefined) return { kind: 'error', message: `Type an assumption's ID, such as 12 or A-12.` }
   const row = rows.find(r => assumptionNumber(r.id) === n)
   if (row === undefined) return { kind: 'error', message: `A-${n} is not in the register.` }
   const refs = parseRefs(row.depends)

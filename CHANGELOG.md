@@ -3,6 +3,14 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+### Changed
+
+- **The assumption lookup takes a bare number**: `33` finds `A-33`, as
+  `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so
+  the prefix was typing that told the pane nothing.
+
 ## [2.18.0] — 2026-10-07
 
 Assumptions are drained where the work settles them
