@@ -1,6 +1,6 @@
 ---
 name: restack-stressor
-version: 2.4.0
+version: 2.5.0
 preamble-tier: 3
 model: opus
 description: |
@@ -374,9 +374,14 @@ path is no longer translated for a Windows Python.
 | When | Command |
 |---|---|
 | **before** issuing a decision brief | `decision open "<question>" --gate <terrain\|confidence\|iterate\|approach\|brief>` prints the brief's number, `D<n>` |
-| the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no` (or `--actors "yes: added <actor>"`; `--supersedes D<m>` when it reverses one) |
+| the architect has answered | `decision answer D<n> --answer "..." --rationale "..." --actors no --assumptions none` (or `--actors "yes: added <actor>"`; `--assumptions "settles A-3, A-7; changes A-9; raises A-12"`; `--supersedes D<m>` when it reverses one) |
 | a belief the design relies on is unverified | `assume add "<belief>" --source "..." --validates "..." --depends "..."` prints `A-<n>` |
 | only someone outside the design can settle it (a handoff ask) | the same, plus `--ask "<recipient>"`: the team or role that would answer |
+| it is an open design question, a check the build must run, or something only the running system can show | the same, plus `--kind decide`, `--kind test` or `--kind observe` |
+| a row's kind is wrong or missing | `assume kind A-<n> <decide\|test\|observe\|belief>`, after the architect confirms it |
+| the work just touched an ADR, decision, residual, actor or iteration | `assume touching <ID or phrase> ...`: the not-closed rows that name it (read-only) |
+| you need one row's whole record | `assume show A-<n>`: the row (its current state) and its own status lines |
+| you need the register's load | `register`: exposure apart from carried, by kind and age, and four worklists (read-only) |
 | an existing row turns out to be an ask, or a recipient is renamed | `assume route A-<n> "<recipient>"`, after the architect confirms who |
 | the architect says an ask has gone out | `assume asked A-<n> [A-<m> ...] --to "<recipient>"`: keeps each status, records the send |
 | a send was recorded that did not happen | `assume unasked A-<n> [A-<m> ...] --why "..."`: keeps each status, cancels the row's last send |
@@ -384,6 +389,21 @@ path is no longer translated for a Windows Python.
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
 | a `/restack-journey` command finishes | `history add --command "/restack-journey <cmd>" --outcome "..." [--decision D<n>]` |
+
+**Close what the work settles.** Registering a row is half the job. Before a
+command finishes after a decision is answered, an ADR is written or amended, an
+iteration is gated, an ablation is answered or a review finding is confirmed,
+run `assume touching` on what that work was about: the ADRs, decisions,
+residuals and actors it names, and `iteration <n>` at an iterate gate. Put the
+rows it lists to the architect, one choice question each, statuses drawn from
+the evidence and **Still open** last, and write each answer with
+`assume status`. The list is a worklist: a row that only mentions the thing
+in passing stays as it is. A decision's `--assumptions` is the answer to the
+same question, and it is required: `none` is a fine answer, a missing one is
+not. It records the claim and changes no status.
+
+**The row is the current state.** Its status lines are its history. Read the
+row; read the lines when you need to know how it got there.
 
 **A `--why` comes from the record.** Quote or point at what settled it: the
 discovery note, the code read, the architect's answer, the line that already
@@ -464,10 +484,13 @@ the one it replaces. The trail is the point, especially in minefield terrain.
   second table, and never add an "Update" heading. An ask's `Validates it`
   starts `Ask <recipient>:`, and a send is a status line that repeats the
   status with `asked <recipient>` as its reason (`unasked <recipient>: <why>`
-  cancels one recorded in error).
+  cancels one recorded in error). Other kinds start `Decide:`, `Test:` or
+  `Observe:`; a row with no prefix is a belief. The row is the current state;
+  the status lines are its history.
 - **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
   brief, appended at the end. It records whether the decision changed the actor
-  set, because that makes earlier matrices `scored pre-D<n>`.
+  set, because that makes earlier matrices `scored pre-D<n>`, and what it did to
+  the register (`Assumptions: settles A-3; raises A-12`, or `none`).
 - **Journey history** in `journey-state.md`: an append-only list at the **end**
   of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
 

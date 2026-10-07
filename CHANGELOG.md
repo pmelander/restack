@@ -3,6 +3,58 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [2.18.0] — 2026-10-07
+
+Assumptions are drained where the work settles them
+([ADR-031](docs/adr/ADR-031-assumptions-drained-where-the-work-settles-them.md)).
+On one brownfield journey the register reached 172 rows in a week, 100 of
+them not closed, and nobody could say which were live. Every skill said
+"add" and nothing said "close". `journey.py` still never changes a status
+for the architect: what is new lists candidates, records claims, or writes
+a status the architect chose.
+
+### Added
+
+- **Kinds**, as a prefix on `Validates it`, the way an ask's recipient
+  already was: `Decide:` (an open design question), `Test:` (a check the
+  build runs), `Observe:` (something only the running system shows); no
+  prefix is a belief. `assume add --kind`, and `assume kind A-<n> <kind>`
+  for an existing row. The seven columns don't change, so every existing
+  register is still canonical.
+- **`journey.py register`**: the register's load. Exposure apart from
+  carried (rows resolved by design, test pending), by kind and by age, how
+  much is load-bearing (its `Depends on it` names an ADR, decision or
+  residual), and four worklists: said settled and still open, deferred to a
+  step that has passed, resting on something superseded, and decisions
+  waiting for a brief.
+- **`journey.py assume touching <ID or phrase>...`**: the not-closed rows
+  that name what the work just touched. Zero padding and continued ADR lists
+  (`ADR-0005, 0025–0027`) are read as the restack-view mod reads them.
+- **`journey.py assume show A-<n>`**: a row and its own status lines.
+- **`/restack-journey settle [scope]`**: the rows that look answered, put to
+  the architect one choice question each, **Still open** last, each answer
+  written with `assume status`.
+- A twelfth journey failure in `/restack-journey review`: *Assumptions
+  undrained*.
+
+### Changed
+
+- **`decision answer` requires `--assumptions`**: `none`, or
+  `settles A-3, A-7; changes A-9; raises A-12`, every ID a row. It records
+  the claim and changes no status. `decision open` writes the field, an
+  entry opened before it gets the line on answer, and `decision note
+  --assumptions` completes an answered decision that never said.
+- **The steps that settle rows look for them**: `/restack-adr` `create` and
+  `update` (and a new `Assumptions:` header line in the ADR format),
+  `/restack-journey iterate` (step 10, with the register line in the brief),
+  `/restack-stressor ablate` after its answer, and `/restack-design-review`
+  after its findings. `where` reports the register's load.
+- The register template says the row is the current state and the status
+  lines its history, and documents the kinds.
+- `/restack-journey` 2.6.0, `/restack-adr` 2.3.0, `/restack-stressor` 2.5.0,
+  `/restack-design-review` 2.4.0. Every tier 2 and 3 skill carries the new
+  *Journey Files* rows.
+
 ## [2.17.1] — 2026-10-06
 
 ### Changed

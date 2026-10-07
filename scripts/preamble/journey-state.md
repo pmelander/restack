@@ -50,10 +50,13 @@ the one it replaces. The trail is the point, especially in minefield terrain.
   second table, and never add an "Update" heading. An ask's `Validates it`
   starts `Ask <recipient>:`, and a send is a status line that repeats the
   status with `asked <recipient>` as its reason (`unasked <recipient>: <why>`
-  cancels one recorded in error).
+  cancels one recorded in error). Other kinds start `Decide:`, `Test:` or
+  `Observe:`; a row with no prefix is a belief. The row is the current state;
+  the status lines are its history.
 - **Decisions log:** one `## D<n> · <date> · <question>` entry per answered
   brief, appended at the end. It records whether the decision changed the actor
-  set, because that makes earlier matrices `scored pre-D<n>`.
+  set, because that makes earlier matrices `scored pre-D<n>`, and what it did to
+  the register (`Assumptions: settles A-3; raises A-12`, or `none`).
 - **Journey history** in `journey-state.md`: an append-only list at the **end**
   of the file, one line per entry: `- <date> · <command> · <outcome> · <D<n>>`.
 

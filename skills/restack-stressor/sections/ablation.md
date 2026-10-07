@@ -201,7 +201,13 @@ with these options:
 and the brief's own entry are the only journey writes an ablation makes. It
 never edits the matrix or an ADR.
 
-After the answer:
+After the answer, **the register** (ADR-031): run `journey.py assume touching`
+on the target, every residual in the removal set and the actors they created.
+A cut usually settles or withdraws the rows about what it removed; a keep
+usually leaves them as they are. Put each listed row to the architect, one
+choice question each with **Still open** last, write each answer with
+`assume status`, and record the same rows in the answer's `--assumptions`.
+
 - **Kept:** hand off to `/restack-adr update <ADR>` to add the dated line
   `Challenged by removal on <date>: kept because <cells, lens>`. That line is
   the tested justification an inheritor needs.

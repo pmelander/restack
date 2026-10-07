@@ -20,4 +20,10 @@ not briefs) are allowed and are not numbered.
 - **Answer:** [the option chosen, in the architect's words]
 - **Rationale:** [one or two lines]
 - **Changes the actor set:** [no | yes: added/removed <actor>. Matrices scored before this are `scored pre-D1`]
+- **Assumptions:** [none | settles A-<n>, ...; changes A-<n>; raises A-<n>]
 - **Supersedes:** [— | D<n>]
+
+`Assumptions` says what the decision did to the register (ADR-031): rows it
+answers (`settles`), rows whose meaning or footing it alters (`changes`), and
+rows registered because of it (`raises`). It records the claim. Each settled
+row's status is still the architect's, written with `assume status`.
