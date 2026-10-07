@@ -10,7 +10,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { MatrixFile, MatrixState } from '../types'
 import { drawBanner } from './banner.tsx'
-import { askBars, bandParts, bandText, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey.ts'
+import { askBars, bandParts, bandText, positionNote, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey.ts'
 import { fields, items, rule, section } from './layout.tsx'
 import type { Files } from './journey.ts'
 import {
@@ -325,13 +325,15 @@ export const register: Register = on => {
     if (current === null) return next(e)
 
     const { Box, Text } = $.ui.resolve(e)
-    const { lead, next: command, tail } = bandParts(current)
+    const { lead, stale, next: command, tail } = bandParts(current)
     const isWarning = current.kind === 'not-canonical'
     const mine = (
       <Text key="restack-view" wrap="truncate">
         <Text dimColor>restack </Text>
         <Text color={isWarning ? 'warning' : undefined}>{lead}</Text>
-        {command !== undefined && <Text dimColor>{isWarning ? ': ' : lead ? ' · next ' : 'next '}</Text>}
+        {stale !== undefined && <Text dimColor>{lead ? ' · ' : ''}</Text>}
+        {stale !== undefined && <Text color="warning">{stale}</Text>}
+        {command !== undefined && <Text dimColor>{isWarning ? ': ' : lead || stale ? ' · next ' : 'next '}</Text>}
         {command !== undefined && <Text color="suggestion">{command}</Text>}
         {tail !== '' && <Text dimColor> · {tail}</Text>}
       </Text>
@@ -371,7 +373,9 @@ export const register: Register = on => {
         </Box>
       )
     }
-    const command = current.next
+    // The recorded move, or `/restack-journey where` when the position is stale.
+    const command = bandParts(current).next
+    const note = positionNote(current)
     const els = { Box, Text }
     const sectionEls = { Box, Text, Markdown }
     const width = e.props.bodyColumns
@@ -474,11 +478,18 @@ export const register: Register = on => {
             'next',
             'Next move',
             undefined,
-            <Box flexDirection="row" columnGap={2} flexWrap="wrap">
-              <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
-              <Text bold color="suggestion">
-                {command}
-              </Text>
+            <Box flexDirection="column" rowGap={1}>
+              <Box flexDirection="row" columnGap={2} flexWrap="wrap">
+                <Button key="fill-next" label="Put the next command in the prompt" hotkey="n" onPress={() => fillNext($, command)} />
+                <Text bold color="suggestion">
+                  {command}
+                </Text>
+              </Box>
+              {note !== undefined && (
+                <Text color={current.age?.isStale ? 'warning' : undefined} dimColor={!current.age?.isStale} wrap="wrap">
+                  {note}
+                </Text>
+              )}
             </Box>,
           )}
         {bars.length > 0 && section(sectionEls, 'waiting', 'Waiting', lists.asks.length, drawAskBars(els, bars, e.surface, inner))}

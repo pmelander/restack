@@ -5,7 +5,30 @@ individual skills carry their own `version:` in frontmatter.
 
 ## [Unreleased]
 
+A stale position says so, and only `where` rewrites it
+([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). On one journey the
+Position tab offered a design review as the next move four days after it had
+run: `where` had written the position, 38 commands and 20 decisions followed,
+and nothing compared the two.
+
+### Added
+
+- **`journey.py check` dates the position**: a `position:` line with the
+  history entries and decisions since it, whether its next move ran, and when
+  either holds, that `/restack-journey where` rewrites it.
+- **`journey.py history add` notes a stale position** after the entry. It
+  writes nothing else: the position stays the architect's assessment.
+- **restack-view** shows the same line under the next move. A stale position
+  turns the band to `position stale since <date> · next /restack-journey
+  where`, and the button fills `where`.
+
 ### Changed
+
+- **Every ReStack command records its history entry**, not only
+  `/restack-journey`, and carries a stale-position note into its `Next:` line.
+- **`/restack-journey where`** (2.7.0) reads everything since the position's
+  date first, then writes a dated subsection, `Last Updated` and the phase
+  line together, and names any other section older than the history.
 
 - **The assumption lookup takes a bare number**: `33` finds `A-33`, as
   `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so

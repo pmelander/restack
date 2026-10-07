@@ -12,6 +12,18 @@ its *Current Position*, then open asks and open assumptions from the register
 and open decisions from the log. A journey not in the canonical shape shows
 `<file> is not canonical: /restack-journey migrate` and nothing else.
 
+A **stale position**, one whose next move has already run or that a decision
+was answered after, says so instead of offering a finished move
+([ADR-032](../../docs/adr/ADR-032-a-stale-position-says-so.md)):
+
+```text
+restack Greenfield · Documentation/Review · position stale since 2026-04-20 · next /restack-journey where · 1 decision
+```
+
+The Position tab adds a line under the next move: the position's date, the
+history and decisions since, and whether its move ran. `journey.py check`
+prints the same line.
+
 It is a **view**. It reads `docs/journey/` and never writes it, never submits
 a prompt, and no skill depends on it: `/restack-journey where` gives the same
 answer wherever this mod is not loaded. `scripts/check_mods.py` holds its

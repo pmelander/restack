@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.6.0
+version: 2.7.0
 preamble-tier: 3
 model: opus
 description: |
@@ -173,7 +173,10 @@ brief is open. `where` is often asked in the middle of one.
 
 1. Read all four journey state files. If none exist, say so plainly and
    reconstruct from repo evidence (existing ADRs, HLDs, review findings,
-   discovery notes) before assessing anything.
+   discovery notes) before assessing anything. Run `journey.py check`: its
+   `position:` line dates the current position and counts the history and
+   decisions since. Read everything after that date before trusting anything
+   the file says above its history.
 2. Inventory what actually exists on disk, not what the state file claims
    exists. Divergence between the two is itself a finding. If
    `Implementation status:` or `Design boundary:` is missing, ask for it now
@@ -191,7 +194,16 @@ brief is open. `where` is often asked in the middle of one.
    long, the next move is often `settle`.
 5. Recommend the next move, with the alternative you rejected and why. It runs
    once step 6 is done, per *Next command*.
-6. Update `journey-state.md` with the current position and the gaps found.
+6. Update `journey-state.md` with the current position and the gaps found:
+   - a new `### <date> (/restack-journey where)` subsection at the top of
+     *Current Position*, superseding the one below it, with the next move;
+   - `Last Updated` and the `Current Phase` line, to match it;
+   - any other section found older than the history (the Iteration Log,
+     Known Gaps, Journey Health): rewrite it when this assessment covers it,
+     otherwise name it in the position with the command that owns it.
+
+   Then `history add --command "/restack-journey where"`. That entry is what
+   later reads date the position from (ADR-032).
 
 **The most common diagnosis is design-first, discovery-skipped.** When the
 artifacts are an HLD plus a design review full of critical findings and there is

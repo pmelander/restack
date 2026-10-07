@@ -8,10 +8,26 @@ export type Journey = {
   confidence?: string
   // The next ReStack command from Current Position, e.g. `/restack-stressor analyze`.
   next?: string
+  // When the position was written, and what happened after it (ADR-032).
+  age?: PositionAge
   // Undefined when the file is missing, so the band leaves the count out.
   asks?: number
   open?: number
   decisions?: number
+}
+
+// The newest Current Position against the history and the log written after
+// it, as journey.py's position_age reads them (ADR-032).
+export type PositionAge = {
+  date: string
+  // History entries after the position.
+  since: number
+  // The date the recorded next move first ran after the position.
+  done?: string
+  // Decisions answered on a later date than the position, as `D<n>`.
+  decided: string[]
+  // The move ran, or a decision was answered since: `/restack-journey where` rewrites it.
+  isStale: boolean
 }
 
 export type NotCanonical = {

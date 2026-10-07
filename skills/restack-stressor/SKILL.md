@@ -388,7 +388,7 @@ path is no longer translated for a Windows Python.
 | something settles or changes an assumption | `assume status A-<n> "<status>" --why "..."` |
 | a row disagrees with a status line already recorded | `assume sync A-<n>` (or `--all`): the row takes the line's status and date, no new line |
 | an answered decision never said whether it changed the actor set | `decision note D<n> --actors no` (or `"yes: added <actor>"`), marked as recorded later |
-| a `/restack-journey` command finishes | `history add --command "/restack-journey <cmd>" --outcome "..." [--decision D<n>]` |
+| a ReStack command finishes | `history add --command "/restack-<skill> <cmd>" --outcome "..." [--decision D<n>]` |
 
 **Close what the work settles.** Registering a row is half the job. Before a
 command finishes after a decision is answered, an ADR is written or amended, an
@@ -401,6 +401,17 @@ the evidence and **Still open** last, and write each answer with
 in passing stays as it is. A decision's `--assumptions` is the answer to the
 same question, and it is required: `none` is a fine answer, a missing one is
 not. It records the claim and changes no status.
+
+**The position goes stale, and says so.** Current Position, the phase line and
+`Last Updated` are `/restack-journey where`'s assessment, and only `where` (or
+`start`) rewrites them. Never bring them up to date from another command: the
+file would look current while the assessment is not (ADR-032 in the ReStack
+repository). Once the recorded next move has run, or a decision has been
+answered after the position was written, `history add` ends with
+`note: Current Position of <date>: ... Stale: ...`. Carry it into the
+handoff: the `Next:` line is `/restack-journey where` unless this work has a
+step of its own that must come first, and then add
+`Alternative: /restack-journey where — the position is stale` under it.
 
 **The row is the current state.** Its status lines are its history. Read the
 row; read the lines when you need to know how it got there.

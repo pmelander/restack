@@ -102,6 +102,18 @@ for (const surface of SURFACES) {
     expect(tree).toContain('journey-state.md is not canonical: /restack-journey migrate')
   })
 
+  test(`a stale position says so and offers where, on ${surface}`, async ($, on) => {
+    stub(on, 'stale')
+    await $.session.start({ surface, isInteractive: true, cwd: ROOT })
+    const answer = await $.command.run({ command: 'restack-view', args: '' })
+    expect(answer.text).toBe(
+      'Greenfield · Documentation/Review · position stale since 2026-04-20 · next /restack-journey where · 1 decision',
+    )
+
+    const tree = textOf(await (await mountBand($, surface)).drawn())
+    expect(tree).toContain('restack ' + answer.text)
+  })
+
   test(`no journey, no line, on ${surface}`, async ($, on) => {
     stub(on, null)
     await $.session.start({ surface, isInteractive: true, cwd: ROOT })
