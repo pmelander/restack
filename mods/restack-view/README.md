@@ -101,8 +101,8 @@ they follow light and dark, and neither is a verdict: there is no red for
 late and no green for done.
 
 **Put the next command in the prompt** (`n`, on Position) puts the next move in
-the prompt box and closes the pane. You read it and press Enter: the mod never
-submits. With a draft already typed, it keeps your draft and shows the command
+the prompt box and leaves the pane open. Esc takes you to the prompt, the pane
+staying up; you read the command and press Enter: the mod never submits. With a draft already typed, it keeps your draft and shows the command
 in a toast instead. Each tab stays under Claude Code's 10,000-character element
 limit and ends with how many rows are left and where the rest is.
 

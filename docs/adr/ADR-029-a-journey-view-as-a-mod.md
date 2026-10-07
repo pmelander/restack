@@ -210,8 +210,10 @@ nothing else changes.
      Next Session Prep), *Asks* (open asks by recipient), *Assumptions*
      (open rows) and *Decisions* (open decisions).
    - **One button, "Put the next command in the prompt",** fills the prompt
-     box with the next command and closes the pane, so the keys go back to
-     the prompt. The architect reads it and presses Enter. The mod never
+     box with the next command and leaves the pane open (amended: closing
+     it lost the view the architect was reading). The pane is opened again
+     without `closeOnEscape`, so Esc hands the keys to the prompt and the
+     pane stays. The architect reads it and presses Enter. The mod never
      submits. **It never overwrites a draft:** it reads the prompt first
      (`$.prompt.read`), and if anything is typed there it shows a toast with
      the command instead.

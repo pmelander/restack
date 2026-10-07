@@ -34,6 +34,13 @@ and nothing compared the two.
   `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so
   the prefix was typing that told the pane nothing.
 
+### Fixed
+
+- **"Put the next command in the prompt" no longer closes the
+  `/restack-view` pane.** It fills the prompt and leaves the pane open; Esc
+  takes the keys to the prompt and the pane stays up beside it (ADR-029,
+  amended).
+
 ## [2.18.0] — 2026-10-07
 
 Assumptions are drained where the work settles them
