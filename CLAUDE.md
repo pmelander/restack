@@ -88,7 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-028
+    ├── adr/                            # ADR-001 .. ADR-031
     └── ...                             # Generated documentation location
 ```
 
@@ -288,8 +288,10 @@ Two rules follow from [ADR-010](docs/adr/ADR-010-skills-are-self-contained.md):
    every check against `tests/fixtures/trace/`, a synthetic engagement with a
    planted defect and a clean neighbour per check. `tests/test_journey.py`
    runs every write and the migration against `tests/fixtures/journey/`, a
-   canonical journey, a legacy one and one with asks, and checks that
-   migration loses no word and that recording a sent ask changes no status.
+   canonical journey, a legacy one, one with asks and one with a planted
+   case per register worklist, and checks that migration loses no word and
+   that neither recording a sent ask nor a decision's `--assumptions`
+   changes a status.
    `tests/test_matrix.py` runs the matrix arithmetic against
    `tests/fixtures/matrix/`, three iterations and their residuals with the
    numbers known, including a declared substrate and a removal with
@@ -311,7 +313,10 @@ date on the architect's behalf. Recording a sent ask repeats the row's
 status rather than taking one, for the same reason
 ([ADR-026](docs/adr/ADR-026-asks-routed-in-the-register.md)); cancelling a send recorded in error
 likewise repeats the status
-([ADR-027](docs/adr/ADR-027-asks-triaged-with-the-architect-first.md)). `update_check.py` is run by `/restack-journey` and
+([ADR-027](docs/adr/ADR-027-asks-triaged-with-the-architect-first.md)).
+`decision answer --assumptions` records which rows a decision settles and
+changes no status; `register` and `assume touching` only list candidates
+([ADR-031](docs/adr/ADR-031-assumptions-drained-where-the-work-settles-them.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet
 prints nothing, which is the same as "up to date"
 ([ADR-016](docs/adr/ADR-016-update-awareness.md)). `trace.py` is run by
@@ -376,6 +381,7 @@ git push origin feature/new-skill-name
 /restack-journey review          # Journey health check
 /restack-journey cadence         # Establish an ongoing rhythm
 /restack-journey asks [who]      # Architect answers first; send-ready asks for the rest
+/restack-journey settle [scope]  # Rows that look answered, put to the architect one by one
 
 /restack-discover paths                  # Map paths through an existing system
 /restack-discover actor <name>           # Investigate what an actor actually does
