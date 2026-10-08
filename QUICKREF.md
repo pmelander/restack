@@ -13,7 +13,8 @@ later, no clone needed. A one-line notice appears at most once a
 day when a newer version is out; `/restack-upgrade off` turns it off.
 `./setup --mods` adds the journey band above the prompt and the `/restack-view`
 pane: position and rhythm, waiting asks, the register and what rests on an
-assumption, decisions, and the impact matrix; `/restack-view band off` hides the band. See [INSTALL.md](INSTALL.md).
+assumption, decisions, and the impact matrix; `/restack-view band off` hides the band. See
+[The journey view](docs/VIEW.md) and [INSTALL.md](INSTALL.md).
 
 ---
 

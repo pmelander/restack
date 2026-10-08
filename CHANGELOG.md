@@ -46,6 +46,10 @@ while the two unsent asks sat in the question's header.
   (`next-command.md`, every skill). A command that waits on someone outside
   the design has no next move to invent.
 
+- **The journey view has its own page**, [docs/VIEW.md](docs/VIEW.md): the
+  band and every tab of the `/restack-view` pane, what to look for in each,
+  and what it deliberately does not do. The README gains a section on it.
+
 - **The assumption lookup takes a bare number**: `33` finds `A-33`, as
   `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so
   the prefix was typing that told the pane nothing.
