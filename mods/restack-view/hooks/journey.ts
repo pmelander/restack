@@ -117,6 +117,10 @@ const command = (text: string | undefined): string | undefined => {
   return bare?.[0]
 }
 
+// Who a next move that is a wait names (ADR-033): `waiting on <recipients>; when ...`.
+const waitingOf = (text: string | undefined): string | undefined =>
+  text?.replace(/\*/g, '').match(/^waiting on\s+(.+?)\s*(?:;|$)/i)?.[1].replace(/\.$/, '')
+
 const confidenceOf = (text: string | undefined): string | undefined =>
   text?.match(/^(High|Medium|Low)\b/i)?.[1]
 
@@ -195,7 +199,8 @@ export function positionNote(view: Journey): string | undefined {
     parts.push(`${plural(age.decided.length, 'decision', 'decisions')} answered since (${range})`)
   }
   if (age.done !== undefined) parts.push(`its next move, ${view.next}, ran ${age.done}`)
-  const text = `Current Position of ${age.date}: ${parts.join('; ')}`
+  const waiting = view.waiting === undefined ? '' : `, waiting on ${view.waiting}`
+  const text = `Current Position of ${age.date}${waiting}: ${parts.join('; ')}`
 
   return age.isStale ? `${text}. Stale: \`${WHERE}\` rewrites it` : text
 }
@@ -326,13 +331,15 @@ export function readJourney(files: Files): View | null {
 
   const head = header(files.state)
   const position = currentPosition(files.state)
-  const next = command(field(position, "What's next", 'Next move'))
+  const move = field(position, "What's next", 'Next move')
+  const next = command(move)
   const journey: Journey = {
     kind: 'journey',
     terrain: terrainOf(field(head, 'Terrain Type')),
     phase: compact(field(head, 'Current Phase')),
     confidence: confidenceOf(field(position, 'Confidence level')),
     next,
+    waiting: waitingOf(move),
     age: positionAge(files.state, files.log, next),
     asks: register?.asks,
     open: register?.open,
@@ -346,8 +353,10 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n === 1
 
 // The band's line, as pieces so the drawing can colour them. The same text
 // answers `/restack-view` where nothing draws. A stale position offers the
-// command that rewrites it in place of the move it recorded (ADR-032).
-export function bandParts(view: View): { lead: string; stale?: string; next?: string; tail: string } {
+// command that rewrites it in place of the move it recorded (ADR-032). A
+// current position that is a wait says who it waits on, and offers no command:
+// there is nothing to run until an answer arrives (ADR-033).
+export function bandParts(view: View): { lead: string; stale?: string; waiting?: string; next?: string; tail: string } {
   if (view.kind === 'not-canonical') {
     return { lead: `${view.file} is not canonical`, next: '/restack-journey migrate', tail: '' }
   }
@@ -362,16 +371,17 @@ export function bandParts(view: View): { lead: string; stale?: string; next?: st
   return {
     lead,
     stale: isStale ? `position stale since ${view.age!.date}` : undefined,
-    next: isStale ? WHERE : view.next,
+    waiting: !isStale && view.waiting !== undefined ? `waiting on ${view.waiting}` : undefined,
+    next: isStale ? WHERE : view.waiting !== undefined ? undefined : view.next,
     tail: counts.join(' · '),
   }
 }
 
 export function bandText(view: View): string {
-  const { lead, stale, next, tail } = bandParts(view)
+  const { lead, stale, waiting, next, tail } = bandParts(view)
   if (view.kind === 'not-canonical') return `${lead}: ${next}`
 
-  return [lead, stale, next === undefined ? undefined : `next ${next}`, tail].filter(Boolean).join(' · ')
+  return [lead, stale, waiting, next === undefined ? undefined : `next ${next}`, tail].filter(Boolean).join(' · ')
 }
 
 // --- the pane ----------------------------------------------------------------

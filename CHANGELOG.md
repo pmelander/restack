@@ -52,6 +52,14 @@ while the two unsent asks sat in the question's header.
 
 ### Fixed
 
+- **A wait no longer leaves the position stale behind it** (ADR-033,
+  amended). A command that answered a decision while the journey waited ended
+  on the wait with no `Next:`, while the decision had made the position stale
+  and the band said run `where`. The stale note now wins: the command hands
+  off to `/restack-journey where` (2.8.1), which records the wait.
+- **A recorded wait reads as one.** `journey.py check` says `waiting on
+  <recipients>` in its `position:` line, and restack-view's band shows it in
+  place of a next command. The `waiting` fixture holds both readers to it.
 - **"Put the next command in the prompt" no longer closes the
   `/restack-view` pane.** It fills the prompt and leaves the pane open; Esc
   takes the keys to the prompt and the pane stays up beside it (ADR-029,

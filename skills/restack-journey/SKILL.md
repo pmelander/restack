@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.8.0
+version: 2.8.1
 preamble-tier: 3
 model: opus
 description: |
@@ -415,7 +415,9 @@ answered after the position was written, `history add` ends with
 `note: Current Position of <date>: ... Stale: ...`. Carry it into the
 handoff: the `Next:` line is `/restack-journey where` unless this work has a
 step of its own that must come first, and then add
-`Alternative: /restack-journey where — the position is stale` under it.
+`Alternative: /restack-journey where — the position is stale` under it. This
+holds when the work ends on a wait too: `where` is what records the wait, so
+the file and the reply say the same thing.
 
 **The row is the current state.** Its status lines are its history. Read the
 row; read the lines when you need to know how it got there.
@@ -588,7 +590,10 @@ Rules that keep a chain honest:
   and the chain ends there. Nor has any command whose next step waits on
   someone outside the design: name who, what each answer starts, and any ask
   not yet sent, then end with no `Next:` line. Filling the wait with a command
-  that changes nothing the next gate needs is inventing one.
+  that changes nothing the next gate needs is inventing one. **Except when the
+  position is stale** (`history add` noted it): then the next move is
+  `/restack-journey where`, which records the wait in the position. A wait said
+  only in the reply leaves the file recommending the old move.
 - **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back
@@ -801,8 +806,10 @@ brief is open. `where` is often asked in the middle of one.
 
    Record it in step 6 as the position's next move
    (`**Next move:** waiting on <recipients>; when an answer arrives,
-   /restack-journey where`), then end `DONE` with no `Next:` line. A review
-   or trace run to fill the wait is an invented move (ADR-033).
+   /restack-journey where`), then end `DONE` with no `Next:` line. Begin the
+   field with `waiting on` and end the names at the `;`: `journey.py check`
+   reads who from it. A review or trace run to fill the wait is an invented
+   move (ADR-033).
 6. Update `journey-state.md` with the current position and the gaps found:
    - a new `### <date> (/restack-journey where)` subsection at the top of
      *Current Position*, superseding the one below it, with the next move;

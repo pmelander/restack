@@ -325,7 +325,8 @@ changes no status; `register` and `assume touching` only list candidates
 ran, or a decision was answered after it) and never rewrite it: only
 `/restack-journey where` does, and the restack-view mod reads the same rule
 from the same `stale` fixture
-([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). A `where` that
+([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)), and a recorded
+wait (`waiting on ...;`) from the `waiting` fixture. A `where` that
 finds its last position still current restates it and writes nothing, not
 even history ([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). `update_check.py` is run by `/restack-journey` and
 `/restack-discover` through `update-check.md`; if it is missing, the snippet

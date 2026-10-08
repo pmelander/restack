@@ -64,7 +64,7 @@ class ModFixtureCase(unittest.TestCase):
     """
 
     def test_mod_fixtures_are_canonical(self):
-        for name in ("band", "lived", "stale"):
+        for name in ("band", "lived", "stale", "waiting"):
             with self.subTest(fixture=name):
                 code, out = run("check", "--docs", str(FIXTURES / name), "--date", DATE)
                 self.assertEqual(code, 0, out)
@@ -364,6 +364,44 @@ class Position(JourneyCase):
         shutil.copytree(FIXTURES / "lived", self.docs)
         out = self.j("history", "add", "--command", "/restack-adr update 0007", "--outcome", "o")[1]
         self.assertNotIn("note:", out)
+
+
+class Waiting(JourneyCase):
+    """A position whose next move is a wait (ADR-033). `waiting` is written by
+    `where`, with nothing after it; the restack-view mod's tests read the same
+    fixture. Answering a decision afterwards makes it stale like any other
+    position: the wait it records may no longer be the wait."""
+
+    fixture = "waiting"
+    D5_OPEN = "## D5 · 2026-04-22 · Who holds the vendor's support contract?\n\n- **Gate:** brief\n- **Answer:** (open)"
+    D5_ANSWERED = "## D5 · 2026-04-23 · Who holds the vendor's support contract?\n\n- **Gate:** brief\n- **Answer:** depot operations"
+
+    def age(self, log):
+        return load_module().position_age(self.text("journey-state.md").split("\n"), log.split("\n"))
+
+    def test_a_recorded_wait_is_current_and_names_who(self):
+        age = self.age(self.text("decisions-log.md"))
+        self.assertEqual(age["waiting"], "depot operations and the locker vendor")
+        self.assertEqual(age["next"], "/restack-journey where")
+        self.assertEqual((age["since"], age["stale"]), (0, False))
+        out = self.j("check")[1]
+        self.assertIn("position: Current Position of 2026-04-22, waiting on depot operations and the "
+                      "locker vendor: nothing in the history since", out)
+
+    def test_a_decision_after_the_wait_makes_it_stale(self):
+        log = self.text("decisions-log.md")
+        self.assertIn(self.D5_OPEN, log)
+        age = self.age(log.replace(self.D5_OPEN, self.D5_ANSWERED))
+        self.assertEqual((age["decided"], age["stale"]), (["D5"], True))
+        self.assertEqual(load_module().position_note(age),
+                         "Current Position of 2026-04-22, waiting on depot operations and the locker vendor: "
+                         "nothing in the history since; 1 decision answered since (D5). "
+                         "Stale: `/restack-journey where` rewrites it")
+
+    def test_a_move_that_is_not_a_wait_names_no_one(self):
+        state = self.text("journey-state.md").replace("waiting on depot operations", "chase depot operations")
+        age = load_module().position_age(state.split("\n"))
+        self.assertIsNone(age["waiting"])
 
 
 class Legacy(JourneyCase):

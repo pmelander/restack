@@ -17,6 +17,10 @@ asks pack. Feedback from that engagement, anonymised.
 
 **Review Date:** 2027-04-07
 
+> **Amended 2026-10-08:** decisions 4 and 5 added. The first version let a
+> command end on a wait over a stale position, and the view still offered a
+> command while the journey waited.
+
 ## Context
 
 An asks pack ended with everything left waiting on three recipients: one
@@ -77,6 +81,32 @@ No history entry, because ADR-032 dates the position from the `where` entry in
 the history. An entry from a `where` that wrote nothing would claim a position
 that does not exist, and the next read would count from it.
 
+### 4. A stale position comes before the wait *(added 2026-10-08)*
+
+On the same engagement, a session answered a decision while the journey
+waited (it re-routed an ask to another team), said everything left was a
+wait, and ended with no `Next:`, telling the architect to run `where` when an
+answer arrived. The decision made the position stale (ADR-032), and the
+restack-view band said so: `position stale since <date> · next
+/restack-journey where`. The reply said wait; the file and the view said run
+`where` now. The view was right: the recorded wait still named the team the
+ask had left.
+
+The two rules disagreed, and the newer one won by accident. Now the stale
+note wins: a command that ends on a wait, and got the note from `history
+add`, hands off to `/restack-journey where`, which records the wait. Only
+`where` ends on a bare wait, because only `where` writes it down.
+
+### 5. A recorded wait reads as one *(added 2026-10-08)*
+
+The wait's field begins `waiting on <recipients>;`. `journey.py check` reads
+who from it into the `position:` line (`Current Position of <date>, waiting on
+<recipients>: ...`), and restack-view's band shows `waiting on <recipients>` in
+place of `next <command>`: there is nothing to run until an answer arrives.
+The Position tab keeps the command the wait names behind its button, for when
+one does. A stale wait shows as any stale position does. Both read the
+`waiting` fixture.
+
 ## Consequences
 
 ### Positive
@@ -99,8 +129,8 @@ that does not exist, and the next read would count from it.
 
 ### Neutral
 
-- No script, file shape or fixture changes. `journey.py` and the mod read the
-  recorded wait as an ordinary next move.
+- No file shape changes. The wait is a sentence in the existing Next move
+  field; a journey with none reads as before.
 
 ## Knock-on changes
 
@@ -113,6 +143,10 @@ All done in the same step.
 | `scripts/preamble/journey-files.md` | a `where` that wrote nothing records no history | done 2026-10-07 |
 | [ADR-020](ADR-020-follow-up-commands-run-without-pause.md) | "two moves genuinely close" narrowed | marked 2026-10-07 |
 | CLAUDE.md, QUICKREF.md, CHANGELOG.md | the behaviour and the ADR | done 2026-10-07 |
+| `scripts/preamble/next-command.md`, `journey-files.md` | decision 4: a stale position hands off to `where` even on a wait | done 2026-10-08 |
+| `skills/restack-journey/scripts/journey.py`, `mods/restack-view/hooks/journey.ts`, `register.tsx`, `types/index.d.ts` | decision 5: `waiting` read from the field; the `position:` line and the band | done 2026-10-08: `/restack-journey` 2.8.1 |
+| `tests/fixtures/journey/waiting/`, `tests/test_journey.py`, the mod's tests | one fixture, current and stale, the same text from both readers | done 2026-10-08 |
+| `mods/restack-view/README.md` | the waiting band | done 2026-10-08 |
 
 ## Alternatives considered
 

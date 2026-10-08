@@ -63,7 +63,9 @@ answered after the position was written, `history add` ends with
 `note: Current Position of <date>: ... Stale: ...`. Carry it into the
 handoff: the `Next:` line is `/restack-journey where` unless this work has a
 step of its own that must come first, and then add
-`Alternative: /restack-journey where — the position is stale` under it.
+`Alternative: /restack-journey where — the position is stale` under it. This
+holds when the work ends on a wait too: `where` is what records the wait, so
+the file and the reply say the same thing.
 
 **The row is the current state.** Its status lines are its history. Read the
 row; read the lines when you need to know how it got there.

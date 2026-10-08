@@ -328,7 +328,7 @@ export const register: Register = on => {
     if (current === null) return next(e)
 
     const { Box, Text } = $.ui.resolve(e)
-    const { lead, stale, next: command, tail } = bandParts(current)
+    const { lead, stale, waiting, next: command, tail } = bandParts(current)
     const isWarning = current.kind === 'not-canonical'
     const mine = (
       <Text key="restack-view" wrap="truncate">
@@ -336,6 +336,8 @@ export const register: Register = on => {
         <Text color={isWarning ? 'warning' : undefined}>{lead}</Text>
         {stale !== undefined && <Text dimColor>{lead ? ' · ' : ''}</Text>}
         {stale !== undefined && <Text color="warning">{stale}</Text>}
+        {waiting !== undefined && <Text dimColor>{lead ? ' · ' : ''}</Text>}
+        {waiting !== undefined && <Text>{waiting}</Text>}
         {command !== undefined && <Text dimColor>{isWarning ? ': ' : lead || stale ? ' · next ' : 'next '}</Text>}
         {command !== undefined && <Text color="suggestion">{command}</Text>}
         {tail !== '' && <Text dimColor> · {tail}</Text>}
@@ -377,7 +379,8 @@ export const register: Register = on => {
       )
     }
     // The recorded move, or `/restack-journey where` when the position is stale.
-    const command = bandParts(current).next
+    // A wait keeps the command it names for when an answer arrives; the note says who.
+    const command = bandParts(current).next ?? current.next
     const note = positionNote(current)
     const els = { Box, Text }
     const sectionEls = { Box, Text, Markdown }

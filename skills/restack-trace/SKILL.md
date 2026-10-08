@@ -165,7 +165,10 @@ Rules that keep a chain honest:
   and the chain ends there. Nor has any command whose next step waits on
   someone outside the design: name who, what each answer starts, and any ask
   not yet sent, then end with no `Next:` line. Filling the wait with a command
-  that changes nothing the next gate needs is inventing one.
+  that changes nothing the next gate needs is inventing one. **Except when the
+  position is stale** (`history add` noted it): then the next move is
+  `/restack-journey where`, which records the wait in the position. A wait said
+  only in the reply leaves the file recommending the old move.
 - **Mid-chain, a command ends at its status line and `Next:`.**
 
 **If the `Skill` tool is unavailable or the host refuses the call,** fall back

@@ -1178,6 +1178,8 @@ def slash_command(text: str) -> str:
 HISTORY_LINE = re.compile(r"^\s*-\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.*)$")
 # The commands that write Current Position (ADR-032).
 WRITES_POSITION = re.compile(r"^/(?:restack-)?journey (?:start|where)\b")
+# A next move that is a wait (ADR-033): `waiting on <recipients>; when ...`.
+WAITING = re.compile(r"^waiting on\s+(.+?)\s*(?:;|$)", re.I)
 
 
 def normal_command(text: str) -> str:
@@ -1233,6 +1235,7 @@ def position_age(lines: list[str], log: list[str] | None = None) -> dict | None:
     same-day entries are left out: it cannot tell which side they fall on.
     `done` is the date of the first entry after it that ran its next move;
     `decided` the decisions answered after it. It is stale when either holds.
+    `waiting` is who a recorded wait names (ADR-033), else None.
     None when the file has no Current Position or no date for it.
     """
     start = next((i for i, l in enumerate(lines) if re.match(r"^##\s+current position\b", l, re.I)), None)
@@ -1254,7 +1257,9 @@ def position_age(lines: list[str], log: list[str] | None = None) -> dict | None:
     date = found.group(0)
     field = re.search(r"^(?:\s*-\s+)?\*\*(?:What's next|Next move)(?: \([^)]*\))?:\*\*\s*(.+?)\s*$",
                       "\n".join(section), re.I | re.M)
-    move = first_command(field.group(1) if field and not field.group(1).startswith("[") else None)
+    value = field.group(1) if field and not field.group(1).startswith("[") else None
+    move = first_command(value)
+    wait = WAITING.match(value.replace("*", "")) if value else None
 
     entries = []
     span = history_span(lines)
@@ -1268,7 +1273,8 @@ def position_age(lines: list[str], log: list[str] | None = None) -> dict | None:
              if d > date or (d == date and writer is not None and i > writer)]
     done = next((d for d, c in after if move and ran(c, move)), None)
     decided = decided_after(log or [], date)
-    return {"date": date, "next": move, "since": len(after), "done": done, "decided": decided,
+    return {"date": date, "next": move, "waiting": wait.group(1).rstrip(".") if wait else None,
+            "since": len(after), "done": done, "decided": decided,
             "stale": done is not None or bool(decided)}
 
 
@@ -1285,7 +1291,8 @@ def position_note(age: dict | None) -> str | None:
                      f"({d[0]}{'' if len(d) == 1 else '–' + d[-1]})")
     if age["done"]:
         parts.append(f"its next move, {age['next']}, ran {age['done']}")
-    text = f"Current Position of {age['date']}: " + "; ".join(parts)
+    waiting = f", waiting on {age['waiting']}" if age.get("waiting") else ""
+    text = f"Current Position of {age['date']}{waiting}: " + "; ".join(parts)
     return text + (". Stale: `/restack-journey where` rewrites it" if age["stale"] else "")
 
 

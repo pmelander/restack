@@ -8,6 +8,8 @@ export type Journey = {
   confidence?: string
   // The next ReStack command from Current Position, e.g. `/restack-stressor analyze`.
   next?: string
+  // Who the position waits on, when its next move is a wait (ADR-033).
+  waiting?: string
   // When the position was written, and what happened after it (ADR-032).
   age?: PositionAge
   // Undefined when the file is missing, so the band leaves the count out.
