@@ -3,67 +3,55 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [Unreleased]
+## [2.19.0] — 2026-10-08
 
-A stale position says so, and only `where` rewrites it
-([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)). On one journey the
-Position tab offered a design review as the next move four days after it had
-run: `where` had written the position, 38 commands and 20 decisions followed,
-and nothing compared the two.
-
-A wait is a next move, and a current position is not rewritten
-([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). Straight after an asks
-pack left everything waiting on three teams, `where` asked the architect to
-choose between two moves that changed nothing, recommending a journey review,
-while the two unsent asks sat in the question's header.
+The journey position keeps up with the work. It says when it is stale and
+only `where` rewrites it
+([ADR-032](docs/adr/ADR-032-a-stale-position-says-so.md)), and when the work
+is waiting on other people, that wait is the position's next move
+([ADR-033](docs/adr/ADR-033-a-wait-is-a-next-move.md)). On one journey the
+Position tab offered a design review four days after it had run. On another,
+`where` asked the architect to choose between two moves that changed nothing
+while two asks sat unsent.
 
 ### Added
 
 - **`journey.py check` dates the position**: a `position:` line with the
   history entries and decisions since it, whether its next move ran, and when
-  either holds, that `/restack-journey where` rewrites it.
+  either holds, that `/restack-journey where` rewrites it. A position whose
+  next move is a wait also says who it waits on.
 - **`journey.py history add` notes a stale position** after the entry. It
   writes nothing else: the position stays the architect's assessment.
 - **restack-view** shows the same line under the next move. A stale position
   turns the band to `position stale since <date> · next /restack-journey
-  where`, and the button fills `where`.
+  where`, and the button fills `where`. A recorded wait shows `waiting on
+  <recipients>` in place of a next command.
+- **The journey view has its own page**, [docs/VIEW.md](docs/VIEW.md): the
+  band and every tab of the `/restack-view` pane, what to look for in each,
+  and what it deliberately does not do. The README gains a section on it.
 
 ### Changed
 
 - **Every ReStack command records its history entry**, not only
   `/restack-journey`, and carries a stale-position note into its `Next:` line.
-- **`/restack-journey where`** (2.7.0) reads everything since the position's
+- **`/restack-journey where`** (2.8.1) reads everything since the position's
   date first, then writes a dated subsection, `Last Updated` and the phase
   line together, and names any other section older than the history.
-- **`/restack-journey where`** (2.8.0) says when the journey is waiting: the
-  asks not yet sent first, then the pending ones and what each answer starts,
-  recorded as the position's next move. It ends `DONE` with no `Next:` and no
-  question.
+- **`where` says when the journey is waiting**: the asks not yet sent first,
+  then the pending ones and what each answer starts, recorded as the
+  position's next move. It ends `DONE` with no `Next:` and no question.
 - **`where` leaves a current position alone**: nothing in the history or the
   decisions since, no document changed, nothing new from the architect. It
   restates the position and writes nothing, history included.
 - **Two moves are close only if each changes what the next gate needs**
   (`next-command.md`, every skill). A command that waits on someone outside
-  the design has no next move to invent.
-
-- **The journey view has its own page**, [docs/VIEW.md](docs/VIEW.md): the
-  band and every tab of the `/restack-view` pane, what to look for in each,
-  and what it deliberately does not do. The README gains a section on it.
-
+  the design has no next move to invent, unless the position is stale: then
+  it hands off to `where`, which records the wait.
 - **The assumption lookup takes a bare number**: `33` finds `A-33`, as
-  `A-33` and `A-033` still do. The register holds nothing but `A-` IDs, so
-  the prefix was typing that told the pane nothing.
+  `A-33` and `A-033` still do.
 
 ### Fixed
 
-- **A wait no longer leaves the position stale behind it** (ADR-033,
-  amended). A command that answered a decision while the journey waited ended
-  on the wait with no `Next:`, while the decision had made the position stale
-  and the band said run `where`. The stale note now wins: the command hands
-  off to `/restack-journey where` (2.8.1), which records the wait.
-- **A recorded wait reads as one.** `journey.py check` says `waiting on
-  <recipients>` in its `position:` line, and restack-view's band shows it in
-  place of a next command. The `waiting` fixture holds both readers to it.
 - **"Put the next command in the prompt" no longer closes the
   `/restack-view` pane.** It fills the prompt and leaves the pane open; Esc
   takes the keys to the prompt and the pane stays up beside it (ADR-029,
