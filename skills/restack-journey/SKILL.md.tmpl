@@ -1,6 +1,6 @@
 ---
 name: restack-journey
-version: 2.8.0
+version: 2.8.1
 preamble-tier: 3
 model: opus
 description: |
@@ -224,8 +224,10 @@ brief is open. `where` is often asked in the middle of one.
 
    Record it in step 6 as the position's next move
    (`**Next move:** waiting on <recipients>; when an answer arrives,
-   /restack-journey where`), then end `DONE` with no `Next:` line. A review
-   or trace run to fill the wait is an invented move (ADR-033).
+   /restack-journey where`), then end `DONE` with no `Next:` line. Begin the
+   field with `waiting on` and end the names at the `;`: `journey.py check`
+   reads who from it. A review or trace run to fill the wait is an invented
+   move (ADR-033).
 6. Update `journey-state.md` with the current position and the gaps found:
    - a new `### <date> (/restack-journey where)` subsection at the top of
      *Current Position*, superseding the one below it, with the next move;

@@ -216,6 +216,34 @@ test('a fresh position says so, and the band keeps its move', () => {
   expect(bandText(view)).toContain('next /restack-design-review complete')
 })
 
+// The `waiting` fixture: a position whose next move is a wait (ADR-033), as
+// the Waiting case expects of journey.py.
+const D5_OPEN = "## D5 · 2026-04-22 · Who holds the vendor's support contract?\n\n- **Gate:** brief\n- **Answer:** (open)"
+const D5_ANSWERED = "## D5 · 2026-04-23 · Who holds the vendor's support contract?\n\n- **Gate:** brief\n- **Answer:** depot operations"
+
+test('a recorded wait says who, and the band offers no command', () => {
+  const view = readJourney(filesOf('waiting'))
+  if (view?.kind !== 'journey') throw new Error('expected a journey')
+  expect(view.waiting).toBe('depot operations and the locker vendor')
+  expect(view.next).toBe('/restack-journey where')
+  expect(view.age).toMatchObject({ since: 0, isStale: false })
+  expect(positionNote(view)).toBe(
+    'Current Position of 2026-04-22, waiting on depot operations and the locker vendor: nothing in the history since',
+  )
+  expect(bandText(view)).toBe(
+    'Greenfield · Documentation/Review · waiting on depot operations and the locker vendor · 1 decision',
+  )
+})
+
+test('a decision after the wait makes it stale, and the band offers where', () => {
+  const files = filesOf('waiting')
+  expect(files.log).toContain(D5_OPEN)
+  const view = readJourney({ ...files, log: files.log.replace(D5_OPEN, D5_ANSWERED) })
+  if (view?.kind !== 'journey') throw new Error('expected a journey')
+  expect(view.age).toMatchObject({ decided: ['D5'], isStale: true })
+  expect(bandText(view)).toBe('Greenfield · Documentation/Review · position stale since 2026-04-22 · next /restack-journey where · 0 decisions')
+})
+
 test('ran is the command and its arguments, not a longer word', () => {
   expect(ran('/stressor walk courier-fill', '/restack-stressor walk')).toBe(true)
   expect(ran('`/restack-adr update 0007` (SYS-1)', '/restack-adr update 0007')).toBe(true)

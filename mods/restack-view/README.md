@@ -24,6 +24,15 @@ was answered after, says so instead of offering a finished move
 restack Greenfield · Documentation/Review · position stale since 2026-04-20 · next /restack-journey where · 1 decision
 ```
 
+A position whose next move is a **wait** says who it waits on and offers no
+command, since nothing runs until an answer arrives
+([ADR-033](../../docs/adr/ADR-033-a-wait-is-a-next-move.md)). The Position tab
+keeps the command the wait names behind its button, for when one does:
+
+```text
+restack Greenfield · Documentation/Review · waiting on depot operations and the locker vendor · 1 decision
+```
+
 The Position tab adds a line under the next move: the position's date, the
 history and decisions since, and whether its move ran. `journey.py check`
 prints the same line.
