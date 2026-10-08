@@ -13,6 +13,10 @@ drift found, updates installed. The skills run the method and keep the record:
 discovery, stressor analysis, decisions, documentation, and the consistency of
 a long engagement. You make the calls.
 
+An optional view keeps the engagement on screen: one line above the prompt
+that says where the journey stands, and a pane that draws the matrix, the
+waiting and the weight a belief carries ([The journey view](docs/VIEW.md)).
+
 ---
 
 ## The problem this addresses
@@ -115,8 +119,8 @@ line if a newer version is out. It never upgrades itself, and
 
 ### Optional extras
 
-Neither is required — sixteen of the seventeen skills work without either, and
-`setup` tells you which are present.
+None is required — sixteen of the seventeen skills work without any of them,
+and `setup` tells you which are present.
 
 ```bash
 pip install -r requirements.txt   # openpyxl — /restack-excel reads .xlsx
@@ -125,16 +129,10 @@ codex login
 ./setup --mods                    # the journey band and pane (Windows: .\setup.ps1 -Mods)
 ```
 
-**The journey band and pane** are a read-only mod. The band keeps where the
-journey stands on screen: terrain, phase, the next command, and the open asks,
-assumptions and decisions, without spending a turn to ask
-([ADR-029](docs/adr/ADR-029-a-journey-view-as-a-mod.md)). `/restack-view` opens
-the pane, which draws what the text hides
-([ADR-030](docs/adr/ADR-030-journey-view-visuals.md)): who the open asks are
-waiting on and for how long, the newest impact matrix one lane per actor, what
-an assumption's *Depends on it* cell resolves to, and the journey's rhythm by
-day. Counts and colours, never a verdict. No skill depends on it, and every
-view has a command that answers the same wherever it is not loaded.
+**The journey band and pane** are the journey view, below
+([See where the journey stands](#see-where-the-journey-stands)). Install it
+unless you work only in the VS Code chat panel or `claude -p`, where it does
+not draw.
 
 **Codex is what makes the second opinion worth having.** Without it the outside
 opinion still runs, using a fresh subagent — which removes conversation bias but
@@ -179,6 +177,57 @@ yours; the toolkit's job is to make you make it deliberately, with the matrix
 in front of you, rather than by drifting onward.
 
 → **[Getting Started](GETTING_STARTED.md)** · **[All commands](QUICKREF.md)** · **[The theory](RESIDUALITY.md)**
+
+---
+
+## See where the journey stands
+
+An engagement runs for weeks, and its state is on disk in `docs/journey/`:
+complete, and spread over three files. "What were we doing, and what's open?"
+is the first question of almost every session, and asking it costs a turn.
+
+The journey view answers it before you type. It is a read-only mod
+(`./setup --mods`) that keeps one line above the prompt and refreshes it after
+every turn:
+
+```text
+restack Brownfield · Stressor Analysis · Medium · next /restack-stressor analyze · 2 asks · 3 open · 1 decision
+```
+
+Terrain, phase and confidence; the next command the journey recorded; then
+the open asks to other teams, open assumptions and open decisions. When the
+recorded move has already run, the line says the position is stale instead
+of offering it.
+
+`/restack-view` opens a pane that draws what the text hides:
+
+```text
+  RS   ■■·■·■■·■■■■■·■■···■·■·■■■■·■··■·■■■·■■·   25
+  LC   ·■··■····■·■··■·■····■········■····■··■·   10
+  CA   ■■■·■···■··········■■·····■········■····    9
+  NS   ··■·■■···■■·■·■··■···■····■■····■··■·■··   14
+  PG   ···················■■···················    2
+  DC   ········································    0
+```
+
+- **Matrix**: the impact matrix on its side, one lane per actor, one
+  character per stressor. A busy lane is where vulnerability concentrates;
+  marks lined up across lanes are stressors that share a mechanism; an empty
+  lane is a path nobody walked.
+- **Asks**: a bar per team you are waiting on, coloured by how long. An unsent
+  ask on the critical path stops being invisible.
+- **Assumptions**: type an assumption's number and see every ADR, residual,
+  decision and stressor that rests on it.
+- **Position**: the journey's rhythm, a day per cell, with the parked weeks
+  left blank; and a button that puts the next command in the prompt for you
+  to send.
+
+It never writes, decides or submits, and it gives counts and colours, never a
+verdict. No skill depends on it: every view has a command that answers the
+same where it is not loaded.
+
+→ **[The journey view](docs/VIEW.md)**: every tab, every key, and what it
+deliberately does not do
 
 ---
 
@@ -341,7 +390,7 @@ structurally rather than satisfying a control on paper
 
 ## Status
 
-ReStack is at **v2.17.1**. All seventeen skills are generated from templates with
+ReStack is at **v2.18.0**. All seventeen skills are generated from templates with
 a shared behavioural preamble. CI checks on every push that no generated file has
 drifted from its source and that the skills tree is valid.
 
@@ -387,6 +436,7 @@ See [Contributing](CONTRIBUTING.md).
 | [RESIDUALITY.md](RESIDUALITY.md) | the theory, and the vocabulary every skill uses |
 | [GETTING_STARTED.md](GETTING_STARTED.md) | first engagement, start to finish |
 | [QUICKREF.md](QUICKREF.md) | every command, and the gates |
+| [docs/VIEW.md](docs/VIEW.md) | the journey view: the band above the prompt and the `/restack-view` pane |
 | [docs/USAGE.md](docs/USAGE.md) | worked examples per skill |
 | [docs/INSTALLATION.md](docs/INSTALLATION.md) | install, upgrade, troubleshoot |
 | [INSTALL.md](INSTALL.md) | install methods, and instructions an agent can follow |

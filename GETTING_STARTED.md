@@ -31,7 +31,8 @@ fourteen for the work, plus `/restack-excel`, `/restack-trace` and
 **Optional:** `./setup --mods` (`.\setup.ps1 -Mods`) adds the journey band, one
 line above the prompt that shows where the journey stands, and `/restack-view`,
 a pane that draws the asks, the register and the matrix. It is read-only, and
-`/restack-view band off` hides the band.
+`/restack-view band off` hides the band. [The journey view](docs/VIEW.md)
+shows what each part draws.
 
 Want an agent to install it for you? Point Claude Code at
 [INSTALL.md](INSTALL.md). Developing ReStack, or upgrading from an unprefixed

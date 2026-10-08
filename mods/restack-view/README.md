@@ -1,5 +1,9 @@
 # restack-view
 
+What the view shows and how to use it, tab by tab, is in
+[The journey view](../../docs/VIEW.md). This page is the mod's reference:
+what it reads, its commands and keys, and how to develop it.
+
 Where the ReStack journey stands, on one line above the prompt
 ([ADR-029](../../docs/adr/ADR-029-a-journey-view-as-a-mod.md)):
 
