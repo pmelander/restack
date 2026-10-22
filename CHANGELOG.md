@@ -3,7 +3,7 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
-## [Unreleased]
+## [2.20.0] — 2026-10-22
 
 Decision briefs are written in the message and asked in the call
 ([ADR-034](docs/adr/ADR-034-briefs-written-in-the-message.md)). The desktop
