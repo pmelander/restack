@@ -27,6 +27,11 @@ the choice format whenever possible."
 > moves are close only if each changes something the next gate needs, and a
 > command whose next step waits on someone outside the design has no next
 > move. Marked inline.
+>
+> **Amended 2026-10-22 by [ADR-034](ADR-034-briefs-written-in-the-message.md).**
+> Every question is still a choice made in `AskUserQuestion`. A brief is now
+> written in the message as markdown, and the call carries only its title and
+> options, because hosts draw the call as a narrow card. Marked inline.
 
 ## Context
 
@@ -68,7 +73,8 @@ numbers and the confusion protocol were often asked in prose.
    per command run, so the reflection keeps the last word.~~ *(withdrawn
    2026-10-03, ADR-022: there are no reflection prompts to hold)*
 5. **Every question is a choice.** A new tier-1 fragment, `questions.md`: every
-   question goes through `AskUserQuestion` with two to four options, the
+   question goes through `AskUserQuestion` *(its context written in the
+   message above the call since 2026-10-22, ADR-034)* with two to four options, the
    recommended one first, including confirms and open answers (offer what was
    found on disk or a default; the host's "Other" takes the rest). Prose only
    when nothing can be enumerated. One question at a time, as before.

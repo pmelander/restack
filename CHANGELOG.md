@@ -3,6 +3,24 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+Decision briefs are written in the message and asked in the call
+([ADR-034](docs/adr/ADR-034-briefs-written-in-the-message.md)). The desktop
+app draws an `AskUserQuestion` call as a half-width card and drops its line
+breaks, so a whole brief inside one arrived as a single dense paragraph.
+
+### Changed
+
+- **A brief has two parts** (`decision-brief.md`, every tier 2 and 3 skill):
+  the brief as markdown in the message, full width with real lists, then the
+  call with only `D<N>` as its header, the title line as its question, and
+  each option's label with a one-line description. The content rules are
+  unchanged, and the work still stops until the call is answered.
+- **Every question keeps its context out of the call** (`questions.md`, every
+  skill): one sentence in the card, what the architect needs to answer in the
+  message above it.
+
 ## [2.19.0] — 2026-10-08
 
 The journey position keeps up with the work. It says when it is stale and

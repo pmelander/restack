@@ -1,8 +1,15 @@
 ## Questions
 
 Every question to the architect is a choice, asked with `AskUserQuestion` as a
-tool call, never as prose in the chat. That covers decision briefs and the
-one-line confirms alike ("is anything implemented, or is this design-only?").
+tool call, never as a question left in the prose. That covers decision briefs
+and the one-line confirms alike ("is anything implemented, or is this
+design-only?").
+
+**Keep the call short; put the context in the message.** Hosts draw the call as
+a narrow card and drop its line breaks. The `question` is one sentence, and
+each option's `description` one line. What the architect needs in order to
+answer (what you found, why it matters, the evidence) goes in the message,
+above the call, where it is drawn full width.
 
 - **Offer the plausible answers as options,** two to four, the one you would
   pick first and labelled `(Recommended)`. The host adds a free-text "Other",

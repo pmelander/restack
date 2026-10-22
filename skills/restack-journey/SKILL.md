@@ -83,8 +83,15 @@ PowerShell 5.1):
 ## Questions
 
 Every question to the architect is a choice, asked with `AskUserQuestion` as a
-tool call, never as prose in the chat. That covers decision briefs and the
-one-line confirms alike ("is anything implemented, or is this design-only?").
+tool call, never as a question left in the prose. That covers decision briefs
+and the one-line confirms alike ("is anything implemented, or is this
+design-only?").
+
+**Keep the call short; put the context in the message.** Hosts draw the call as
+a narrow card and drop its line breaks. The `question` is one sentence, and
+each option's `description` one line. What the architect needs in order to
+answer (what you found, why it matters, the evidence) goes in the message,
+above the call, where it is drawn full width.
 
 - **Offer the plausible answers as options,** two to four, the one you would
   pick first and labelled `(Recommended)`. The host adds a free-text "Other",
@@ -148,29 +155,61 @@ complexity, change carries hidden risk.
 ## Decision Briefs
 
 Architecture is a sequence of decisions made under uncertainty. Every point
-where the architect's judgement is required is a **decision brief**, issued via
-`AskUserQuestion` as a tool call — never as prose in the chat, and never
-answered on the architect's behalf.
+where the architect's judgement is required is a **decision brief**, answered
+through `AskUserQuestion` as a tool call, and never answered on the architect's
+behalf.
+
+A brief has two parts, issued together in one turn:
+
+1. **The brief, in the message**, as markdown, immediately before the call. The
+   chat draws it full width, with real lists.
+2. **The question, in the call.** Hosts draw an `AskUserQuestion` call as a
+   narrow card and drop its line breaks, so a brief put inside one reads as a
+   single dense paragraph. The call carries only:
+   - `header`: `D<N>`;
+   - `question`: the title line, `D<N> — <one-line question title>`, and
+     nothing else;
+   - per option, `label`: the option's label, the recommended one first with
+     `(Recommended)`; `description`: one line on what it buys and what it
+     costs, under 150 characters.
+
+Then stop. Writing the brief is not asking it: a brief left in the message
+with no call after it is the conclusion-in-prose failure the stop gates exist
+to prevent.
 
 ### Format
 
+The brief in the message:
+
+```markdown
+### D<N> — <one-line question title>
+
+- **Aspiration:** <the aspiration this decision serves, one line>
+- **Position:** <terrain> · <journey phase> · iteration <N>
+
+**ELI10:** <plain English a smart non-architect follows, 2-4 sentences, name the stakes>
+
+**If we choose wrong:** <which actor, which path, what the user of the system experiences>
+
+- **Recommendation:** <option> because <one-line reason tied to the aspiration>
+- **Confidence:** <High | Medium | Low> — <what evidence would raise it>
+- **Reversibility:** <Reversible | Costly to reverse | One-way door>
+
+**A) <option label>** (recommended)
+- ✅ <pro — concrete, observable, ≥40 characters>
+- ✅ <pro>
+- ❌ <con — honest, ≥40 characters>
+
+**B) <option label>**
+- ✅ <pro>
+- ✅ <pro>
+- ❌ <con>
+
+**Net:** <one-line synthesis of what is actually being traded off>
 ```
-D<N> — <one-line question title>
-Aspiration: <the aspiration this decision serves, one line>
-Position: <terrain> · <journey phase> · iteration <N>
-ELI10: <plain English a smart non-architect follows, 2-4 sentences, name the stakes>
-If we choose wrong: <which actor, which path, what the user of the system experiences>
-Recommendation: <option> because <one-line reason tied to the aspiration>
-Confidence: <High | Medium | Low> — <what evidence would raise it>
-Reversibility: <Reversible | Costly to reverse | One-way door>
-A) <option label> (recommended)
-  ✅ <pro — concrete, observable, ≥40 characters>
-  ❌ <con — honest, ≥40 characters>
-B) <option label>
-  ✅ <pro>
-  ❌ <con>
-Net: <one-line synthesis of what is actually being traded off>
-```
+
+Keep the blank lines: without them markdown joins the fields into one
+paragraph, which is the problem this layout solves.
 
 **D-numbering:** numbers are unique within a journey, and a brief takes its
 number when it is issued, not when it is answered. Get it from
@@ -215,6 +254,7 @@ The architect's option set is sacred.
 
 ### Self-check before emitting
 
+- [ ] The brief is in the message, as markdown, before the call
 - [ ] `D<N>` header present
 - [ ] Aspiration line names a real aspiration, not the task
 - [ ] ELI10 present, plain English, names the stakes
@@ -225,7 +265,9 @@ The architect's option set is sacred.
 - [ ] Every option has ≥2 ✅ and ≥1 ❌, each ≥40 characters
 - [ ] `(recommended)` on exactly one option
 - [ ] Net line closes the tradeoff
-- [ ] You are calling the tool, not writing prose
+- [ ] The call follows the brief: `question` is the title line alone, each
+      option's `label` the brief's label word for word, its `description` one
+      line, nothing else from the brief in it
 
 ### If a brief is interrupted or rejected
 
@@ -233,12 +275,13 @@ A rejected, interrupted or cancelled `AskUserQuestion` call (a host restart, a
 dismissed dialog) is **not an answer**. It is not "no", and it is not consent to
 the recommendation. Do not proceed on the recommendation and do not log a
 decision. On resumption, say that `D<N>` is unanswered and re-issue it
-unchanged. If the architect answers in chat instead, that is the answer: record
+unchanged, the brief and the call. If the architect answers in chat instead, that is the answer: record
 it in their words. **No decision is logged without a recorded answer.**
 
 ### If AskUserQuestion is unavailable
 
-Render the identical brief as prose, add "reply with a letter", and **stop**.
+The brief is already in the message. End it with the options' letters and
+labels, add "reply with a letter", and **stop**.
 Do not auto-decide and do not write the decision into the journey state as a
 substitute for the architect having made it.
 
