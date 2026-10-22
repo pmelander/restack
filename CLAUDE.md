@@ -88,7 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── requirements.txt                    # Python dependencies (openpyxl)
 └── docs/
     ├── journey/                        # Journey state for an engagement
-    ├── adr/                            # ADR-001 .. ADR-033
+    ├── adr/                            # ADR-001 .. ADR-034
     └── ...                             # Generated documentation location
 ```
 
@@ -147,7 +147,10 @@ and ends with no `Next:`
 ([ADR-018](docs/adr/ADR-018-next-command-as-a-copy-block.md)). A skill that
 names its next move should use it rather than invent its own format, and every
 skill lists `Skill` in `allowed-tools`. `questions.md` makes every question a
-choice through `AskUserQuestion`, confirms included. Rendering
+choice through `AskUserQuestion`, confirms included. A decision brief is
+written in the message as markdown and the call carries only its title and
+options: hosts draw the call as a narrow card with its line breaks dropped
+([ADR-034](docs/adr/ADR-034-briefs-written-in-the-message.md)). Rendering
 the move as a `show_widget` button was built and withdrawn in 2.5.2 because
 clicks were unreliable. Read
 [ADR-017](docs/adr/ADR-017-next-step-as-a-button.md) before trying that again.
