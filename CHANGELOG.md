@@ -3,6 +3,16 @@
 All notable changes to ReStack. Versions follow the skill set as a whole;
 individual skills carry their own `version:` in frontmatter.
 
+## [Unreleased]
+
+### Added
+
+- **The band opens the view.** The journey line above the prompt ends in an
+  **Open view** button that opens the `/restack-view` pane, and reads **Close
+  view** while it is up: a click, or ctrl+x tab then `v` in the terminal. It
+  follows the pane however it closes (its mark, Esc), and after a reload starts
+  from whether the pane is still up.
+
 ## [2.20.0] — 2026-10-22
 
 Decision briefs are written in the message and asked in the call

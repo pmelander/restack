@@ -86,6 +86,11 @@ restack Brownfield · Stressor Analysis · Medium · next /restack-stressor anal
 
 It refreshes when a turn ends, so it follows the work without you asking.
 
+**Open view** at the end of the line opens the pane, as `/restack-view` does,
+and reads **Close view** while the pane is up. Click it, or in the terminal
+focus the band (ctrl+x tab) and press `v`. A pane closed by its own mark or Esc
+turns the button back to Open view.
+
 **A stale position says so.** When the recorded next move has already run, or
 a decision was answered after the position was written, the band does not
 offer a move that is finished. It tells you to bring the position up to date
@@ -342,6 +347,7 @@ sessions. The skills work the same there; use the commands in the table above.
 | Command | Does |
 |---|---|
 | `/restack-view` | opens the pane; where no pane can be drawn, prints the band's line instead |
+| the band's **Open view** / **Close view** | opens or closes the pane |
 | `/restack-view band` | toggles the band |
 | `/restack-view band on` / `off` | shows or hides the band; remembered between sessions |
 
