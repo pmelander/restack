@@ -21,9 +21,13 @@ const textOf = (node: unknown): string =>
         ? textOf((node as { children: unknown }).children)
         : ''
 
+// What the band's button asked of the engine, and the panes it holds open.
+type Panes = { opened: string[]; closed: string[]; up: Set<string> }
+
 // Stands in for the engine: a project at /work holding the named fixture, or
 // no journey at all; an in-memory store; and another band mod beneath this one.
-const stub = (on: On, fixture: string | null, stored: Record<string, unknown> = {}) => {
+const stub = (on: On, fixture: string | null, stored: Record<string, unknown> = {}): Panes => {
+  const panes: Panes = { opened: [], closed: [], up: new Set() }
   mock.store(on, stored)
   const files = fixture === null ? {} : FIXTURES[fixture]
   // The engine hands a stub the path resolved and absolute, so match its end.
@@ -49,6 +53,21 @@ const stub = (on: On, fixture: string | null, stored: Record<string, unknown> = 
   on('session.start', () => ({ cwd: ROOT }))
   on('classic.SessionStart', () => ({}))
   on('ui.render', () => ({ type: 'Text', props: {}, children: [OTHERS] }))
+  on('ui.open', ($, e) => {
+    panes.opened.push(e.id)
+    panes.up.add(e.id)
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', ($, e) => {
+    panes.closed.push(e.id)
+    panes.up.delete(e.id)
+    return { value: undefined }
+  })
+  on('ui.panes', () => ({
+    value: [...panes.up].map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })),
+  }))
+
+  return panes
 }
 
 const mountBand = ($: Parameters<Parameters<typeof test>[1]>[0], surface: (typeof SURFACES)[number]) =>
@@ -122,6 +141,41 @@ for (const surface of SURFACES) {
 
     const tree = textOf(await (await mountBand($, surface)).drawn())
     expect(tree).toContain('restack ' + answer.text)
+  })
+
+  test(`the band's button opens the view and closes it again, on ${surface}`, async ($, on) => {
+    const panes = stub(on, 'band')
+    await $.session.start({ surface, isInteractive: true, cwd: ROOT })
+    const band = await mountBand($, surface)
+    expect((await band.find({ key: 'toggle-view' }))?.props.label).toBe('Open view')
+
+    await band.press({ key: 'toggle-view' })
+    expect(panes.opened).toEqual(['restack-view'])
+    expect((await band.find({ key: 'toggle-view' }))?.props.label).toBe('Close view')
+
+    await band.press({ key: 'toggle-view' })
+    expect(panes.closed).toEqual(['restack-view'])
+    expect((await band.find({ key: 'toggle-view' }))?.props.label).toBe('Open view')
+  })
+
+  test(`a pane already gone is opened again, not closed, on ${surface}`, async ($, on) => {
+    const panes = stub(on, 'band')
+    await $.session.start({ surface, isInteractive: true, cwd: ROOT })
+    const band = await mountBand($, surface)
+    await band.press({ key: 'toggle-view' })
+    // Gone from the engine's record, as after its mark or Esc.
+    panes.up.delete('restack-view')
+    await band.press({ key: 'toggle-view' })
+    expect(panes.opened).toEqual(['restack-view', 'restack-view'])
+    expect(panes.closed).toEqual([])
+  })
+
+  test(`a pane still up after a reload starts the button at close, on ${surface}`, async ($, on) => {
+    const panes = stub(on, 'band')
+    panes.up.add('restack-view')
+    await $.session.start({ surface, isInteractive: true, cwd: ROOT })
+    const band = await mountBand($, surface)
+    expect((await band.find({ key: 'toggle-view' }))?.props.label).toBe('Close view')
   })
 
   test(`no journey, no line, on ${surface}`, async ($, on) => {

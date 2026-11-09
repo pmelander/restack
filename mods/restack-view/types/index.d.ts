@@ -153,6 +153,8 @@ declare module 'claude-code' {
       view: View | null
       detail: Detail | null
       isBandOn: boolean
+      // Whether the pane is up, so the band's button reads Open or Close view.
+      isViewOpen: boolean
       tab: Tab
       matrix: MatrixState | null
       // The matrix picked in the tab's Select; null is the newest.

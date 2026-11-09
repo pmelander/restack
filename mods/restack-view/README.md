@@ -60,6 +60,10 @@ The choice is remembered, so `/restack-upgrade` keeps it current.
 | `/restack-view` | opens the pane; where nothing draws a pane, prints the line instead |
 | `/restack-view band [on\|off]` | shows or hides the line; remembered between sessions; no argument toggles |
 
+The line ends in a button, **Open view**, that opens the pane as `/restack-view`
+does and reads **Close view** while it is up: a click, or ctrl+x tab then `v` in
+the terminal.
+
 ## The pane
 
 Five tabs, `1` to `5`, under the ReStack banner in an 80s fade. Esc closes it.

@@ -40,6 +40,7 @@ const residualPick = atom({ plugin: 'restack-view', key: 'residualPick' } as con
 const isSortedByTotal = atom({ plugin: 'restack-view', key: 'isSortedByTotal' } as const, false)
 const matrixOffset = atom({ plugin: 'restack-view', key: 'matrixOffset' } as const, 0)
 const lookupResult = atom({ plugin: 'restack-view', key: 'lookup' } as const, null)
+const isViewOpen = atom({ plugin: 'restack-view', key: 'isViewOpen' } as const, false)
 
 const PANE = 'restack-view'
 const TITLE = 'ReStack journey'
@@ -261,6 +262,32 @@ async function fillNext($: EngineInterface, command: string): Promise<void> {
   $.ui.toast(FILLED)
 }
 
+// The pane, as `/restack-view` and the band's button open it.
+async function openView($: EngineInterface): Promise<void> {
+  lastSeen = ''
+  await refresh($)
+  await $.ui.open({ id: PANE, title: TITLE, focus: true, closeOnEscape: true })
+  await update($, isViewOpen, () => true)
+}
+
+// The band's button: the pane open or shut. The engine's record decides, so
+// a pane closed by its mark or Esc is not opened twice.
+async function toggleView($: EngineInterface): Promise<void> {
+  const isUp = (await $.ui.panes()).some(pane => pane.id === PANE)
+  if (isUp) {
+    await $.ui.close({ id: PANE })
+    await update($, isViewOpen, () => false)
+    return
+  }
+  await openView($)
+}
+
+// After a reload or /clear the pane may still be up: the button starts from that.
+async function loadViewOpen($: EngineInterface): Promise<void> {
+  const isUp = (await $.ui.panes()).some(pane => pane.id === PANE)
+  await update($, isViewOpen, () => isUp)
+}
+
 async function loadBand($: EngineInterface): Promise<void> {
   const stored = await $.store.get(BAND_KEY)
   if (typeof stored === 'boolean') await update($, isBandOn, () => stored)
@@ -271,6 +298,7 @@ export const register: Register = on => {
     await loadBand($)
     const ran = await next(e)
     void refresh($)
+    await loadViewOpen($)
     // Registered last: a name refused here would skip the rest of this hook.
     await $.command.register({
       name: 'restack-view',
@@ -285,10 +313,19 @@ export const register: Register = on => {
   // /clear, /resume and /branch reset $.state and do not fire session.start.
   on('classic.SessionStart', { source: ['clear', 'resume', 'fork'] }, async ($, e, next) => {
     await loadBand($)
+    await loadViewOpen($)
     lastSeen = ''
     void refresh($)
 
     return next(e)
+  })
+
+  // However the pane closes (the button, its mark, Esc), the button says so.
+  on('ui.close', async ($, e, next) => {
+    const closed = await next(e)
+    if (e.id === PANE) await update($, isViewOpen, () => false)
+
+    return closed
   })
 
   // After each turn: the turn may have written the journey files.
@@ -301,14 +338,15 @@ export const register: Register = on => {
   on('command.run', { command: 'restack-view' }, async ($, e) => {
     const args = e.args.trim().toLowerCase().split(/\s+/).filter(Boolean)
     if (args.length === 0) {
-      lastSeen = ''
-      await refresh($)
-      const current = await read($, view)
       const surfaces = await $.session.surfaces()
       if (!surfaces.some(s => DRAWS.includes(s))) {
+        lastSeen = ''
+        await refresh($)
+        const current = await read($, view)
+
         return { text: current === null ? NO_JOURNEY : bandText(current) }
       }
-      await $.ui.open({ id: PANE, title: TITLE, focus: true, closeOnEscape: true })
+      await openView($)
 
       return {}
     }
@@ -327,11 +365,12 @@ export const register: Register = on => {
     const current = await read($, view)
     if (current === null) return next(e)
 
-    const { Box, Text } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
     const { lead, stale, waiting, next: command, tail } = bandParts(current)
     const isWarning = current.kind === 'not-canonical'
-    const mine = (
-      <Text key="restack-view" wrap="truncate">
+    const isOpen = await read($, isViewOpen)
+    const line = (
+      <Text wrap="truncate">
         <Text dimColor>restack </Text>
         <Text color={isWarning ? 'warning' : undefined}>{lead}</Text>
         {stale !== undefined && <Text dimColor>{lead ? ' · ' : ''}</Text>}
@@ -342,6 +381,15 @@ export const register: Register = on => {
         {command !== undefined && <Text color="suggestion">{command}</Text>}
         {tail !== '' && <Text dimColor> · {tail}</Text>}
       </Text>
+    )
+    // The line gives way first, so the button stays whole on a narrow band.
+    const mine = (
+      <Box key="restack-view" flexDirection="row" columnGap={1}>
+        <Box flexGrow={1} flexShrink={1}>
+          {line}
+        </Box>
+        <Button key="toggle-view" label={isOpen ? 'Close view' : 'Open view'} hotkey="v" onPress={() => toggleView($)} />
+      </Box>
     )
     // Share the band: what the mods after this one draw stays, under this line.
     const theirs = await next(e)
