@@ -7,11 +7,12 @@
 import type { Elements, RenderSurface } from 'claude-code'
 
 import type { MatrixState } from '../types'
-import { claimedCells, COLOR, desktopWindow, fileLabel, flippedWindow, order, runs } from './matrix.ts'
-import type { Mark } from './matrix.ts'
-import { KEY } from './layout.tsx'
+import { claimedCells, COLOR, desktopWindow, fileLabel, flippedWindow, order, runs } from './matrix'
+import type { Mark } from './matrix'
+import { KEY } from './layout'
 
-type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select' | 'Svg'>
+// Svg is on every surface but the terminal's, which draws the lanes as Text.
+type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Button' | 'Select'> & { Svg?: Elements['desktop']['Svg'] }
 
 export type MatrixPicks = {
   residual: string
@@ -71,7 +72,8 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
   const label = Math.max(4, ...grid.actors.map(a => a.length)) + 1
   const room = columns - label - TOTAL_WIDTH - 1
   // The Desktop's drawing must stay under the Svg limit, so its window may be narrower.
-  const desktop = surface === 'desktop' ? desktopWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room)) : null
+  const isSvg = surface === 'desktop' && Svg !== undefined
+  const desktop = isSvg ? desktopWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room)) : null
   const win = desktop?.win ?? flippedWindow(grid, rows, cols, claimed, picks.offset, Math.max(10, room))
 
   const stamp =
@@ -141,9 +143,9 @@ export function drawMatrix(els: Els, state: MatrixState | null, picks: MatrixPic
       </Box>
       {pager}
       <Text> </Text>
-      {surface === 'desktop' && desktop === null ? (
+      {isSvg && desktop === null ? (
         <Text dimColor>Too many marks to draw here, even ten stressors at a time; the terminal draws them as text.</Text>
-      ) : surface === 'desktop' && desktop !== null ? (
+      ) : Svg !== undefined && desktop !== null ? (
         <Svg source={desktop.svg} alt={`Impact matrix ${grid.file}, ${win.ids[0]} to ${win.ids[win.ids.length - 1]}, one lane per actor`} />
       ) : (
         <Box flexDirection="column">

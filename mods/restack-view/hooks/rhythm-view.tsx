@@ -5,9 +5,9 @@
 
 import type { Elements, RenderSurface } from 'claude-code'
 
-import { FAMILIES } from './rhythm.ts'
-import type { Family, Rhythm } from './rhythm.ts'
-import { KEY } from './layout.tsx'
+import { FAMILIES } from './rhythm'
+import type { Family, Rhythm } from './rhythm'
+import { KEY } from './layout'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text'>
 

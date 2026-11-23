@@ -9,8 +9,8 @@
 
 import type { Elements, RenderSurface } from 'claude-code'
 
-import type { AgeBucket, AskBar } from './journey.ts'
-import { KEY } from './layout.tsx'
+import type { AgeBucket, AskBar } from './journey'
+import { KEY } from './layout'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text'>
 
@@ -55,14 +55,15 @@ export function allocate(counts: number[], width: number): number[] {
   let left = width - cells.reduce((a, b) => a + b, 0)
   for (const { i } of exact.map((x, i) => ({ i, r: x - Math.floor(x) })).sort((a, b) => b.r - a.r)) {
     if (left <= 0) break
-    cells[i] += 1
+    cells[i] = (cells[i] ?? 0) + 1
     left -= 1
   }
   counts.forEach((n, i) => {
-    if (n <= 0 || cells[i] > 0) return
+    if (n <= 0 || (cells[i] ?? 0) > 0) return
     const donor = cells.indexOf(Math.max(...cells))
-    if (cells[donor] > 1) {
-      cells[donor] -= 1
+    const most = cells[donor] ?? 0
+    if (most > 1) {
+      cells[donor] = most - 1
       cells[i] = 1
     }
   })
@@ -109,7 +110,7 @@ export function drawAskBars(els: Els, bars: AskBar[], surface: RenderSurface, co
             </Box>
             <Box flexGrow={1} height={1} overflow="hidden">
               <Text wrap="truncate">
-                {AGE_ORDER.map((b, j) => run(els, `age-${b}`, parts[j], AGE_COLOR[b]))}
+                {AGE_ORDER.map((b, j) => run(els, `age-${b}`, parts[j] ?? 0, AGE_COLOR[b]))}
                 {run(els, 'track', track - filled, TRACK_COLOR, true)}
               </Text>
             </Box>
@@ -148,7 +149,7 @@ export function drawStatusBar(els: Els, statuses: Array<[string, number]>, surfa
     <Box key="status-bar" flexDirection="column">
       <Box height={1} overflow="hidden">
         <Text wrap="truncate">
-          {statuses.map(([status], i) => run(els, `status-${i}`, parts[i], STATUS_COLOR[status] ?? OTHER_COLOR))}
+          {statuses.map(([status], i) => run(els, `status-${i}`, parts[i] ?? 0, STATUS_COLOR[status] ?? OTHER_COLOR))}
         </Text>
       </Box>
       <Box flexDirection="row" flexWrap="wrap" columnGap={2}>

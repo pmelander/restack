@@ -2,7 +2,7 @@
 // between everything (maintainer, 2026-10-06: the pane read too compact,
 // especially with a lot of text). One place, so every tab spaces alike.
 
-import type { Elements, RenderSurface } from 'claude-code'
+import type { Elements, RenderChildren, RenderSurface } from 'claude-code'
 
 type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Markdown'>
 
@@ -23,7 +23,7 @@ export function heading(els: Els, title: string, count?: number) {
 
 // A headed block: the heading, a blank line, the content indented under it,
 // and a blank line after.
-export function section(els: Els, key: string, title: string, count: number | undefined, children: unknown) {
+export function section(els: Els, key: string, title: string, count: number | undefined, children: RenderChildren) {
   const { Box } = els
 
   return (

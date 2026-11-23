@@ -4,7 +4,8 @@
 
 import type { Elements, RenderSurface } from 'claude-code'
 
-type Els = Pick<Elements[RenderSurface], 'Box' | 'Text' | 'Svg'>
+// Svg is on every surface but the terminal's, which this banner draws as Text.
+type Els = Pick<Elements[RenderSurface], 'Box' | 'Text'> & { Svg?: Elements['desktop']['Svg'] }
 
 // figlet's "slant", as the maintainer pasted it, first line re-indented.
 export const ART = [
@@ -24,8 +25,9 @@ export function fade(t: number): string {
   const x = Math.min(1, Math.max(0, t)) * (STOPS.length - 1)
   const i = Math.min(STOPS.length - 2, Math.floor(x))
   const f = x - i
-  const mix = (shift: number) =>
-    Math.round(((STOPS[i] >> shift) & 0xff) * (1 - f) + ((STOPS[i + 1] >> shift) & 0xff) * f)
+  const a = STOPS[i] ?? 0
+  const b = STOPS[i + 1] ?? a
+  const mix = (shift: number) => Math.round(((a >> shift) & 0xff) * (1 - f) + ((b >> shift) & 0xff) * f)
 
   return `#${[16, 8, 0].map(s => mix(s).toString(16).padStart(2, '0')).join('')}`
 }
@@ -58,7 +60,7 @@ export function bannerSvg(): string {
 export function drawBanner(els: Els, surface: RenderSurface, columns: number) {
   if (columns < WIDTH + 2) return null
   const { Box, Text, Svg } = els
-  if (surface === 'desktop') {
+  if (surface === 'desktop' && Svg !== undefined) {
     return (
       <Box key="banner" flexDirection="column">
         <Svg source={bannerSvg()} alt="ReStack" />

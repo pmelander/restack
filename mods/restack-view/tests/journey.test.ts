@@ -20,14 +20,21 @@ import {
   readRegister,
   stateProblem,
   sectionsOf,
-} from '../hooks/journey.ts'
-import { FIXTURES } from './fixtures.ts'
+} from '../hooks/journey'
+import { FIXTURES } from './fixtures'
+import type { JourneyName } from './fixtures'
+import { at } from './kit'
 
-const filesOf = (name: string) => ({
-  state: FIXTURES[name]['journey-state.md'],
-  register: FIXTURES[name]['assumptions-register.md'],
-  log: FIXTURES[name]['decisions-log.md'],
-})
+// A journey's three files; `stale` and `waiting` have no register.
+const filesOf = (name: JourneyName) => {
+  const files: Readonly<Record<string, string>> = FIXTURES[name]
+
+  return {
+    state: files['journey-state.md'],
+    register: files['assumptions-register.md'],
+    log: files['decisions-log.md'],
+  }
+}
 
 test('a full journey: header fields, next command, and the three counts', () => {
   expect(readJourney(filesOf('band'))).toEqual({
@@ -127,7 +134,7 @@ test('a phase line further down is never read as the phase', () => {
 })
 
 test('CRLF files read the same as LF', () => {
-  const crlf = (s: string) => s.replace(/\n/g, '\r\n')
+  const crlf = (s: string | undefined) => s?.replace(/\n/g, '\r\n')
   const files = filesOf('band')
   expect(readJourney({ state: crlf(files.state), register: crlf(files.register), log: crlf(files.log) })).toEqual(
     readJourney(files),
@@ -238,7 +245,7 @@ test('a recorded wait says who, and the band offers no command', () => {
 test('a decision after the wait makes it stale, and the band offers where', () => {
   const files = filesOf('waiting')
   expect(files.log).toContain(D5_OPEN)
-  const view = readJourney({ ...files, log: files.log.replace(D5_OPEN, D5_ANSWERED) })
+  const view = readJourney({ ...files, log: files.log?.replace(D5_OPEN, D5_ANSWERED) })
   if (view?.kind !== 'journey') throw new Error('expected a journey')
   expect(view.age).toMatchObject({ decided: ['D5'], isStale: true })
   expect(bandText(view)).toBe('Greenfield · Documentation/Review · position stale since 2026-04-22 · next /restack-journey where · 0 decisions')
@@ -264,27 +271,27 @@ test('each tab is headed sections of items, and says when there is nothing', () 
     ['Depot operations', 1],
     ['Locker vendor', 1],
   ])
-  expect(asks[1].items).toEqual([{ id: 'A-2', meta: 'Partly resolved · never asked', lines: ['the UPS hold-up time'] }])
-  const open = sectionsOf(detail, 'assumptions')[0]
+  expect(at(asks, 1).items).toEqual([{ id: 'A-2', meta: 'Partly resolved · never asked', lines: ['the UPS hold-up time'] }])
+  const open = at(sectionsOf(detail, 'assumptions'), 0)
   expect([open.title, open.count]).toEqual(['Open assumptions', 3])
   expect(open.items!.find(i => i.id === 'A-3')).toEqual({
     id: 'A-3',
     meta: 'Open',
     lines: ['Reservation lookups stay under 50 ms', '*settles it:* a load test against the staging API'],
   })
-  expect(sectionsOf(detail, 'decisions')[0].items).toEqual([
+  expect(at(sectionsOf(detail, 'decisions'), 0).items).toEqual([
     { id: 'D3', meta: '2026-04-18 · gate: brief', lines: ['Offline unlock: local codes or a cached allow-list?'] },
   ])
   const none = readDetail(filesOf('canonical'))!
   expect(sectionsOf(none, 'asks')).toEqual([{ key: 'asks', title: 'Open asks', count: 0, empty: 'No open asks.' }])
-  expect(sectionsOf(none, 'decisions')[0].empty).toBe('No open decisions.')
+  expect(at(sectionsOf(none, 'decisions'), 0).empty).toBe('No open decisions.')
   expect(sectionsOf(none, 'matrix')).toEqual([])
 })
 
 test('a long list stops at sixty items and says where the rest is', () => {
   const detail = readDetail(filesOf('band'))!
   const many = { ...detail, open: Array.from({ length: 75 }, (_, i) => ({ id: `A-${i + 1}`, status: 'Open', assumption: 'x', validates: 'y' })) }
-  const open = sectionsOf(many, 'assumptions')[0]
+  const open = at(sectionsOf(many, 'assumptions'), 0)
   expect(open.items!.length).toBe(60)
   expect(open.count).toBe(75)
   expect(open.more).toBe('… 15 more: docs/journey/assumptions-register.md')
