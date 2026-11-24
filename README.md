@@ -5,7 +5,8 @@
 
 # ReStack
 
-**Architecture skills for Claude Code, built on Residuality Theory.**
+**Architecture skills for Claude Code, built on Residuality Theory.**\
+**The spec in spec-driven development, stressed before anything is built from it.**
 
 Seventeen skills — fourteen that do the work of designing systems which
 survive things nobody predicted, and three utilities: spreadsheets in, document
@@ -16,6 +17,52 @@ a long engagement. You make the calls.
 An optional view keeps the engagement on screen: one line above the prompt
 that says where the journey stands, and a pane that draws the matrix, the
 waiting and the weight a belief carries ([The journey view](docs/VIEW.md)).
+
+---
+
+## Spec-driven development needs a spec worth driving from
+
+Spec-driven development makes the specification the source of truth: write it
+first, then let agents plan, break down and implement against it. The idea is
+right. It moves the hard thinking ahead of the code, and it gives an agent
+something better to follow than a chat history.
+
+It also moves the risk there. An agent implements a spec faithfully, including
+every assumption nobody checked and every failure nobody pictured. A spec
+written from the happy path becomes a happy-path system, built faster and
+trusted more than before.
+
+ReStack does the spec half, and does it properly. Before anything is built from
+it, the design is:
+
+- **Grounded.** Every claim about the existing system carries a source. The
+  ones that do not are registered as assumptions, with what would settle them.
+- **Stressed.** It is walked path by path against stressors chosen to reach
+  past what its authors imagined, and changed until the impact is low enough.
+- **Decided.** Every call that shapes it is a recorded decision, with its
+  reversibility and the stressors it clears.
+- **Kept consistent.** The documents are traced for drift, so the spec an
+  agent reads in week six still says what was decided in week two.
+
+What comes out is plain markdown in your repository:
+
+| The spec | Where | Written by |
+|---|---|---|
+| Paths, actors and intentions of the system as it really is | `docs/discovery/` | `/restack-discover` |
+| Stressors, the impact matrix, residuals | `docs/stressor-analysis/` | `/restack-stressor` |
+| Decisions, with reversibility and the residual each implements | `docs/adr/` | `/restack-adr` |
+| HLD and component designs | `docs/architecture/` | `/restack-solution-doc` |
+| Deployment and operations | `docs/deployment/`, `docs/operations/` | `/restack-solution-doc` |
+| What the design rests on, and what was decided at each gate | `docs/journey/` | `/restack-journey` |
+
+Then it hands over. Whatever turns a spec into tasks and code (Spec Kit, Kiro,
+gstack, or a team) reads those files. ReStack has no integration with any of
+them, needs none, and is not affiliated with them.
+
+The spec does not go stale at handover, either. Each ADR records what it
+predicts, `/restack-evolve` writes the fitness functions that keep a residual
+true, automated where possible, and `/restack-arch-learning` compares what the
+spec predicted against what actually happened.
 
 ---
 
@@ -361,7 +408,9 @@ are called — plus three utilities.
 
 ReStack stops where implementation starts. It produces a design, the decisions
 behind it, and the residuals that make it survivable — then hands over. It does
-not review diffs, run tests, or ship anything.
+not review diffs, run tests, or ship anything. In spec-driven terms it writes
+and stresses the spec; something else builds from it
+([Spec-driven development](#spec-driven-development-needs-a-spec-worth-driving-from)).
 
 That makes it the layer upstream of a delivery toolkit like
 [gstack](https://github.com/garrytan/gstack), which picks up at the point
