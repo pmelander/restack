@@ -13,6 +13,20 @@ individual skills carry their own `version:` in frontmatter.
   follows the pane however it closes (its mark, Esc), and after a reload starts
   from whether the pane is still up.
 
+### Fixed
+
+- **The journey view passes on Claude Code 2.1.330.** `claude plugin validate
+  --strict` now type-checks a mod against its strict config, and CI failed on
+  restack-view's 242 errors. `Svg` is typed as the desktop's alone (the
+  terminal has none, and draws the banner and matrix as text, as before);
+  local imports drop their `.ts` suffix; every index read handles a missing
+  item; the tests state what 2.1.330's kit asks (`origin` and `presentation`
+  on a command run, the band's `isCollapsed`, `scroll` and `view`). Behaviour
+  is unchanged: the mod's 126 tests pass on 2.1.319 and 2.1.330.
+- **Test fixtures have exact keys.** `tests/fixtures.ts` is generated with
+  `satisfies` in place of a wide `Record`, so a test naming a journey or file
+  that is not there fails the type-check instead of reading `undefined`.
+
 ## [2.20.0] — 2026-10-22
 
 Decision briefs are written in the message and asked in the call

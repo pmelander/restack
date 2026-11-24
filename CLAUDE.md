@@ -355,6 +355,8 @@ on languages). The rules:
    environment access.
 2. **No packages.** A mod imports its own files and `claude-code`, nothing
    else. No `package.json`, no build step: Claude Code loads `.ts` and `.tsx`.
+   Import its own files without the suffix (`./journey`, not `./journey.ts`):
+   `plugin validate --strict` type-checks the mod and refuses a `.ts` suffix.
 3. **It reads the canonical journey files itself** and is tested against the
    same fixtures as `journey.py`, rendered into `tests/fixtures.ts`. Keep pure
    parsing out of the hooks module, so the tests reach it without `$`.

@@ -2,9 +2,12 @@
 // fills the prompt and never submits or overwrites a draft.
 
 import { expect, mock, test } from 'claude-code/testing'
-import type { On } from 'claude-code'
+import type { On, RenderSurface } from 'claude-code'
+import type { Engine } from 'claude-code/testing'
 
-import { FIXTURES, MATRIX_FIXTURES } from './fixtures.ts'
+import { FIXTURES, MATRIX_FIXTURES } from './fixtures'
+import type { JourneyName } from './fixtures'
+import { runView } from './kit'
 
 const SURFACES = ['terminal', 'desktop'] as const
 const ROOT = '/work'
@@ -48,8 +51,8 @@ type Seen = {
 // docs/journey/ and `analysis` in docs/stressor-analysis/, drawn on `surface`.
 const stub = (
   on: On,
-  surface: string,
-  fixture: string | null | Record<string, string>,
+  surface: RenderSurface,
+  fixture: JourneyName | null | Record<string, string>,
   draft = '',
   analysis: Record<string, string> = {},
   adr: Record<string, string> = {},
@@ -67,7 +70,7 @@ const stub = (
   const fileAt = (path: string): string | undefined => {
     const m = where(path)
 
-    return m && m[2] !== undefined ? dirs[m[1]][m[2]] : undefined
+    return m && m[2] !== undefined ? dirs[m[1] ?? '']?.[m[2]] : undefined
   }
   on('session.root', () => ({ value: ROOT }))
   on('session.cwd', () => ({ value: ROOT }))
@@ -81,10 +84,11 @@ const stub = (
   on('fs.read', ($, e) => ({ value: fileAt(e.path) ?? '' }))
   on('fs.list', ($, e) => {
     const m = where(e.path)
-    if (!m || m[2] !== undefined || Object.keys(dirs[m[1]]).length === 0) return { deny: 'missing' }
+    const dir = dirs[m?.[1] ?? '']
+    if (!m || m[2] !== undefined || dir === undefined || Object.keys(dir).length === 0) return { deny: 'missing' }
 
     return {
-      value: Object.entries(dirs[m[1]]).map(([name, text]) => ({ name, kind: 'file', size: text.length, mtimeMs: 1, isLink: false })),
+      value: Object.entries(dir).map(([name, text]) => ({ name, kind: 'file', size: text.length, mtimeMs: 1, isLink: false })),
     }
   })
   on('ui.open', ($, e) => {
@@ -127,7 +131,7 @@ const PANE = {
 for (const surface of SURFACES) {
   test(`/restack-view opens the pane, which shows the position first, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'band')
-    const answer = await $.command.run({ command: 'restack-view', args: '' })
+    const answer = await runView($)
     expect(answer.text).toBeUndefined()
     expect(seen.opened).toEqual(['restack-view'])
 
@@ -141,7 +145,7 @@ for (const surface of SURFACES) {
 
   test(`the tabs switch between the lists, on ${surface}`, async ($, on) => {
     stub(on, surface, 'band')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'tab-asks' })
@@ -156,7 +160,7 @@ for (const surface of SURFACES) {
 
   test(`the button fills an empty prompt, keeps the pane open, and submits nothing, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'band')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'fill-next' })
@@ -169,7 +173,7 @@ for (const surface of SURFACES) {
 
   test(`the button never writes over a draft, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'band', 'half a thought')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
 
     await ui.press({ key: 'fill-next' })
@@ -180,7 +184,7 @@ for (const surface of SURFACES) {
 
   test(`a stale position says why, and the button fills where, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'stale')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     const tree = textOf(await ui.drawn())
     expect(tree).toContain('its next move, /restack-design-review complete, ran 2026-04-20')
@@ -192,7 +196,7 @@ for (const surface of SURFACES) {
 
   test(`a recorded wait says who, and the button keeps where for an answer, on ${surface}`, async ($, on) => {
     const seen = stub(on, surface, 'waiting')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     const tree = textOf(await ui.drawn())
     expect(tree).toContain('Current Position of 2026-04-22, waiting on depot operations and the locker vendor')
@@ -204,7 +208,7 @@ for (const surface of SURFACES) {
 
   test(`a legacy journey shows what the band shows, and no button, on ${surface}`, async ($, on) => {
     stub(on, surface, 'legacy')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     expect(textOf(await ui.drawn())).toContain('journey-state.md is not canonical: /restack-journey migrate')
     expect(await ui.find({ key: 'fill-next' })).toBeUndefined()
@@ -214,7 +218,7 @@ for (const surface of SURFACES) {
 for (const surface of SURFACES) {
   test(`the Asks tab opens with one waiting bar per recipient, on ${surface}`, async ($, on) => {
     stub(on, surface, 'asks')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     await ui.press({ key: 'tab-asks' })
     const tree = textOf(await ui.drawn())
@@ -237,7 +241,7 @@ for (const surface of SURFACES) {
       .replace('\n\n## Status lines', `\n${row}\n\n## Status lines`)
       .concat('- A-8 · Open · 2026-04-12 · registered\n')
     stub(on, surface, { ...FIXTURES.asks, 'assumptions-register.md': register })
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     await ui.press({ key: 'tab-asks' })
     expect(textOf(await ui.drawn())).toContain('2 · never asked 2 · 41 d')
@@ -246,7 +250,7 @@ for (const surface of SURFACES) {
 
   test(`the Assumptions tab opens with the register by status, on ${surface}`, async ($, on) => {
     stub(on, surface, 'asks')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     await ui.press({ key: 'tab-assumptions' })
     const tree = textOf(await ui.drawn())
@@ -260,7 +264,7 @@ for (const surface of SURFACES) {
 
   test(`no bars on the Position and Decisions tabs, on ${surface}`, async ($, on) => {
     stub(on, surface, 'asks')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     expect(textOf(await ui.drawn())).not.toContain('rows in the register')
     await ui.press({ key: 'tab-decisions' })
@@ -273,13 +277,13 @@ for (const surface of SURFACES) {
 for (const surface of SURFACES) {
   test(`the banner tops the pane, and leaves a narrow pane alone, on ${surface}`, async ($, on) => {
     stub(on, surface, 'band')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const wide = await $.ui.mount({ ...PANE, surface })
     if (surface === 'terminal') {
       expect(textOf(await wide.drawn())).toContain('/_/ |_|')
     } else {
       const svg = await wide.find({ type: 'Svg' })
-      expect((svg as { props: { source: string } }).props.source).toContain('linearGradient')
+      expect(String(svg?.props.source)).toContain('linearGradient')
     }
     await wide.unmount()
 
@@ -302,8 +306,8 @@ const ANALYSIS = {
   'stressors-2026-04-01.md': '# Stressors\n',
 }
 
-const openMatrix = async ($: Parameters<Parameters<typeof test>[1]>[0], surface: (typeof SURFACES)[number]) => {
-  await $.command.run({ command: 'restack-view', args: '' })
+const openMatrix = async ($: Engine, surface: (typeof SURFACES)[number]) => {
+  await runView($)
   const ui = await $.ui.mount({ ...PANE, surface })
   await ui.press({ key: 'tab-matrix' })
 
@@ -345,7 +349,7 @@ for (const surface of SURFACES) {
 
   test(`a matrix wider than the pane pages, on ${surface}`, async ($, on) => {
     stub(on, surface, 'band', '', { 'matrix-2026-04-12-iter3.md': MATRIX_FIXTURES['matrix-iter3.md'] })
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, bodyColumns: 20 } })
     await ui.press({ key: 'tab-matrix' })
     expect(textOf(await ui.drawn())).toContain('S-1 … S-10 (1–10 of 12 stressors)')
@@ -370,7 +374,7 @@ for (const surface of SURFACES) {
 for (const surface of SURFACES) {
   test(`the Position tab opens with the rhythm strip, on ${surface}`, async ($, on) => {
     stub(on, surface, 'band')
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     const tree = textOf(await ui.drawn())
     expect(tree).toContain('RHYTHM')
@@ -393,7 +397,7 @@ for (const surface of SURFACES) {
 for (const surface of SURFACES) {
   test(`the Assumptions tab looks up what rests on a belief, on ${surface}`, async ($, on) => {
     stub(on, surface, 'asks', '', {}, { 'ADR-0004-controller-reporting.md': '# ADR-0004: Controller reporting interval\n' })
-    await $.command.run({ command: 'restack-view', args: '' })
+    await runView($)
     const ui = await $.ui.mount({ ...PANE, surface })
     await ui.press({ key: 'tab-assumptions' })
     expect(await ui.find({ key: 'lookup' })).toBeDefined()
@@ -412,7 +416,7 @@ for (const surface of SURFACES) {
 
 test('where nothing draws a pane, /restack-view prints the line and opens nothing', async ($, on) => {
   const seen = stub(on, 'vscode', 'band')
-  const answer = await $.command.run({ command: 'restack-view', args: '' })
+  const answer = await runView($)
   expect(answer.text).toContain('next /restack-stressor analyze')
   expect(seen.opened).toEqual([])
 })

@@ -42,7 +42,7 @@ export const FAMILIES: ReadonlyArray<[Family, string]> = [
 export function familyOf(command: string): Family {
   const m = command.match(/\/(?:restack-)?([a-z][a-z-]*)/)
 
-  return m ? (FAMILY[m[1]] ?? 'other') : 'other'
+  return m ? (FAMILY[m[1] ?? ''] ?? 'other') : 'other'
 }
 
 const HISTORY_LINE = /^\s*-\s*(\d{4}-\d{2}-\d{2})\s*·\s*(.*)$/
@@ -59,12 +59,13 @@ export function historyEntries(state: string): Entry[] {
     if (line.startsWith('## ')) break
     const m = line.match(HISTORY_LINE)
     if (!m) continue
-    const command = m[2].split('·')[0].replace(/`/g, '').trim()
+    const [date = '', rest = ''] = m.slice(1)
+    const command = (rest.split('·')[0] ?? '').replace(/`/g, '').trim()
     out.push({
-      date: m[1],
+      date,
       command,
       family: familyOf(command),
-      isGate: /\bD\d+\b/.test(m[2]),
+      isGate: /\bD\d+\b/.test(rest),
       isIterate: /\/(?:restack-)?journey iterate\b/.test(command),
     })
   }
@@ -91,9 +92,10 @@ const isoOf = (index: number): string => new Date(index * DAY_MS).toISOString().
 // (then per several weeks) when the days are more than `width`. A cell takes
 // the family most of its entries share, the latest of them on a tie.
 export function rhythm(entries: Entry[], today: string, width: number): Rhythm | null {
-  if (entries.length === 0) return null
-  const first = dayIndex(entries[0].date)
-  const last = Math.max(dayIndex(today), dayIndex(entries[entries.length - 1].date))
+  const [earliest, latest] = [entries[0], entries.at(-1)]
+  if (earliest === undefined || latest === undefined) return null
+  const first = dayIndex(earliest.date)
+  const last = Math.max(dayIndex(today), dayIndex(latest.date))
   const days = last - first + 1
   const room = Math.max(1, width)
   const bucket = days <= room ? 1 : 7 * Math.ceil(days / room / 7)
@@ -104,6 +106,7 @@ export function rhythm(entries: Entry[], today: string, width: number): Rhythm |
   }))
   for (const e of entries) {
     const cell = cells[Math.floor((dayIndex(e.date) - first) / bucket)]
+    if (cell === undefined) continue
     cell.count += 1
     cell.isGate ||= e.isGate
     cell.tally.set(e.family, (cell.tally.get(e.family) ?? 0) + 1)

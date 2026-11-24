@@ -6,8 +6,8 @@
 // does not reach here fails tests/journey.test.ts (ADR-029, decision point 4).
 
 import type { Ask, Decision, Detail, Journey, OpenRow, PositionAge, Tab, View } from '../types'
-import { historyEntries } from './rhythm.ts'
-import type { Item } from './layout.tsx'
+import { historyEntries } from './rhythm'
+import type { Item } from './layout'
 
 export type Files = { state?: string; register?: string; log?: string }
 
@@ -85,7 +85,7 @@ const currentPosition = (text: string): string => {
 const MAX_FIELD = 32
 const compact = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
-  const clause = value.split(/\. |: |; | — | – |, | \(/)[0].replace(/[.\s]+$/, '').trim()
+  const clause = (value.split(/\. |: |; | — | – |, | \(/)[0] ?? '').replace(/[.\s]+$/, '').trim()
   if (clause === '') return undefined
 
   return clause.length > MAX_FIELD ? clause.slice(0, MAX_FIELD - 1) + '…' : clause
@@ -99,7 +99,7 @@ const terrainOf = (value: string | undefined): string | undefined => {
   if (value === undefined) return undefined
   const found: string[] = []
   for (const m of value.matchAll(/\b(greenfield|brownfield|minefield|ongoing evolution)\b/gi)) {
-    const term = TERRAINS.find(t => t.toLowerCase() === m[1].toLowerCase())
+    const term = TERRAINS.find(t => t.toLowerCase() === (m[1] ?? '').toLowerCase())
     if (term !== undefined && !found.includes(term)) found.push(term)
   }
 
@@ -111,7 +111,7 @@ const terrainOf = (value: string | undefined): string | undefined => {
 const command = (text: string | undefined): string | undefined => {
   if (text === undefined) return undefined
   const span = text.match(/`(\/restack-[^`]+)`/)
-  if (span) return span[1].trim()
+  if (span?.[1] !== undefined) return span[1].trim()
   const bare = text.match(/\/restack-[a-z-]+(?:\s+[a-z][\w-]*)?/)
 
   return bare?.[0]
@@ -119,7 +119,7 @@ const command = (text: string | undefined): string | undefined => {
 
 // Who a next move that is a wait names (ADR-033): `waiting on <recipients>; when ...`.
 const waitingOf = (text: string | undefined): string | undefined =>
-  text?.replace(/\*/g, '').match(/^waiting on\s+(.+?)\s*(?:;|$)/i)?.[1].replace(/\.$/, '')
+  text?.replace(/\*/g, '').match(/^waiting on\s+(.+?)\s*(?:;|$)/i)?.[1]?.replace(/\.$/, '')
 
 const confidenceOf = (text: string | undefined): string | undefined =>
   text?.match(/^(High|Medium|Low)\b/i)?.[1]
@@ -157,7 +157,7 @@ function decidedAfter(log: string, date: string): string[] {
     }
     if (line.startsWith('## ')) current = null
     const answer = line.match(/^- \*\*Answer:\*\*\s*(.*?)\s*$/)
-    if (current !== null && answer && answer[1] !== '(open)' && current[2] > date) found.push(`D${current[1]}`)
+    if (current !== null && answer && answer[1] !== '(open)' && (current[2] ?? '') > date) found.push(`D${current[1]}`)
   }
 
   return found
@@ -232,21 +232,23 @@ function registerTable(text: string): Table | string {
   let updates = 0
   let i = 0
   while (i < all.length) {
-    const line = all[i]
+    const line = all[i] ?? ''
     if (UPDATE_HEADING.test(line)) updates += 1
     if (line.trim().startsWith('|') && !isSeparator(line)) {
       const start = i
-      while (i < all.length && all[i].trim().startsWith('|')) i += 1
-      const header = splitRow(all[start]).map(c => stripMd(c).toLowerCase())
+      const first = line
+      while (i < all.length && (all[i] ?? '').trim().startsWith('|')) i += 1
+      const header = splitRow(first).map(c => stripMd(c).toLowerCase())
       if (header[0] === 'id') tables.push([start, i])
-      else if (A_ROW.test(all[start])) orphans += i - start
+      else if (A_ROW.test(first)) orphans += i - start
       continue
     }
     i += 1
   }
-  if (tables.length !== 1) return `${tables.length} register tables; the canonical register has exactly one`
-  const [start, end] = tables[0]
-  if (splitRow(all[start]).map(stripMd).join('|') !== COLUMNS.join('|')) {
+  const only = tables[0]
+  if (tables.length !== 1 || only === undefined) return `${tables.length} register tables; the canonical register has exactly one`
+  const [start, end] = only
+  if (splitRow(all[start] ?? '').map(stripMd).join('|') !== COLUMNS.join('|')) {
     return "the register table's columns are not the canonical seven"
   }
   if (orphans > 0) return `${orphans} row(s) outside any table`
@@ -268,7 +270,7 @@ const isOpen = (cells: Cells): boolean => OPEN.includes(stripMd(cells[5] ?? '').
 const askOf = (cells: Cells): { recipient: string; need: string } | undefined => {
   const m = (cells[3] ?? '').trim().match(ASK_PREFIX)
 
-  return m ? { recipient: m[1].trim(), need: m[2].trim() } : undefined
+  return m ? { recipient: (m[1] ?? '').trim(), need: (m[2] ?? '').trim() } : undefined
 }
 
 export function readRegister(text: string): Register | string {
@@ -287,8 +289,9 @@ const sendsOf = (statusLines: string[]): Map<string, Array<[string, string]>> =>
     if (!m) continue
     const id = `A-${Number(m[1])}`
     const list = sends.get(id) ?? []
-    if (m[4].startsWith('asked ')) list.push([m[3], m[4].slice('asked '.length).trim()])
-    else if (m[4].startsWith('unasked ')) list.pop()
+    const [date, change] = [m[3] ?? '', m[4] ?? '']
+    if (change.startsWith('asked ')) list.push([date, change.slice('asked '.length).trim()])
+    else if (change.startsWith('unasked ')) list.pop()
     sends.set(id, list)
   }
 
@@ -398,7 +401,7 @@ function openDecisions(text: string): Decision[] {
     if (line.startsWith('## ')) {
       close()
       const m = line.match(D_HEADING)
-      current = m ? { id: `D${m[1]}`, date: m[2], question: m[3].trim() } : undefined
+      current = m ? { id: `D${m[1]}`, date: m[2] ?? '', question: (m[3] ?? '').trim() } : undefined
       isOpenAnswer = false
       continue
     }
@@ -417,8 +420,8 @@ function openDecisions(text: string): Decision[] {
 const headerFields = (text: string): Array<[string, string]> =>
   lines(header(text))
     .map(l => l.match(/^\*\*([^*:]+?)(?: \([^)]*\))?:\*\*\s*(.+?)\s*$/))
-    .filter((m): m is RegExpMatchArray => m !== null && !/^previous|^earlier/i.test(m[1]))
-    .map(m => [m[1], m[2]])
+    .filter((m): m is RegExpMatchArray => m !== null && !/^previous|^earlier/i.test(m[1] ?? ''))
+    .map(m => [m[1] ?? '', m[2] ?? ''])
 
 // What the pane lists. Null for no journey or one not in the canonical shape:
 // the pane then shows what the band shows.
@@ -470,9 +473,10 @@ const registeredOf = (statusLines: string[]): Map<string, string> => {
   const first = new Map<string, string>()
   for (const line of statusLines) {
     const m = line.match(STATUS_LINE)
-    if (!m || m[3] === '—') continue
+    const date = m?.[3]
+    if (!m || date === undefined || date === '—') continue
     const id = `A-${Number(m[1])}`
-    if (!first.has(id)) first.set(id, m[3])
+    if (!first.has(id)) first.set(id, date)
   }
 
   return first
@@ -606,7 +610,7 @@ export function sectionsOf(detail: Detail, tab: Tab): TabSection[] {
 
     return [...groups.values()].map((group, i) => ({
       key: `asks-${i}`,
-      title: group[0].recipient,
+      title: group[0]?.recipient ?? '',
       count: group.length,
       ...capped(
         group.map(ask => ({ id: ask.id, meta: `${ask.status} · ${ask.sent}`, lines: [ask.need] })),

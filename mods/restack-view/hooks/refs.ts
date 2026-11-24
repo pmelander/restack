@@ -6,7 +6,7 @@
 // reader does not know as an ID is shown as written, under "also named".
 
 import type { Lookup, LookupItem, MatrixGrid } from '../types'
-import type { RegisterRow } from './journey.ts'
+import type { RegisterRow } from './journey'
 
 export type Refs = {
   adrs: number[]
@@ -49,7 +49,7 @@ export function parseRefs(cell: string): Refs {
       [RESIDUAL, refs.residuals, (s: string) => `R${s}`],
       [STRESSOR, refs.stressors, (s: string) => `S-${s}`],
     ] as const) {
-      for (const m of rest.matchAll(re)) into.push(map(m[1]))
+      for (const m of rest.matchAll(re)) into.push(map(m[1] ?? ''))
       rest = rest.replace(re, ' ')
     }
     for (const m of rest.matchAll(DECISION)) refs.decisions.push(Number(m[1]))
@@ -105,7 +105,7 @@ export function decisionTitles(log: string): Map<number, string> {
   const out = new Map<number, string>()
   for (const line of log.split(/\r?\n/)) {
     const m = line.match(/^## D(\d+) · (\d{4}-\d{2}-\d{2}) · (.*)$/)
-    if (m) out.set(Number(m[1]), `${m[3].trim()} (${m[2]})`)
+    if (m) out.set(Number(m[1]), `${(m[3] ?? '').trim()} (${m[2]})`)
   }
 
   return out
@@ -116,7 +116,7 @@ export function residualTitles(text: string): Map<string, string> {
   const out = new Map<string, string>()
   for (const line of text.split(/\r?\n/)) {
     const m = line.match(/^#{2,4}\s+(R-?[\w.-]+?)\b\s*[:—–-]?\s*(.*)$/)
-    if (m) out.set(m[1].replace(/^R-/, 'R'), m[2].replace(/\*+/g, '').trim())
+    if (m) out.set((m[1] ?? '').replace(/^R-/, 'R'), (m[2] ?? '').replace(/\*+/g, '').trim())
   }
 
   return out

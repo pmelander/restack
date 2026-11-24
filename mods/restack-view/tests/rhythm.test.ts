@@ -3,9 +3,9 @@
 
 import { expect, test } from 'claude-code/testing'
 
-import { familyOf, historyEntries, rhythm } from '../hooks/rhythm.ts'
-import type { Entry } from '../hooks/rhythm.ts'
-import { FIXTURES } from './fixtures.ts'
+import { familyOf, historyEntries, rhythm } from '../hooks/rhythm'
+import type { Entry } from '../hooks/rhythm'
+import { FIXTURES } from './fixtures'
 
 test('a command belongs to the family of its skill, prefixed or not', () => {
   expect(familyOf('/restack-stressor walk courier-fill')).toBe('stressor')
