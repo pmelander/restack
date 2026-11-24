@@ -5,8 +5,8 @@
 import { expect, test } from 'claude-code/testing'
 
 import type { MatrixGrid } from '../types'
-import { registerRows } from '../hooks/journey.ts'
-import { readMatrix } from '../hooks/matrix.ts'
+import { registerRows } from '../hooks/journey'
+import { readMatrix } from '../hooks/matrix'
 import {
   adrFiles,
   decisionTitles,
@@ -15,8 +15,8 @@ import {
   parseRefs,
   residualTitles,
   titleOf,
-} from '../hooks/refs.ts'
-import { FIXTURES, MATRIX_FIXTURES } from './fixtures.ts'
+} from '../hooks/refs'
+import { FIXTURES, MATRIX_FIXTURES } from './fixtures'
 
 test('an ADR clause owns its bare numbers, ranges and slashes', () => {
   expect(parseRefs('ADR-0005, 0025, 0026–0031, 0032, 0040; LLD-03; LLD-09')).toMatchObject({

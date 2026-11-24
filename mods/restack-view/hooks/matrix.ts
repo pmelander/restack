@@ -32,6 +32,9 @@ const splitRow = (line: string): string[] => {
   return body.split('|').map(c => c.trim())
 }
 
+// A row's cell by column; a short row reads as empty there.
+const cellAt = (row: string[], k: number): string => row[k] ?? ''
+
 // [value, unknown] for a cell, or null when it is not a score.
 export function score(cell: string): [number, boolean] | null {
   const text = stripMd(cell)
@@ -70,17 +73,17 @@ export const UNKNOWN = 2
 export function readMatrix(text: string): { grid?: Omit<MatrixGrid, 'file' | 'claims' | 'residualsFile' | 'baseline' | 'stale' | 'marked'>; problems: string[] } {
   const lines = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n').split('\n')
   for (const block of tables(lines)) {
-    const header = splitRow(block[0]).map(stripMd)
+    const header = splitRow(block[0] ?? '').map(stripMd)
     const totalCols = header.map((h, k) => (TOTAL_HEADER.test(h) ? k : -1)).filter(k => k >= 0)
-    if (totalCols.length === 0) continue
-    const totalCol = totalCols[totalCols.length - 1]
+    const totalCol = totalCols.at(-1)
+    if (totalCol === undefined) continue
     const body = block.slice(1).map(splitRow).filter(c => c.length === header.length)
-    const data = body.filter(c => !MARGIN_ROW.test(stripMd(c[0])))
-    const margins = body.filter(c => MARGIN_ROW.test(stripMd(c[0])))
+    const data = body.filter(c => !MARGIN_ROW.test(stripMd(cellAt(c, 0))))
+    const margins = body.filter(c => MARGIN_ROW.test(stripMd(cellAt(c, 0))))
     const cols: number[] = []
     for (let k = 0; k < totalCol; k++) {
-      if (LABEL_HEADERS.has(header[k].toLowerCase()) || data.length === 0) continue
-      if (data.filter(c => score(c[k]) !== null).length / data.length >= 0.8) cols.push(k)
+      if (LABEL_HEADERS.has(cellAt(header, k).toLowerCase()) || data.length === 0) continue
+      if (data.filter(c => score(cellAt(c, k)) !== null).length / data.length >= 0.8) cols.push(k)
     }
     if (cols.length === 0) continue
 
@@ -88,11 +91,11 @@ export function readMatrix(text: string): { grid?: Omit<MatrixGrid, 'file' | 'cl
     const lensCol = header.findIndex(h => h.toLowerCase() === 'lens')
     const key = (c: string[]): string => {
       for (const k of labelCols) {
-        const m = stripMd(c[k]).match(STRESSOR_ID)
+        const m = stripMd(cellAt(c, k)).match(STRESSOR_ID)
         if (m) return m[0]
       }
 
-      return labelCols.length > 0 ? stripMd(c[labelCols[0]]) : stripMd(c[0])
+      return stripMd(cellAt(c, labelCols[0] ?? 0))
     }
 
     const problems: string[] = []
@@ -102,39 +105,39 @@ export function readMatrix(text: string): { grid?: Omit<MatrixGrid, 'file' | 'cl
       const id = key(c)
       let got = 0
       const cells = cols.map((k, j) => {
-        const v = score(c[k])
+        const v = score(cellAt(c, k))
         if (v === null) {
-          problems.push(`${id} × ${header[k]} = '${stripMd(c[k])}' is not a score`)
+          problems.push(`${id} × ${cellAt(header, k)} = '${stripMd(cellAt(c, k))}' is not a score`)
           return EMPTY
         }
         const [value, isUnknown] = v
-        if (value > 1) problems.push(`${id} × ${header[k]} = ${value}: scoring is 0 or 1`)
+        if (value > 1) problems.push(`${id} × ${cellAt(header, k)} = ${value}: scoring is 0 or 1`)
         if (isUnknown) unknown += 1
         got += value
-        colTotals[j] += value
+        colTotals[j] = (colTotals[j] ?? 0) + value
 
         return value === 0 ? EMPTY : isUnknown ? UNKNOWN : HIT
       })
-      const stated = stripMd(c[totalCol]).match(/\d+/)
+      const stated = stripMd(cellAt(c, totalCol)).match(/\d+/)
       if (stated === null) problems.push(`${id} has no row total (cells sum to ${got})`)
       else if (Number(stated[0]) !== got) problems.push(`${id} cells sum to ${got}, the row says ${stated[0]}`)
 
-      return { id, lens: lensCol >= 0 ? stripMd(c[lensCol]) || undefined : undefined, cells, total: got }
+      return { id, lens: lensCol >= 0 ? stripMd(cellAt(c, lensCol)) || undefined : undefined, cells, total: got }
     })
     const total = colTotals.reduce((a, b) => a + b, 0)
     for (const c of margins) {
       cols.forEach((k, j) => {
-        const stated = stripMd(c[k]).match(/\d+/)
+        const stated = stripMd(cellAt(c, k)).match(/\d+/)
         if (stated && Number(stated[0]) !== colTotals[j]) {
-          problems.push(`column ${header[k]} sums to ${colTotals[j]}, the totals row says ${stated[0]}`)
+          problems.push(`column ${cellAt(header, k)} sums to ${colTotals[j]}, the totals row says ${stated[0]}`)
         }
       })
-      const stated = stripMd(c[totalCol]).match(/\d+/)
+      const stated = stripMd(cellAt(c, totalCol)).match(/\d+/)
       if (stated && Number(stated[0]) !== total) problems.push(`the matrix sums to ${total}, the totals row says ${stated[0]}`)
     }
     if (margins.length === 0) problems.push('no totals row')
 
-    return { grid: { actors: cols.map(k => header[k]), rows, colTotals, total, unknown }, problems }
+    return { grid: { actors: cols.map(k => cellAt(header, k)), rows, colTotals, total, unknown }, problems }
   }
 
   return { problems: ['no impact matrix found (a table with actor columns and a Σ / Total column)'] }
@@ -153,8 +156,8 @@ export function readClaims(text: string, actors: string[]): Claim[] {
   for (const line of text.replace(/^﻿/, '').replace(/\r\n?/g, '\n').split('\n')) {
     const h = line.match(RESIDUAL_HEADING)
     if (h) {
-      const title = stripMd(h[2]).replace(/^[:—–\- ]+/, '').trim()
-      current = { id: h[1], title: title.length > 60 ? title.slice(0, 60) + '…' : title, cells: [] }
+      const title = stripMd(h[2] ?? '').replace(/^[:—–\- ]+/, '').trim()
+      current = { id: h[1] ?? '', title: title.length > 60 ? title.slice(0, 60) + '…' : title, cells: [] }
       out.push(current)
       inClears = false
       continue
@@ -172,7 +175,7 @@ export function readClaims(text: string, actors: string[]): Claim[] {
       if (inClears && t !== '' && !(t.startsWith('-') || t.startsWith('*'))) inClears = false
       continue
     }
-    for (const [, s, cols] of line.matchAll(CLAIM_LINE)) {
+    for (const [, s = '', cols = ''] of line.matchAll(CLAIM_LINE)) {
       for (const col of cols.split(',').map(c => c.trim())) {
         if (known.has(col)) current.cells.push([s, col])
       }
@@ -195,7 +198,7 @@ export function actorSetChanges(log: string): number[] {
       continue
     }
     const m = line.match(/\*\*Changes the actor set:?\*\*:?\s*(\w+)/i)
-    if (m && current !== undefined && m[1].toLowerCase() === 'yes' && !changes.includes(current)) changes.push(current)
+    if (m && current !== undefined && (m[1] ?? '').toLowerCase() === 'yes' && !changes.includes(current)) changes.push(current)
   }
 
   return changes.sort((a, b) => a - b)
@@ -222,7 +225,7 @@ export function matrixFiles(names: string[]): MatrixFile[] {
   return names
     .map(name => ({ name, m: name.match(MATRIX_NAME) }))
     .filter((x): x is { name: string; m: RegExpMatchArray } => x.m !== null)
-    .map(({ name, m }) => ({ name, date: m[1], iter: m[2] === undefined ? undefined : Number(m[2]) }))
+    .map(({ name, m }) => ({ name, date: m[1] ?? '', iter: m[2] === undefined ? undefined : Number(m[2]) }))
     .sort((a, b) => (a.date === b.date ? (b.iter ?? -1) - (a.iter ?? -1) : a.date < b.date ? 1 : -1))
 }
 
@@ -241,8 +244,8 @@ export function order(grid: MatrixGrid, byTotal: boolean): { rows: number[]; col
   if (!byTotal) return { rows, cols }
 
   return {
-    rows: rows.sort((a, b) => grid.rows[b].total - grid.rows[a].total || a - b),
-    cols: cols.sort((a, b) => grid.colTotals[b] - grid.colTotals[a] || a - b),
+    rows: rows.sort((a, b) => (grid.rows[b]?.total ?? 0) - (grid.rows[a]?.total ?? 0) || a - b),
+    cols: cols.sort((a, b) => (grid.colTotals[b] ?? 0) - (grid.colTotals[a] ?? 0) || a - b),
   }
 }
 
@@ -305,6 +308,7 @@ export const lensColor = (lens: string | undefined): string =>
 
 const markOf = (grid: MatrixGrid, r: number, c: number, claimed: Set<string>): Mark => {
   const row = grid.rows[r]
+  if (row === undefined) return 'empty'
   const v = row.cells[c]
   if (v === EMPTY) return 'empty'
   if (claimed.has(`${row.id}|${grid.actors[c]}`)) return 'claimed'
@@ -332,25 +336,25 @@ export function flippedWindow(
   // A label every tenth stressor, where it fits before the next one.
   const ruler = Array.from({ length: shown.length }, () => ' ')
   for (let i = 0; i < shown.length; i += 10) {
-    const id = grid.rows[shown[i]].id
+    const id = grid.rows[shown[i] ?? -1]?.id ?? ''
     if (i + id.length > shown.length) break
-    for (let k = 0; k < id.length; k++) ruler[i + k] = id[k]
+    for (let k = 0; k < id.length; k++) ruler[i + k] = id.charAt(k)
   }
 
   return {
     start,
     end,
     count,
-    ids: shown.map(r => grid.rows[r].id),
-    lens: shown.map(r => lensColor(grid.rows[r].lens)),
+    ids: shown.map(r => grid.rows[r]?.id ?? ''),
+    lens: shown.map(r => lensColor(grid.rows[r]?.lens)),
     ruler: ruler.join('').trimEnd(),
     lanes: cols.map(c => {
       const all = grid.rows.map((_, r) => markOf(grid, r, c, claimed))
 
       return {
-        actor: grid.actors[c],
+        actor: grid.actors[c] ?? '',
         marks: shown.map(r => markOf(grid, r, c, claimed)),
-        total: grid.colTotals[c],
+        total: grid.colTotals[c] ?? 0,
         unknown: grid.rows.filter(row => row.cells[c] === UNKNOWN).length,
         claimed: all.filter(m => m === 'claimed').length,
       }
@@ -417,7 +421,7 @@ export function laneSvg(win: Window): string {
     x += count * PITCH
   }
   for (let i = 0; i < n; i += 10) {
-    parts.push(`<text x="${LABEL_PX + i * PITCH}" y="22" fill="${INK}">${esc(win.ids[i])}</text>`)
+    parts.push(`<text x="${LABEL_PX + i * PITCH}" y="22" fill="${INK}">${esc(win.ids[i] ?? '')}</text>`)
   }
   win.lanes.forEach((lane, row) => {
     const y = TOP + row * LANE

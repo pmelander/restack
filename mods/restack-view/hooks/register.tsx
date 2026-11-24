@@ -9,10 +9,10 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { MatrixFile, MatrixState } from '../types'
-import { drawBanner } from './banner.tsx'
-import { askBars, bandParts, bandText, positionNote, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey.ts'
-import { fields, items, rule, section } from './layout.tsx'
-import type { Files } from './journey.ts'
+import { drawBanner } from './banner'
+import { askBars, bandParts, bandText, positionNote, readDetail, readJourney, registerRows, sectionsOf, TABS } from './journey'
+import { fields, items, rule, section } from './layout'
+import type { Files } from './journey'
 import {
   adrFiles,
   assumptionNumber,
@@ -22,13 +22,13 @@ import {
   parseRefs,
   residualTitles,
   titleOf,
-} from './refs.ts'
-import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix.ts'
-import { drawMatrix } from './matrix-view.tsx'
-import { rhythm } from './rhythm.ts'
-import type { Entry } from './rhythm.ts'
-import { drawRhythm, stripWidth } from './rhythm-view.tsx'
-import { drawAskBars, drawStatusBar } from './waiting.tsx'
+} from './refs'
+import { actorSetChanges, matrixFiles, readClaims, readMatrix, residualsFor, staleness } from './matrix'
+import { drawMatrix } from './matrix-view'
+import { rhythm } from './rhythm'
+import type { Entry } from './rhythm'
+import { drawRhythm, stripWidth } from './rhythm-view'
+import { drawAskBars, drawStatusBar } from './waiting'
 
 const view = atom({ plugin: 'restack-view', key: 'view' } as const, null)
 const detail = atom({ plugin: 'restack-view', key: 'detail' } as const, null)
@@ -134,7 +134,7 @@ async function readOnce($: EngineInterface): Promise<void> {
 
     const files: Files = {}
     for (const [i, [key, name]] of names.entries()) {
-      if (times[i] >= 0) files[key as keyof Files] = await $.fs.read(join(dir, name))
+      if ((times[i] ?? -1) >= 0) files[key as keyof Files] = await $.fs.read(join(dir, name))
     }
     const next = readJourney(files)
     const nextDetail = readDetail(files)
@@ -404,7 +404,9 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== PANE) return next(e)
-    const { Box, Text, Button, Markdown, Select, Svg, Input } = $.ui.resolve(e)
+    const table = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown, Select, Input } = table
+    const Svg = 'Svg' in table ? table.Svg : undefined
     const current = await read($, view)
     const lists = await read($, detail)
     const open = await read($, tab)

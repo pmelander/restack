@@ -22,10 +22,12 @@ import {
   runs,
   staleness,
   UNKNOWN,
-} from '../hooks/matrix.ts'
-import { FIXTURES, MATRIX_FIXTURES } from './fixtures.ts'
+} from '../hooks/matrix'
+import { FIXTURES, MATRIX_FIXTURES } from './fixtures'
+import type { MatrixName } from './fixtures'
+import { at } from './kit'
 
-const gridOf = (name: string, residuals?: string): MatrixGrid => {
+const gridOf = (name: MatrixName, residuals?: MatrixName): MatrixGrid => {
   const { grid, problems } = readMatrix(MATRIX_FIXTURES[name])
   expect(problems).toEqual([])
   const claims = residuals === undefined ? [] : readClaims(MATRIX_FIXTURES[residuals], grid!.actors)
@@ -42,9 +44,9 @@ test('iteration 1: 5 stressors × 4 actors, total 11, 2 unknown cells counted as
   expect(g.unknown).toBe(2)
   expect(g.colTotals).toEqual([2, 4, 3, 2])
   // S-5: CA 1, RS 1, LC 1?, NS ?
-  expect(g.rows[4].cells).toEqual([HIT, HIT, UNKNOWN, UNKNOWN])
-  expect(g.rows[4].total).toBe(4)
-  expect(g.rows[2].cells).toEqual([EMPTY, EMPTY, EMPTY, HIT])
+  expect(at(g.rows, 4).cells).toEqual([HIT, HIT, UNKNOWN, UNKNOWN])
+  expect(at(g.rows, 4).total).toBe(4)
+  expect(at(g.rows, 2).cells).toEqual([EMPTY, EMPTY, EMPTY, HIT])
 })
 
 test('iteration 3: 12 × 8, total 23, a zero row kept', () => {
@@ -128,8 +130,8 @@ test('flipped: one lane per actor, one mark per stressor, totals over the whole 
   expect(w.ids).toEqual(['S-1', 'S-2', 'S-3', 'S-4', 'S-5'])
   expect(w.lens).toEqual([COLOR.lens.O, COLOR.lens.C, COLOR.lens.O, COLOR.lens.C, COLOR.lens.X])
   expect(w.lanes.map(l => l.actor)).toEqual(['CA', 'RS', 'LC', 'NS'])
-  expect(w.lanes[0].marks).toEqual(['hit', 'empty', 'empty', 'empty', 'hit'])
-  expect(w.lanes[3].marks).toEqual(['empty', 'empty', 'hit', 'empty', 'unknown'])
+  expect(at(w.lanes, 0).marks).toEqual(['hit', 'empty', 'empty', 'empty', 'hit'])
+  expect(at(w.lanes, 3).marks).toEqual(['empty', 'empty', 'hit', 'empty', 'unknown'])
   expect(w.lanes.map(l => [l.total, l.unknown])).toEqual([[2, 0], [4, 0], [3, 1], [2, 1]])
   expect(w.ruler).toBe('S-1')
 })
@@ -138,14 +140,14 @@ test('claimed cells are marked as claimed, and counted per actor', () => {
   const g = gridOf('matrix-iter1.md', 'residuals-iter1.md')
   const { rows, cols } = order(g, false)
   // RS: S-1, S-2 and S-4 are claimed (R1, and R2 for S-1); S-5 is not.
-  const all = flippedWindow(g, rows, cols, claimedCells(g, '*'), 0, 100).lanes[1]
+  const all = at(flippedWindow(g, rows, cols, claimedCells(g, '*'), 0, 100).lanes, 1)
   expect(all.marks).toEqual(['claimed', 'claimed', 'empty', 'claimed', 'hit'])
   expect(all.claimed).toBe(3)
   // R2 alone claims only S-1 × RS in that lane.
-  expect(flippedWindow(g, rows, cols, claimedCells(g, 'R2'), 0, 100).lanes[1].marks).toEqual([
+  expect(at(flippedWindow(g, rows, cols, claimedCells(g, 'R2'), 0, 100).lanes, 1).marks).toEqual([
     'claimed', 'hit', 'empty', 'hit', 'hit',
   ])
-  expect(flippedWindow(g, rows, cols, claimedCells(g, '-'), 0, 100).lanes[1].claimed).toBe(0)
+  expect(at(flippedWindow(g, rows, cols, claimedCells(g, '-'), 0, 100).lanes, 1).claimed).toBe(0)
 })
 
 test('the window is as wide as the pane draws, and paging is clamped', () => {
@@ -154,7 +156,7 @@ test('the window is as wide as the pane draws, and paging is clamped', () => {
   const at = (offset: number, width: number) => {
     const w = flippedWindow(g, rows, cols, new Set(), offset, width)
 
-    return [w.start, w.end, w.lanes[0].marks.length]
+    return [w.start, w.end, w.lanes[0]?.marks.length]
   }
   expect(at(0, 5)).toEqual([0, 5, 5])
   expect(at(5, 5)).toEqual([5, 10, 5])
@@ -209,8 +211,8 @@ const bigGrid = (every: number) => {
     cells: actors.map((_, j) => ((i * 7 + j * 13) % every === 0 ? 1 : 0)),
     total: 0,
   }))
-  rows.forEach(r => (r.total = r.cells.reduce((a, b) => a + b, 0)))
-  const colTotals = actors.map((_, j) => rows.reduce((a, r) => a + r.cells[j], 0))
+  rows.forEach(r => (r.total = r.cells.reduce<number>((a, b) => a + b, 0)))
+  const colTotals = actors.map((_, j) => rows.reduce((a, r) => a + at(r.cells, j), 0))
 
   return {
     file: 'big.md',

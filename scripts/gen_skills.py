@@ -243,20 +243,24 @@ def render_mod_fixtures() -> str:
         "// AUTO-GENERATED from tests/fixtures/journey/ by scripts/gen_skills.py - do not edit.",
         "// The journeys journey.py is tested against, so the mod reads the same shapes.",
         "",
-        "export const FIXTURES: Readonly<Record<string, Readonly<Record<string, string>>>> = {",
+        "// Exact keys, so a test that names a journey or a file that is not here",
+        "// fails the type-check instead of reading undefined.",
+        "export const FIXTURES = {",
     ]
     for name, files in journeys.items():
         out.append(f"  {json.dumps(name)}: {{")
         for file, text in files.items():
             out.append(f"    {json.dumps(file)}: {json.dumps(text, ensure_ascii=False)},")
         out.append("  },")
-    out.append("}")
+    out.append("} satisfies Readonly<Record<string, Readonly<Record<string, string>>>>")
+    out += ["", "export type JourneyName = keyof typeof FIXTURES"]
     # The matrices matrix.py is tested against, for the Matrix tab (ADR-030).
-    out += ["", "export const MATRIX_FIXTURES: Readonly<Record<string, string>> = {"]
+    out += ["", "export const MATRIX_FIXTURES = {"]
     for path in sorted(MATRIX_FIXTURES.glob("*.md")):
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
         out.append(f"  {json.dumps(path.name)}: {json.dumps(text, ensure_ascii=False)},")
-    out.append("}")
+    out.append("} satisfies Readonly<Record<string, string>>")
+    out += ["", "export type MatrixName = keyof typeof MATRIX_FIXTURES"]
     return "\n".join(out) + "\n"
 
 
