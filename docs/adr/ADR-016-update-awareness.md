@@ -45,8 +45,9 @@ A check also brings costs, and they shape the design:
 - **Audit trail.** A journey's decisions log records which method produced each
   gate. If the skills change under an in-flight journey, that record stops
   meaning anything.
-- **Egress.** In some environments, NLTG among them, any outbound fetch from a
-  skill needs to be justified, and there must be a way to switch it off.
+- **Egress.** In some environments, such as regulated enterprises, any outbound
+  fetch from a skill needs to be justified, and there must be a way to switch
+  it off.
 - **Windows.** The maintainer runs Git Bash and Windows PowerShell 5.1. Paths
   recorded by one shell are read by a different runtime.
 
